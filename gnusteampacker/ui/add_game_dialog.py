@@ -16,24 +16,29 @@ class AddGameDialog(Adw.Dialog):
         super().__init__(title="Add Game")
         self._on_add = on_add
         self._search_results: list[dict] = []
-        self._selected_appid: str = ""
+        self._appid: str = ""
         self._game_name: str = ""
+        self._branches: list[str] = ["public"]
+        self._search_timeout_id: int = 0
+        self._appid_timeout_id: int = 0
 
         self.set_content_width(480)
-        self.set_content_height(560)
+        self.set_content_height(580)
 
         toolbar_view = Adw.ToolbarView()
-        header = Adw.HeaderBar()
-        toolbar_view.add_top_bar(header)
+        toolbar_view.add_top_bar(Adw.HeaderBar())
         self.set_child(toolbar_view)
 
-        # Main content
+        scroll = Gtk.ScrolledWindow(vexpand=True)
+        scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+        toolbar_view.set_content(scroll)
+
         content = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
         content.set_margin_top(12)
         content.set_margin_bottom(12)
         content.set_margin_start(16)
         content.set_margin_end(16)
-        toolbar_view.set_content(content)
+        scroll.set_child(content)
 
         # ── Search section ──────────────────────────────────────────────────
         search_group = Adw.PreferencesGroup(title="Search by name")
@@ -46,40 +51,50 @@ class AddGameDialog(Adw.Dialog):
         self._results_list.set_selection_mode(Gtk.SelectionMode.SINGLE)
         self._results_list.add_css_class("boxed-list")
         self._results_list.set_visible(False)
-        self._results_list.connect("row-activated", self._on_result_selected)
+        self._results_list.connect("row-activated", self._on_result_activated)
         search_group.add(self._results_list)
         content.append(search_group)
 
         # ── Manual AppID ────────────────────────────────────────────────────
         manual_group = Adw.PreferencesGroup(title="Or enter AppID directly")
         manual_group.set_margin_top(16)
+
         self._appid_row = Adw.EntryRow(title="AppID")
         self._appid_row.connect("changed", self._on_appid_changed)
         manual_group.add(self._appid_row)
+
+        # Shown while fetching game info
+        self._info_row = Adw.ActionRow(title="Looking up game…")
+        self._info_row.set_visible(False)
+        spinner = Gtk.Spinner()
+        spinner.start()
+        self._info_row.add_suffix(spinner)
+        manual_group.add(self._info_row)
+
         content.append(manual_group)
 
-        # ── Options ─────────────────────────────────────────────────────────
-        options_group = Adw.PreferencesGroup(title="Options")
-        options_group.set_margin_top(16)
+        # ── Options (disabled until game info loaded) ──────────────────────
+        self._options_group = Adw.PreferencesGroup(title="Options")
+        self._options_group.set_margin_top(16)
+        self._options_group.set_sensitive(False)
 
         platforms = list(steam_api.PLATFORMS.keys())
         self._platform_row = Adw.ComboRow(title="Platform")
-        platform_model = Gtk.StringList.new(platforms)
-        self._platform_row.set_model(platform_model)
-        options_group.add(self._platform_row)
+        self._platform_row.set_model(Gtk.StringList.new(platforms))
+        self._options_group.add(self._platform_row)
 
-        self._branch_row = Adw.EntryRow(title="Branch")
-        self._branch_row.set_text("public")
-        self._branch_row.connect("changed", self._on_branch_changed)
-        options_group.add(self._branch_row)
+        self._branch_row = Adw.ComboRow(title="Branch")
+        self._branch_row.set_model(Gtk.StringList.new(["public"]))
+        self._branch_row.connect("notify::selected", self._on_branch_changed)
+        self._options_group.add(self._branch_row)
 
         self._password_row = Adw.PasswordEntryRow(title="Branch password")
         self._password_row.set_visible(False)
-        options_group.add(self._password_row)
+        self._options_group.add(self._password_row)
 
-        content.append(options_group)
+        content.append(self._options_group)
 
-        # ── Footer buttons ───────────────────────────────────────────────────
+        # ── Footer ──────────────────────────────────────────────────────────
         btn_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
         btn_box.set_margin_top(20)
         btn_box.set_halign(Gtk.Align.END)
@@ -96,17 +111,26 @@ class AddGameDialog(Adw.Dialog):
 
         content.append(btn_box)
 
-    # ── Helpers ─────────────────────────────────────────────────────────────
+    # ── Search ───────────────────────────────────────────────────────────────
 
     def _on_search_changed(self, entry: Gtk.SearchEntry) -> None:
         term = entry.get_text().strip()
+        if self._search_timeout_id:
+            GLib.source_remove(self._search_timeout_id)
         if len(term) >= 2:
-            GLib.timeout_add(400, self._do_search, term)
+            self._search_timeout_id = GLib.timeout_add(400, self._do_search, term)
+        else:
+            self._results_list.set_visible(False)
 
     def _on_search_activate(self, entry: Gtk.SearchEntry) -> None:
-        self._do_search(entry.get_text().strip())
+        if self._search_timeout_id:
+            GLib.source_remove(self._search_timeout_id)
+        term = entry.get_text().strip()
+        if len(term) >= 2:
+            self._do_search(term)
 
     def _do_search(self, term: str) -> bool:
+        self._search_timeout_id = 0
         async_run(self._search_async(term))
         return False
 
@@ -118,50 +142,116 @@ class AddGameDialog(Adw.Dialog):
         GLib.idle_add(self._populate_results, results)
 
     def _populate_results(self, results: list[dict]) -> bool:
-        while row := self._results_list.get_first_child():
-            self._results_list.remove(row)
         self._search_results = results[:10]
+        self._results_list.remove_all()
+
+        if not results:
+            self._results_list.set_visible(False)
+            return False
+
+        if len(results) == 1:
+            # Auto-select the only match
+            self._results_list.set_visible(False)
+            self._select_result(results[0])
+            return False
+
         for r in self._search_results:
             row = Adw.ActionRow(title=r["name"], subtitle=f"AppID: {r['appid']}")
             row.set_activatable(True)
             self._results_list.append(row)
-        self._results_list.set_visible(bool(results))
+        self._results_list.set_visible(True)
         return False
 
-    def _on_result_selected(self, listbox, row: Gtk.ListBoxRow) -> None:
+    def _on_result_activated(self, _listbox, row: Gtk.ListBoxRow) -> None:
         idx = row.get_index()
         if 0 <= idx < len(self._search_results):
-            r = self._search_results[idx]
-            self._selected_appid = r["appid"]
-            self._game_name = r["name"]
-            self._appid_row.set_text(r["appid"])
-            self._add_btn.set_sensitive(True)
+            self._results_list.set_visible(False)
+            self._select_result(self._search_results[idx])
+
+    def _select_result(self, r: dict) -> None:
+        self._appid_row.set_text(r["appid"])
+        # _on_appid_changed fires from set_text and triggers the info fetch
+
+    # ── AppID entry ──────────────────────────────────────────────────────────
 
     def _on_appid_changed(self, row: Adw.EntryRow) -> None:
         text = row.get_text().strip()
-        if text.isdigit():
-            self._selected_appid = text
-            if not self._game_name:
-                self._game_name = ""
-            self._add_btn.set_sensitive(True)
-        else:
-            self._add_btn.set_sensitive(False)
+        if self._appid_timeout_id:
+            GLib.source_remove(self._appid_timeout_id)
+            self._appid_timeout_id = 0
+        # Reset dependent state
+        self._appid = ""
+        self._game_name = ""
+        self._options_group.set_sensitive(False)
+        self._add_btn.set_sensitive(False)
+        self._info_row.set_visible(False)
 
-    def _on_branch_changed(self, row: Adw.EntryRow) -> None:
-        branch = row.get_text().strip()
-        self._password_row.set_visible(branch not in ("", "public"))
+        if text.isdigit() and len(text) >= 2:
+            self._appid_timeout_id = GLib.timeout_add(600, self._do_fetch_info, text)
+
+    def _do_fetch_info(self, appid: str) -> bool:
+        self._appid_timeout_id = 0
+        self._info_row.set_title("Looking up game…")
+        self._info_row.set_visible(True)
+        async_run(self._fetch_info_async(appid))
+        return False
+
+    async def _fetch_info_async(self, appid: str) -> None:
+        try:
+            info = await steam_api.get_game_info(appid)
+            GLib.idle_add(self._on_info_loaded, appid, info, None)
+        except Exception as e:
+            GLib.idle_add(self._on_info_loaded, appid, None, str(e))
+
+    def _on_info_loaded(self, appid: str, info: dict | None, error: str | None) -> bool:
+        # Ignore stale callbacks if user already changed the AppID
+        if self._appid_row.get_text().strip() != appid:
+            return False
+
+        self._info_row.set_visible(False)
+
+        if error or not info:
+            self._info_row.set_title(f"Not found: {error or 'unknown error'}")
+            self._info_row.set_visible(True)
+            return False
+
+        self._appid = appid
+        self._game_name = info.get("name", f"App {appid}")
+        self._branches = info.get("branches", ["public"])
+        if "public" not in self._branches:
+            self._branches.insert(0, "public")
+
+        # Populate branch dropdown
+        self._branch_row.set_model(Gtk.StringList.new(self._branches))
+        self._branch_row.set_selected(0)
+
+        self._options_group.set_sensitive(True)
+        self._add_btn.set_sensitive(True)
+        return False
+
+    # ── Branch / password ────────────────────────────────────────────────────
+
+    def _on_branch_changed(self, row: Adw.ComboRow, _param) -> None:
+        idx = row.get_selected()
+        if idx == Gtk.INVALID_LIST_POSITION:
+            return
+        branch = self._branches[idx] if idx < len(self._branches) else "public"
+        self._password_row.set_visible(branch != "public")
+
+    # ── Add ──────────────────────────────────────────────────────────────────
 
     def _on_add_clicked(self, _btn) -> None:
+        if not self._appid:
+            return
         platforms = list(steam_api.PLATFORMS.values())
         platform = platforms[self._platform_row.get_selected()]
-        appid = self._appid_row.get_text().strip() or self._selected_appid
-        if not appid.isdigit():
-            return
+        idx = self._branch_row.get_selected()
+        branch = self._branches[idx] if idx < len(self._branches) else "public"
         item = QueueItem(
-            appid=appid,
-            game_name=self._game_name or f"App {appid}",
+            appid=self._appid,
+            game_name=self._game_name,
             platform=platform,
-            branch=self._branch_row.get_text().strip() or "public",
+            branch=branch,
             branch_password=self._password_row.get_text().strip(),
         )
         self._on_add(item)
