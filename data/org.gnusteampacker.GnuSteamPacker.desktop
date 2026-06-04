@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=GnuSteamPacker
+Comment=Download and package Steam games
+Exec=gnusteampacker
+Icon=org.gnusteampacker.GnuSteamPacker
+Terminal=false
+Type=Application
+Categories=Utility;
+Keywords=steam;download;pack;game;

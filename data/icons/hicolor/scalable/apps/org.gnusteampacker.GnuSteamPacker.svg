@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <!-- Background rounded rect -->
+  <rect width="128" height="128" rx="28" fill="#1a73e8"/>
+  <!-- Download arrow -->
+  <path d="M64 28 L64 72 M46 56 L64 74 L82 56" stroke="white" stroke-width="8"
+        stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <!-- Archive box bottom -->
+  <rect x="28" y="82" width="72" height="18" rx="4" fill="white" opacity="0.9"/>
+  <!-- Box lid -->
+  <rect x="24" y="72" width="80" height="12" rx="4" fill="white"/>
+</svg>

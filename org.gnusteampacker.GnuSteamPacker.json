@@ -1,0 +1,47 @@
+{
+  "app-id": "org.gnusteampacker.GnuSteamPacker",
+  "runtime": "org.gnome.Platform",
+  "runtime-version": "50",
+  "sdk": "org.gnome.Sdk",
+  "sdk-version": "50",
+  "command": "gnusteampacker",
+  "finish-args": [
+    "--share=network",
+    "--share=ipc",
+    "--socket=fallback-x11",
+    "--socket=wayland",
+    "--filesystem=home",
+    "--talk-name=org.freedesktop.secrets"
+  ],
+  "modules": [
+    {
+      "name": "python3-deps",
+      "buildsystem": "simple",
+      "build-commands": [
+        "pip3 install --no-index --find-links=. --prefix=${FLATPAK_DEST} aiohttp vdf secretstorage"
+      ],
+      "sources": [
+        {
+          "type": "file",
+          "url": "https://files.pythonhosted.org/packages/source/a/aiohttp/aiohttp-3.14.0.tar.gz",
+          "sha256": "placeholder-replace-with-real-sha256"
+        }
+      ]
+    },
+    {
+      "name": "gnusteampacker",
+      "buildsystem": "simple",
+      "build-commands": [
+        "pip3 install --no-index --prefix=${FLATPAK_DEST} .",
+        "install -Dm644 data/org.gnusteampacker.GnuSteamPacker.desktop ${FLATPAK_DEST}/share/applications/org.gnusteampacker.GnuSteamPacker.desktop",
+        "install -Dm644 data/icons/hicolor/scalable/apps/org.gnusteampacker.GnuSteamPacker.svg ${FLATPAK_DEST}/share/icons/hicolor/scalable/apps/org.gnusteampacker.GnuSteamPacker.svg"
+      ],
+      "sources": [
+        {
+          "type": "dir",
+          "path": "."
+        }
+      ]
+    }
+  ]
+}

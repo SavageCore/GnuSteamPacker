@@ -1,0 +1,36 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "gnusteampacker"
+version = "0.1.0"
+description = "Linux-native Steam game downloader and packager"
+license = { text = "GPL-3.0-or-later" }
+requires-python = ">=3.11"
+dependencies = [
+    "aiohttp>=3.14",
+    "vdf>=3.4",
+    "secretstorage>=3.3",
+]
+
+[project.scripts]
+gnusteampacker = "gnusteampacker.main:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["gnusteampacker"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP"]
+ignore = [
+    "E402",  # PyGObject requires gi.require_version() before gi.repository imports
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.15.16",
+]

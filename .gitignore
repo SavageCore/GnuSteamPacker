@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+dist/
+build/
+*.egg-info/
+.ruff_cache/
+build-dir/
+repo/
+.flatpak-builder/
+.claude/
+requirements.txt
