@@ -10,4 +10,3 @@ build-dir/
 repo/
 .flatpak-builder/
 .claude/
-requirements.txt
