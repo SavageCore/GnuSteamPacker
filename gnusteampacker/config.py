@@ -11,7 +11,6 @@ DEFAULTS = {
     "steamcmd_path": str(DATA_DIR / "steamcmd" / "steamcmd.sh"),
     "steamcmd_auto_download": True,
     "output_dir": str(Path.home() / "GnuSteamPacker"),
-    "split_size_mb": 5120,
     "color_scheme": "default",  # "default" | "light" | "dark"
 }
 

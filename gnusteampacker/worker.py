@@ -14,7 +14,6 @@ async def process_item(item: QueueItem, update_cb: UpdateCB) -> None:
     conf = cfg.load()
     steamcmd_path = Path(conf["steamcmd_path"])
     output_base = Path(conf["output_dir"])
-    split_mb = int(conf.get("split_size_mb", 5120))
 
     def push(status: Status, progress: float = 0.0, detail: str = "") -> None:
         item.status = status
@@ -83,7 +82,6 @@ async def process_item(item: QueueItem, update_cb: UpdateCB) -> None:
             source_dir=install_dir,
             archive_name=item.archive_name,
             output_dir=output_base,
-            split_mb=split_mb,
             progress_cb=lambda line: push(Status.COMPRESSING, item.progress),
         )
     except Exception as e:

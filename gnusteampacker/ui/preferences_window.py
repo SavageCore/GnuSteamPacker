@@ -61,18 +61,6 @@ class PreferencesWindow(Adw.PreferencesDialog):
         browse_row.connect("activated", self._pick_output_dir)
         group.add(browse_row)
 
-        split_group = Adw.PreferencesGroup(title="Compression")
-        page.add(split_group)
-
-        self._split_size = Adw.SpinRow.new_with_range(500, 50000, 512)
-        self._split_size.set_title("Archive split size (MB)")
-        self._split_size.set_value(float(self._conf.get("split_size_mb", 5120)))
-        self._split_size.connect(
-            "changed",
-            lambda r: self._save("split_size_mb", int(r.get_value())),
-        )
-        split_group.add(self._split_size)
-
     def _pick_output_dir(self, _row) -> None:
         dialog = Gtk.FileDialog(title="Choose output directory")
         dialog.select_folder(self.get_root(), None, self._on_output_dir_chosen)
