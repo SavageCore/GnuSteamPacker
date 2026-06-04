@@ -6,7 +6,6 @@ gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 from gi.repository import Adw, Gio, GLib, Gtk
 
-from gnusteampacker import release_text as rt
 from gnusteampacker import worker
 from gnusteampacker.async_runner import run as async_run
 from gnusteampacker.queue_model import QueueItem, Status
@@ -93,7 +92,6 @@ class MainWindow(Adw.ApplicationWindow):
             item,
             remove_cb=self._remove_item,
             retry_cb=self._retry_item,
-            view_text_cb=self._show_release_text,
         )
         self._rows[id(item)] = row
         self._list_box.append(row)
@@ -142,43 +140,3 @@ class MainWindow(Adw.ApplicationWindow):
             row.update(item)
         return False
 
-    # ── Release text dialog ───────────────────────────────────────────────
-
-    def _show_release_text(self, item: QueueItem) -> None:
-        text = rt.generate(item)
-
-        dialog = Adw.Dialog(title="Release Text")
-        dialog.set_content_width(600)
-        dialog.set_content_height(400)
-
-        toolbar_view = Adw.ToolbarView()
-        toolbar_view.add_top_bar(Adw.HeaderBar())
-        dialog.set_child(toolbar_view)
-
-        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
-        box.set_margin_top(12)
-        box.set_margin_bottom(12)
-        box.set_margin_start(16)
-        box.set_margin_end(16)
-        toolbar_view.set_content(box)
-
-        scroll = Gtk.ScrolledWindow(vexpand=True)
-        tv = Gtk.TextView()
-        tv.set_editable(False)
-        tv.set_monospace(True)
-        tv.get_buffer().set_text(text)
-        scroll.set_child(tv)
-        box.append(scroll)
-
-        copy_btn = Gtk.Button(label="Copy to Clipboard")
-        copy_btn.add_css_class("suggested-action")
-        copy_btn.set_halign(Gtk.Align.END)
-        copy_btn.connect("clicked", lambda _: self._copy_text(text, copy_btn))
-        box.append(copy_btn)
-
-        dialog.present(self)
-
-    def _copy_text(self, text: str, btn: Gtk.Button) -> None:
-        self.get_clipboard().set(text)
-        btn.set_label("Copied!")
-        GLib.timeout_add(1500, lambda: btn.set_label("Copy to Clipboard") or False)

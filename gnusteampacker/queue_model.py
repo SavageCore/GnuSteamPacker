@@ -5,6 +5,7 @@ from enum import StrEnum
 class Status(StrEnum):
     READY = "Ready"
     GETINFO = "Fetching info…"
+    AUTHENTICATING = "Waiting for Steam Guard…"
     DOWNLOADING = "Downloading"
     CLEANING = "Cleaning"
     COMPRESSING = "Compressing"

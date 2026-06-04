@@ -1,11 +1,15 @@
 """Async download pipeline: info fetch → steamcmd → clean → compress."""
 
+import logging
+import shutil
 from collections.abc import Callable
 from pathlib import Path
 
 from gnusteampacker import compressor, credentials, release_text, steam_api, steamcmd, vdf_cleaner
 from gnusteampacker import config as cfg
 from gnusteampacker.queue_model import QueueItem, Status
+
+log = logging.getLogger(__name__)
 
 UpdateCB = Callable[[QueueItem], None]
 
@@ -48,8 +52,11 @@ async def process_item(item: QueueItem, update_cb: UpdateCB) -> None:
     password = credentials.get_password()
     install_dir = output_base / f"{item.appid}_{item.platform}"
 
-    def dl_progress(pct: float, _line: str) -> None:
-        push(Status.DOWNLOADING, pct)
+    def dl_progress(pct: float, line: str) -> None:
+        if "Logging in using" in line:
+            push(Status.AUTHENTICATING)
+        else:
+            push(Status.DOWNLOADING, pct)
 
     try:
         ok, reason = await steamcmd.run_download(
@@ -69,6 +76,18 @@ async def process_item(item: QueueItem, update_cb: UpdateCB) -> None:
         push(status_map.get(reason, Status.FAIL), detail=reason)
         return
 
+    # Guard: fail fast if SteamCMD ran but downloaded nothing.
+    # Game files install directly into install_dir (not under steamapps/common);
+    # steamapps/ is only SteamCMD metadata so we exclude it from the check.
+    game_entries = (
+        [p for p in install_dir.iterdir() if p.name != "steamapps"]
+        if install_dir.exists() else []
+    )
+    log.debug("install_dir non-steamapps entries: %s", [p.name for p in game_entries])
+    if not game_entries:
+        push(Status.FAIL, detail="Download completed but no game files found in install directory")
+        return
+
     # ── 4. Clean sensitive data ────────────────────────────────────────────
     push(Status.CLEANING, 1.0)
     steamapps_dir = install_dir / "steamapps"
@@ -77,15 +96,23 @@ async def process_item(item: QueueItem, update_cb: UpdateCB) -> None:
 
     # ── 5. Compress ────────────────────────────────────────────────────────
     push(Status.COMPRESSING, 0.0)
+    output_folder = output_base / item.archive_name
     try:
         await compressor.compress(
             source_dir=install_dir,
             archive_name=item.archive_name,
-            output_dir=output_base,
+            output_dir=output_folder,
             progress_cb=lambda line: push(Status.COMPRESSING, item.progress),
         )
     except Exception as e:
         push(Status.FAIL, detail=str(e))
         return
+
+    # ── 6. Write BBCode release text ───────────────────────────────────────
+    txt_path = output_folder / (item.archive_name + ".txt")
+    txt_path.write_text(release_text.generate(item), encoding="utf-8")
+
+    # ── 7. Remove staging directory ────────────────────────────────────────
+    shutil.rmtree(install_dir, ignore_errors=True)
 
     push(Status.COMPLETE, 1.0)
