@@ -67,10 +67,7 @@ class GnuSteamPackerApp(Adw.Application):
 
 
 def main() -> int:
-    logging.basicConfig(
-        level=logging.DEBUG,
-        format="%(levelname)s %(name)s: %(message)s",
-    )
+    logging.basicConfig(level=logging.WARNING)
     app = GnuSteamPackerApp()
     return app.run(sys.argv)
 
