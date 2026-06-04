@@ -10,7 +10,7 @@ description: |
   Downloads Steam games via SteamCMD, strips sensitive data from ACF files,
   and produces compressed archives with release text for distribution.
 vendor: GnuSteamPacker Project
-homepage: https://github.com/savagecore/GnuSteamPacker
+homepage: https://github.com/SavageCore/GnuSteamPacker
 license: GPL-3.0-or-later
 
 depends:
@@ -37,10 +37,11 @@ contents:
     file_info:
       mode: 0755
 
-rpm:
-  depends:
-    - python3 >= 3.11
-    - python3-gobject
-    - gtk4
-    - libadwaita
-    - p7zip
+overrides:
+  rpm:
+    depends:
+      - python3 >= 3.11
+      - python3-gobject
+      - gtk4
+      - libadwaita
+      - p7zip
