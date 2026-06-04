@@ -59,3 +59,10 @@ class QueueItem:
             Status.NOSUB,
             Status.SKIPPED,
         )
+
+    def is_retryable(self) -> bool:
+        return self.status in (
+            Status.FAIL,
+            Status.STEAMGUARD,
+            Status.RATELIMITED,
+        )

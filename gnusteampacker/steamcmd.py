@@ -120,6 +120,7 @@ def _check_logs(steamcmd_dir: Path) -> tuple[bool, str]:
 
     content = read("content_log.txt")
     connection = read("connection_log.txt")
+    combined = content + connection
 
     if "No subscription" in content:
         return False, "nosub"
@@ -127,9 +128,13 @@ def _check_logs(steamcmd_dir: Path) -> tuple[bool, str]:
         return False, "ratelimited"
     if "Invalid Password" in connection:
         return False, "badlogin"
-    # Steam Guard: login succeeded only if one of these marker files exists
-    site = (steamcmd_dir / "logs" / "sitelicense_steamcmd.txt").exists()
-    compat = (steamcmd_dir / "logs" / "compat_log.txt").exists()
-    if not site and not compat:
+    # Positive Steam Guard failure: SteamCMD explicitly says auth failed
+    steamguard_errors = (
+        "Two-factor code mismatch",
+        "Steam Guard",
+        "requires two-factor",
+        "steamguard",
+    )
+    if any(s.lower() in combined.lower() for s in steamguard_errors):
         return False, "steamguard"
     return True, ""

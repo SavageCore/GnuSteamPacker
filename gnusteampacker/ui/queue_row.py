@@ -8,17 +8,17 @@ from gnusteampacker.queue_model import QueueItem, Status
 
 
 class QueueRow(Adw.ActionRow):
-    def __init__(self, item: QueueItem, remove_cb, view_text_cb):
+    def __init__(self, item: QueueItem, remove_cb, retry_cb, view_text_cb):
         super().__init__()
         self._item = item
         self._remove_cb = remove_cb
+        self._retry_cb = retry_cb
         self._view_text_cb = view_text_cb
 
         self.set_title(item.game_name or f"AppID {item.appid}")
         branch = item.branch or "public"
         self.set_subtitle(f"AppID: {item.appid}  ·  {item.display_platform}  ·  Branch: {branch}")
 
-        # Right side box
         box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4, valign=Gtk.Align.CENTER)
 
         self._status_label = Gtk.Label(label=item.status.value)
@@ -39,6 +39,14 @@ class QueueRow(Adw.ActionRow):
         self._text_btn.set_visible(False)
         self._text_btn.connect("clicked", lambda _: view_text_cb(item))
         self._btn_box.append(self._text_btn)
+
+        self._retry_btn = Gtk.Button()
+        self._retry_btn.set_icon_name("view-refresh-symbolic")
+        self._retry_btn.add_css_class("flat")
+        self._retry_btn.set_tooltip_text("Retry")
+        self._retry_btn.set_visible(False)
+        self._retry_btn.connect("clicked", lambda _: retry_cb(item))
+        self._btn_box.append(self._retry_btn)
 
         self._remove_btn = Gtk.Button()
         self._remove_btn.set_icon_name("user-trash-symbolic")
@@ -64,11 +72,10 @@ class QueueRow(Adw.ActionRow):
             else:
                 self._progress.pulse()
 
-        terminal = item.is_terminal()
-        self._remove_btn.set_sensitive(item.status == Status.READY or terminal)
+        self._retry_btn.set_visible(item.is_retryable())
+        self._remove_btn.set_sensitive(item.status == Status.READY or item.is_terminal())
         self._text_btn.set_visible(item.status == Status.COMPLETE and bool(item.depot_list))
 
-        # Colour the status label
         for cls in ("success", "error", "warning"):
             self._status_label.remove_css_class(cls)
         if item.status == Status.COMPLETE:

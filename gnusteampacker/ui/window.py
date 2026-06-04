@@ -89,7 +89,12 @@ class MainWindow(Adw.ApplicationWindow):
 
     def _add_item(self, item: QueueItem) -> None:
         self._items.append(item)
-        row = QueueRow(item, remove_cb=self._remove_item, view_text_cb=self._show_release_text)
+        row = QueueRow(
+            item,
+            remove_cb=self._remove_item,
+            retry_cb=self._retry_item,
+            view_text_cb=self._show_release_text,
+        )
         self._rows[id(item)] = row
         self._list_box.append(row)
         self._refresh_stack()
@@ -115,6 +120,15 @@ class MainWindow(Adw.ApplicationWindow):
         for item in self._items:
             if item.status == Status.READY:
                 self._start_item(item)
+
+    def _retry_item(self, item: QueueItem) -> None:
+        item.status = Status.READY
+        item.progress = 0.0
+        item.error_detail = ""
+        row = self._rows.get(id(item))
+        if row:
+            row.update(item)
+        self._start_item(item)
 
     def _start_item(self, item: QueueItem) -> None:
         def update_cb(updated_item: QueueItem) -> None:
