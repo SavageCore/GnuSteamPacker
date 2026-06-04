@@ -223,12 +223,14 @@ class AddGameDialog(Adw.Dialog):
         self._appid = appid
         self._game_name = info.get("name", f"App {appid}")
         self._branches = info.get("branches", ["public"])
-        if "public" not in self._branches:
-            self._branches.insert(0, "public")
+        if "public" in self._branches:
+            self._branches.remove("public")
+        self._branches.insert(0, "public")
 
         # Populate branch dropdown
         self._branch_row.set_model(Gtk.StringList.new(self._branches))
         self._branch_row.set_selected(0)
+        self._platform_row.set_selected(0)
 
         self._options_group.set_sensitive(True)
         self._add_btn.set_sensitive(True)
