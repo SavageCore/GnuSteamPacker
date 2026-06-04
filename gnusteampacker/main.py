@@ -1,3 +1,4 @@
+import logging
 import sys
 
 import gi
@@ -66,6 +67,10 @@ class GnuSteamPackerApp(Adw.Application):
 
 
 def main() -> int:
+    logging.basicConfig(
+        level=logging.DEBUG,
+        format="%(levelname)s %(name)s: %(message)s",
+    )
     app = GnuSteamPackerApp()
     return app.run(sys.argv)
 

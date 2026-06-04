@@ -1,5 +1,7 @@
 """Add Game dialog — search by name or enter AppID directly."""
 
+import logging
+
 import gi
 
 gi.require_version("Gtk", "4.0")
@@ -7,6 +9,8 @@ gi.require_version("Adw", "1")
 from gi.repository import Adw, GLib, Gtk
 
 from gnusteampacker import steam_api
+
+log = logging.getLogger(__name__)
 from gnusteampacker.async_runner import run as async_run
 from gnusteampacker.queue_model import QueueItem
 
@@ -138,6 +142,7 @@ class AddGameDialog(Adw.Dialog):
         try:
             results = await steam_api.search_games(term)
         except Exception:
+            log.exception("search_games failed for %r", term)
             results = []
         GLib.idle_add(self._populate_results, results)
 

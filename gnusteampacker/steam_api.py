@@ -1,14 +1,34 @@
 """Steam public API helpers — no API key required."""
 
+import logging
+import re
 from datetime import UTC, datetime
 from typing import Any
+from urllib.parse import quote
 
 import aiohttp
 
+log = logging.getLogger(__name__)
+
+# Steam autocomplete suggest — returns HTML, no auth required
+STORE_SUGGEST = (
+    "https://store.steampowered.com/search/suggest"
+    "?term={term}&f=games&cc=US&l=english"
+    "&use_store_query=1&use_search_spellcheck=1"
+)
 STEAMCMD_INFO = "https://api.steamcmd.net/v1/info/{appid}"
-STORE_SEARCH = "https://store.steampowered.com/api/storeearch/?term={term}&l=english&cc=US"
 STORE_DETAILS = "https://store.steampowered.com/api/appdetails?appids={appid}"
 DEPOT_NAMES = "https://raw.githubusercontent.com/Masquerade64/SteamDepotNames/main/depots.ini"
+
+_HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0"
+    )
+}
+
+# Parses: data-ds-appid="12345" and <div class="match_name ...">Game Title</div>
+_RE_APPID = re.compile(r'data-ds-appid="(\d+)"')
+_RE_NAME = re.compile(r'class="match_name[^"]*">([^<]+)</div>')
 
 PLATFORMS = {
     "Windows 64-bit": "win64",
@@ -29,46 +49,55 @@ PLATFORM_STEAMCMD = {
 
 async def search_games(term: str) -> list[dict[str, str]]:
     """Return list of {name, appid} matching term."""
-    async with aiohttp.ClientSession() as session:
-        url = STORE_SEARCH.format(term=aiohttp.helpers.quote(term, safe=""))
+    url = STORE_SUGGEST.format(term=quote(term, safe=""))
+    log.debug("search_games: GET %s", url)
+    async with aiohttp.ClientSession(headers=_HEADERS) as session:
         async with session.get(url, timeout=aiohttp.ClientTimeout(total=10)) as r:
-            data = await r.json(content_type=None)
-    items = data.get("items", [])
-    return [{"name": i["name"], "appid": str(i["id"])} for i in items if i.get("type") == "game"]
+            log.debug("search_games: status %s", r.status)
+            html = await r.text()
+
+    appids = _RE_APPID.findall(html)
+    names = _RE_NAME.findall(html)
+    log.debug("search_games: found %d appids, %d names", len(appids), len(names))
+
+    results = [
+        {"appid": aid, "name": name}
+        for aid, name in zip(appids, names)
+    ]
+    log.debug("search_games: returning %s", results)
+    return results
 
 
 async def get_game_info(appid: str) -> dict[str, Any]:
     """Return structured game info from api.steamcmd.net."""
-    async with aiohttp.ClientSession() as session:
-        async with session.get(
-            STEAMCMD_INFO.format(appid=appid), timeout=aiohttp.ClientTimeout(total=15)
-        ) as r:
+    url = STEAMCMD_INFO.format(appid=appid)
+    log.debug("get_game_info: GET %s", url)
+    async with aiohttp.ClientSession(headers=_HEADERS) as session:
+        async with session.get(url, timeout=aiohttp.ClientTimeout(total=15)) as r:
+            log.debug("get_game_info: status %s", r.status)
             data = await r.json(content_type=None)
 
     if data.get("status") != "success":
-        raise ValueError(f"App {appid} not found")
+        raise ValueError(f"App {appid} not found (status: {data.get('status')})")
 
     app = data["data"][appid]
     common = app.get("common", {})
     depots = app.get("depots", {})
     branches = depots.get("branches", {})
 
-    branch_names = list(branches.keys())
-
     result: dict[str, Any] = {
         "appid": appid,
         "name": common.get("name", f"App {appid}"),
-        "branches": branch_names,
+        "branches": list(branches.keys()),
         "depots": {},
     }
 
     for depot_id, depot_data in depots.items():
         if not depot_id.isdigit():
             continue
-        manifests = depot_data.get("manifests", {})
         result["depots"][depot_id] = {
             "name": depot_data.get("name", ""),
-            "manifests": manifests,
+            "manifests": depot_data.get("manifests", {}),
         }
 
     for branch_name, branch_data in branches.items():
@@ -80,15 +109,16 @@ async def get_game_info(appid: str) -> dict[str, Any]:
         else:
             result[f"time_{branch_name}"] = ""
 
+    log.debug("get_game_info: name=%r branches=%r", result["name"], result["branches"])
     return result
 
 
 async def get_store_details(appid: str) -> dict[str, Any]:
     """Return store details (short description, website)."""
-    async with aiohttp.ClientSession() as session:
-        async with session.get(
-            STORE_DETAILS.format(appid=appid), timeout=aiohttp.ClientTimeout(total=10)
-        ) as r:
+    url = STORE_DETAILS.format(appid=appid)
+    log.debug("get_store_details: GET %s", url)
+    async with aiohttp.ClientSession(headers=_HEADERS) as session:
+        async with session.get(url, timeout=aiohttp.ClientTimeout(total=10)) as r:
             data = await r.json(content_type=None)
     app = data.get(appid, {})
     if not app.get("success"):
@@ -102,8 +132,9 @@ async def get_store_details(appid: str) -> dict[str, Any]:
 
 async def fetch_depot_names() -> dict[str, str]:
     """Return {depot_id: name} from Masquerade64's depot names list."""
+    log.debug("fetch_depot_names: fetching")
     try:
-        async with aiohttp.ClientSession() as session:
+        async with aiohttp.ClientSession(headers=_HEADERS) as session:
             async with session.get(DEPOT_NAMES, timeout=aiohttp.ClientTimeout(total=10)) as r:
                 text = await r.text()
         names: dict[str, str] = {}
@@ -118,6 +149,8 @@ async def fetch_depot_names() -> dict[str, str]:
             if in_section and "=" in line:
                 k, _, v = line.partition("=")
                 names[k.strip()] = v.strip()
+        log.debug("fetch_depot_names: loaded %d entries", len(names))
         return names
     except Exception:
+        log.exception("fetch_depot_names failed")
         return {}
