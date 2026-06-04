@@ -1,4 +1,4 @@
-.PHONY: dev run lint format flatpak rpm deb appimage clean
+.PHONY: dev run watch lint format flatpak rpm deb appimage clean
 
 dev:
 	uv venv --python /usr/bin/python3 --system-site-packages --clear
@@ -6,6 +6,9 @@ dev:
 
 run:
 	uv run gnusteampacker
+
+watch:
+	find gnusteampacker -name '*.py' | entr -r uv run gnusteampacker
 
 lint:
 	uv run ruff check gnusteampacker/
