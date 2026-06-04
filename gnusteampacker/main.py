@@ -1,11 +1,12 @@
 import logging
 import sys
+from pathlib import Path
 
 import gi
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
-from gi.repository import Adw, Gio, Gtk
+from gi.repository import Adw, Gdk, Gio, Gtk
 
 from gnusteampacker import APP_ID, __version__
 from gnusteampacker import config as cfg
@@ -24,6 +25,11 @@ class GnuSteamPackerApp(Adw.Application):
 
     def _on_activate(self, app) -> None:
         if not self._window:
+            icon_dir = Path(__file__).parent.parent / "data" / "icons"
+            if icon_dir.exists():
+                display = Gdk.Display.get_default()
+                if display:
+                    Gtk.IconTheme.get_for_display(display).add_search_path(str(icon_dir))
             self._window = MainWindow(app)
             self._setup_actions()
             self._apply_color_scheme()

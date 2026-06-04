@@ -1,4 +1,4 @@
-.PHONY: dev run watch lint format flatpak rpm deb appimage clean
+.PHONY: dev run watch lint format dev-icons flatpak rpm deb appimage clean
 
 dev:
 	uv venv --python /usr/bin/python3 --system-site-packages --clear
@@ -15,6 +15,15 @@ lint:
 
 format:
 	uv run ruff format gnusteampacker/
+
+dev-icons:
+	install -Dm644 data/icons/hicolor/scalable/apps/org.gnusteampacker.GnuSteamPacker.svg \
+		$(HOME)/.local/share/icons/hicolor/scalable/apps/org.gnusteampacker.GnuSteamPacker.svg
+	install -Dm644 data/org.gnusteampacker.GnuSteamPacker.desktop \
+		$(HOME)/.local/share/applications/org.gnusteampacker.GnuSteamPacker.desktop
+	gtk-update-icon-cache -f -t $(HOME)/.local/share/icons/hicolor/ 2>/dev/null || true
+	update-desktop-database $(HOME)/.local/share/applications/ 2>/dev/null || true
+	@echo "Icon installed. Restart the shell or re-login if icon is still missing."
 
 flatpak:
 	flatpak-builder --force-clean build-dir org.gnusteampacker.GnuSteamPacker.json
