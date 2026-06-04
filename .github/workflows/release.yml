@@ -1,0 +1,63 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  packages:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v4
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-gi gir1.2-adw-1 p7zip-full
+          echo 'deb [trusted=yes] https://repo.goreleaser.com/apt/ /' | sudo tee /etc/apt/sources.list.d/goreleaser.list
+          sudo apt-get update && sudo apt-get install -y nfpm
+
+      - name: Prepare package directory
+        run: |
+          uv sync
+          mkdir -p dist
+          cp -r gnusteampacker dist/
+
+      - name: Build DEB and RPM
+        run: make deb && make rpm
+
+      - name: Build AppImage
+        run: |
+          pip install python-appimage
+          make appimage
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            *.deb
+            *.rpm
+            *.AppImage
+
+  flatpak:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    container:
+      image: bilelmoussaoui/flatpak-github-actions:gnome-50
+      options: --privileged
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Flatpak bundle
+        run: |
+          flatpak-builder --repo=repo --force-clean build-dir org.gnusteampacker.GnuSteamPacker.json
+          flatpak build-bundle repo gnusteampacker.flatpak org.gnusteampacker.GnuSteamPacker
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: gnusteampacker.flatpak

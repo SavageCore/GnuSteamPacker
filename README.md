@@ -10,6 +10,15 @@ Features:
 - Generate BBCode release text for *that* Russian Steam forum
 - Stores Steam credentials in the system keyring (GNOME Keyring / KWallet)
 
+## Download
+
+| Distro | Package |
+|--------|---------|
+| Fedora, RHEL, openSUSE | [.rpm](https://github.com/SavageCore/GnuSteamPacker/releases/latest) |
+| Debian, Ubuntu, Mint | [.deb](https://github.com/SavageCore/GnuSteamPacker/releases/latest) |
+| Any Linux (x86_64) | [.AppImage](https://github.com/SavageCore/GnuSteamPacker/releases/latest) |
+| Flatpak | [.flatpak](https://github.com/SavageCore/GnuSteamPacker/releases/latest) |
+
 ## Requirements
 
 - Python 3.11+
