@@ -151,6 +151,16 @@ class MainWindow(Adw.ApplicationWindow):
             body="Enter the code from your email or authenticator app.",
         )
         entry = Gtk.Entry(placeholder_text="XXXXX", activates_default=True)
+
+        def _on_guard_changed(_entry):
+            text = _entry.get_text()
+            upper = text.upper()
+            if text != upper:
+                pos = _entry.get_position()
+                _entry.set_text(upper)
+                _entry.set_position(pos)
+
+        entry.connect("changed", _on_guard_changed)
         dialog.set_extra_child(entry)
         dialog.add_response("cancel", "Cancel")
         dialog.add_response("retry", "Retry")
