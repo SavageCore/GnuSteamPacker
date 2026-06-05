@@ -6,6 +6,7 @@ gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 from gi.repository import Adw, Gio, GLib, Gtk
 
+from gnusteampacker import config as cfg
 from gnusteampacker import worker
 from gnusteampacker.async_runner import run as async_run
 from gnusteampacker.queue_model import QueueItem, Status
@@ -16,12 +17,25 @@ from gnusteampacker.ui.queue_row import QueueRow
 class MainWindow(Adw.ApplicationWindow):
     def __init__(self, app):
         super().__init__(application=app, title="GnuSteamPacker")
-        self.set_default_size(700, 520)
+        conf = cfg.load()
+        self.set_default_size(conf["window_width"], conf["window_height"])
+        if conf["window_maximized"]:
+            self.maximize()
+        self.connect("close-request", self._on_close_request)
 
         self._items: list[QueueItem] = []
         self._rows: dict[int, QueueRow] = {}  # id(item) → row
 
         self._build_ui()
+
+    def _on_close_request(self, _win) -> bool:
+        conf = cfg.load()
+        if not self.is_maximized():
+            conf["window_width"] = self.get_width()
+            conf["window_height"] = self.get_height()
+        conf["window_maximized"] = self.is_maximized()
+        cfg.save(conf)
+        return False
 
     def _build_ui(self) -> None:
         toolbar_view = Adw.ToolbarView()
