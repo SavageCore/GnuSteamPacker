@@ -39,14 +39,10 @@ deb:
 	uv export --no-dev -o /tmp/gsp-requirements.txt
 	nfpm package --packager deb --config nfpm.yml
 
-requirements.txt:
-	uv export --no-dev -o requirements.txt
-	sed -i '/^-e \./d' requirements.txt
-
 appimage:
 	uv export --no-dev -o requirements.txt
 	sed -i '/^-e \./d' requirements.txt
 	python-appimage build app -p 3.11 .
 
 clean:
-	rm -rf build-dir .flatpak-builder __pycache__ gnusteampacker/__pycache__ gnusteampacker/ui/__pycache__
+	rm -rf build-dir .flatpak-builder requirements.txt __pycache__ gnusteampacker/__pycache__ gnusteampacker/ui/__pycache__
