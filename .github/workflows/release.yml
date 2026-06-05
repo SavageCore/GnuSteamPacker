@@ -11,9 +11,9 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: astral-sh/setup-uv@v4
+      - uses: astral-sh/setup-uv@v7
 
       - name: Install system dependencies
         run: |
@@ -36,7 +36,7 @@ jobs:
           pip install python-appimage
           make appimage
 
-      - uses: softprops/action-gh-release@v2
+      - uses: softprops/action-gh-release@v3
         with:
           files: |
             *.deb
@@ -50,7 +50,7 @@ jobs:
       pages: write
       id-token: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Install Flatpak tooling
         run: |
@@ -80,7 +80,7 @@ jobs:
           cp gnusteampacker-flatpak.gpg flatpak-repo/
           touch flatpak-repo/.nojekyll
 
-      - uses: softprops/action-gh-release@v2
+      - uses: softprops/action-gh-release@v3
         with:
           files: gnusteampacker.flatpak
 
