@@ -7,11 +7,15 @@ DATA_DIR = Path(os.environ.get("XDG_DATA_HOME", Path.home() / ".local/share")) /
 
 CONFIG_FILE = CONFIG_DIR / "config.json"
 
+_cpu = os.cpu_count() or 4
+
 DEFAULTS = {
     "steamcmd_path": str(DATA_DIR / "steamcmd" / "steamcmd.sh"),
     "steamcmd_auto_download": True,
     "output_dir": str(Path.home() / "GnuSteamPacker"),
     "color_scheme": "default",  # "default" | "light" | "dark"
+    "compression_level": 5,
+    "compression_threads": max(1, _cpu // 2),
 }
 
 

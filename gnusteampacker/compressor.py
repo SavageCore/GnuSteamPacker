@@ -18,6 +18,8 @@ async def compress(
     archive_name: str,
     output_dir: Path,
     progress_cb: Callable[[str], None] | None = None,
+    level: int = 5,
+    threads: int = 1,
 ) -> Path:
     """
     Compress source_dir into output_dir/<archive_name>.7z.
@@ -32,7 +34,8 @@ async def compress(
 
     cmd = [
         sevenz, "a",
-        "-mx9",
+        f"-mx{level}",
+        f"-mmt={threads}",
         "-sdel",
         "-pcs.rin.ru",
         "-mhe=on",

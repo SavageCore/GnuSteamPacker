@@ -20,6 +20,8 @@ async def process_item(
     conf = cfg.load()
     steamcmd_path = Path(conf["steamcmd_path"])
     output_base = Path(conf["output_dir"])
+    compression_level = int(conf.get("compression_level", 5))
+    compression_threads = int(conf.get("compression_threads", 1))
 
     def push(status: Status, progress: float = 0.0, detail: str = "") -> None:
         item.status = status
@@ -105,6 +107,8 @@ async def process_item(
             archive_name=item.archive_name,
             output_dir=output_folder,
             progress_cb=lambda line: push(Status.COMPRESSING, item.progress),
+            level=compression_level,
+            threads=compression_threads,
         )
     except Exception as e:
         push(Status.FAIL, detail=str(e))
