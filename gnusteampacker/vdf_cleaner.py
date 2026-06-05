@@ -1,4 +1,4 @@
-"""Clean sensitive data from SteamCMD-downloaded ACF files."""
+"""Clean sensitive data from DepotDownloader-generated ACF files."""
 
 import shutil
 from pathlib import Path

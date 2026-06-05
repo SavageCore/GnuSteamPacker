@@ -88,6 +88,7 @@ async def get_game_info(appid: str) -> dict[str, Any]:
     result: dict[str, Any] = {
         "appid": appid,
         "name": common.get("name", f"App {appid}"),
+        "installdir": common.get("installdir", common.get("name", f"App {appid}")),
         "branches": list(branches.keys()),
         "depots": {},
     }
@@ -95,9 +96,21 @@ async def get_game_info(appid: str) -> dict[str, Any]:
     for depot_id, depot_data in depots.items():
         if not depot_id.isdigit():
             continue
+        # API returns manifests as {branch: {gid, size, download}} — flatten to {branch: gid}
+        manifests: dict[str, str] = {}
+        size = ""
+        for branch, branch_data in depot_data.get("manifests", {}).items():
+            if isinstance(branch_data, dict):
+                manifests[branch] = branch_data.get("gid", "")
+                if branch == "public":
+                    size = branch_data.get("size", "")
+            else:
+                manifests[branch] = str(branch_data)
         result["depots"][depot_id] = {
             "name": depot_data.get("name", ""),
-            "manifests": depot_data.get("manifests", {}),
+            "manifests": manifests,
+            "depotfromapp": str(depot_data.get("depotfromapp", "")),
+            "size": size,
         }
 
     for branch_name, branch_data in branches.items():
@@ -105,7 +118,7 @@ async def get_game_info(appid: str) -> dict[str, Any]:
         ts = branch_data.get("timeupdated")
         if ts:
             dt = datetime.fromtimestamp(int(ts), tz=UTC)
-            result[f"time_{branch_name}"] = dt.strftime("%Y-%m-%d %H:%M UTC")
+            result[f"time_{branch_name}"] = dt.strftime("%B %-d, %Y - %H:%M:%S UTC")
         else:
             result[f"time_{branch_name}"] = ""
 

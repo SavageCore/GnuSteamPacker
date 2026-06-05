@@ -1,11 +1,21 @@
-"""Async download pipeline: info fetch → steamcmd → clean → compress."""
+"""Async download pipeline: info fetch → steamcmd → vdf_clean → dd manifests → compress."""
 
 import logging
+import re
 import shutil
 from collections.abc import Callable
 from pathlib import Path
 
-from gnusteampacker import compressor, credentials, release_text, steam_api, steamcmd, vdf_cleaner
+from gnusteampacker import (
+    compressor,
+    credentials,
+    depotdownloader,
+    folder_organiser,
+    release_text,
+    steam_api,
+    steamcmd,
+    vdf_cleaner,
+)
 from gnusteampacker import config as cfg
 from gnusteampacker.queue_model import QueueItem, Status
 
@@ -13,12 +23,15 @@ log = logging.getLogger(__name__)
 
 UpdateCB = Callable[[QueueItem], None]
 
+_MANIFEST_RE = re.compile(r"^(\d+)_(\d+)\.manifest$")
+
 
 async def process_item(
     item: QueueItem, update_cb: UpdateCB, steam_guard_code: str | None = None
 ) -> None:
     conf = cfg.load()
-    steamcmd_path = Path(conf["steamcmd_path"])
+    sc_path = Path(conf["steamcmd_path"])
+    dd_path = Path(conf["depotdownloader_path"])
     output_base = Path(conf["output_dir"])
     compression_level = int(conf.get("compression_level", 5))
     compression_threads = int(conf.get("compression_threads", 1))
@@ -29,15 +42,26 @@ async def process_item(
         item.error_detail = detail
         update_cb(item)
 
-    # ── 1. Ensure SteamCMD is available ────────────────────────────────────
+    # ── 1. Ensure tools are available ─────────────────────────────────────
     if conf.get("steamcmd_auto_download", True):
         try:
-            await steamcmd.ensure_steamcmd(steamcmd_path, lambda msg: push(Status.GETINFO, 0, msg))
+            await steamcmd.ensure_steamcmd(
+                sc_path, lambda msg: push(Status.GETINFO, 0, msg)
+            )
         except Exception as e:
             push(Status.FAIL, detail=f"SteamCMD install failed: {e}")
             return
 
-    # ── 2. Fetch game info and depot list ──────────────────────────────────
+    if conf.get("depotdownloader_auto_download", True):
+        try:
+            await depotdownloader.ensure_depotdownloader(
+                dd_path, lambda msg: push(Status.GETINFO, 0, msg)
+            )
+        except Exception as e:
+            push(Status.FAIL, detail=f"DepotDownloader install failed: {e}")
+            return
+
+    # ── 2. Fetch game info and initial depot list ──────────────────────────
     push(Status.GETINFO)
     try:
         depot_names = await steam_api.fetch_depot_names()
@@ -50,21 +74,21 @@ async def process_item(
         push(Status.FAIL, detail=f"Info fetch failed: {e}")
         return
 
-    # ── 3. Download ────────────────────────────────────────────────────────
+    # ── 3. Download via SteamCMD ───────────────────────────────────────────
     push(Status.DOWNLOADING, 0.0)
     username = credentials.get_username()
     password = credentials.get_password()
     install_dir = output_base / f"{item.appid}_{item.platform}"
 
-    def dl_progress(pct: float, line: str) -> None:
-        if "Logging in using" in line:
+    def sc_progress(pct: float, line: str) -> None:
+        if "Logging in" in line:
             push(Status.AUTHENTICATING)
         else:
             push(Status.DOWNLOADING, pct)
 
     try:
         ok, reason = await steamcmd.run_download(
-            item, steamcmd_path, username, password, install_dir, dl_progress, steam_guard_code
+            item, sc_path, username, password, install_dir, sc_progress
         )
     except Exception as e:
         push(Status.FAIL, detail=str(e))
@@ -80,25 +104,49 @@ async def process_item(
         push(status_map.get(reason, Status.FAIL), detail=reason)
         return
 
-    # Guard: fail fast if SteamCMD ran but downloaded nothing.
-    # Game files install directly into install_dir (not under steamapps/common);
-    # steamapps/ is only SteamCMD metadata so we exclude it from the check.
-    game_entries = (
-        [p for p in install_dir.iterdir() if p.name != "steamapps"]
-        if install_dir.exists() else []
-    )
-    log.debug("install_dir non-steamapps entries: %s", [p.name for p in game_entries])
-    if not game_entries:
-        push(Status.FAIL, detail="Download completed but no game files found in install directory")
+    # Guard: SteamCMD places game files at install_dir/ root (ACFs at steamapps/).
+    root_entries = [e for e in install_dir.iterdir() if e.name != "steamapps"]
+    log.debug("install_dir root entries (excl. steamapps): %d", len(root_entries))
+    if not root_entries:
+        push(Status.FAIL, detail="Download completed but no game files found in staging directory")
         return
 
-    # ── 4. Clean sensitive data ────────────────────────────────────────────
-    push(Status.CLEANING, 1.0)
-    steamapps_dir = install_dir / "steamapps"
-    if steamapps_dir.exists():
-        vdf_cleaner.clean_steamapps(steamapps_dir)
+    # ── 4. Sanitise ACF files ──────────────────────────────────────────────
+    push(Status.CLEANING, 0.0)
+    try:
+        vdf_cleaner.clean_steamapps(install_dir / "steamapps")
+    except Exception as e:
+        log.warning("vdf_cleaner failed: %s", e)
 
-    # ── 5. Compress ────────────────────────────────────────────────────────
+    # ── 5. Fetch manifest files via DepotDownloader ────────────────────────
+    push(Status.CLEANING, 0.5)
+    try:
+        ok, reason = await depotdownloader.run_manifest_only(
+            item, dd_path, username, password, install_dir
+        )
+        if not ok:
+            log.warning("DepotDownloader manifest-only failed (%s) — depotcache will be empty", reason)
+    except Exception as e:
+        log.warning("DepotDownloader manifest-only error: %s — depotcache will be empty", e)
+
+    # ── 6. Rebuild depot list with real manifest GIDs ─────────────────────
+    dd_cache = install_dir / ".DepotDownloader"
+    if dd_cache.exists():
+        manifest_overrides: dict[str, str] = {}
+        for f in dd_cache.glob("*.manifest"):
+            m = _MANIFEST_RE.match(f.name)
+            if m:
+                manifest_overrides[m.group(1)] = m.group(2)
+        if manifest_overrides:
+            item.depot_list = release_text.build_depot_list(
+                game_info, depot_names, item.branch, manifest_overrides=manifest_overrides
+            )
+
+    # ── 7. Promote manifest files to depotcache/ ──────────────────────────
+    push(Status.CLEANING, 1.0)
+    folder_organiser.reorganise(install_dir, item.appid)
+
+    # ── 8. Compress ────────────────────────────────────────────────────────
     push(Status.COMPRESSING, 0.0)
     output_folder = output_base / item.archive_name
     try:
@@ -114,11 +162,11 @@ async def process_item(
         push(Status.FAIL, detail=str(e))
         return
 
-    # ── 6. Write BBCode release text ───────────────────────────────────────
+    # ── 9. Write BBCode release text ───────────────────────────────────────
     txt_path = output_folder / (item.archive_name + ".txt")
     txt_path.write_text(release_text.generate(item), encoding="utf-8")
 
-    # ── 7. Remove staging directory ────────────────────────────────────────
+    # ── 10. Remove staging directory ───────────────────────────────────────
     shutil.rmtree(install_dir, ignore_errors=True)
 
     push(Status.COMPLETE, 1.0)

@@ -4,8 +4,8 @@ A Linux-native GUI for downloading, cleaning, and packaging Steam games for arch
 
 Features:
 - Search Steam for games by name or AppID
-- Download via SteamCMD (auto-installed on first run)
-- Strip privacy-sensitive data from ACF/VDF files
+- Download via DepotDownloader (auto-installed on first run)
+- Generate clean ACF manifest files
 - Compress to a single `.7z` archive
 - Generate BBCode release text for *that* Russian Steam forum
 - Stores Steam credentials in the system keyring (GNOME Keyring / KWallet)
@@ -25,11 +25,11 @@ Install via the self-hosted remote for automatic updates:
 
 ```bash
 # Add remote (once)
-curl -sL https://savagecore.github.io/GnuSteamPacker/gnusteampacker-flatpak.gpg \
+curl -sL https://SavageCore.github.io/GnuSteamPacker/gnusteampacker-flatpak.gpg \
   -o /tmp/gnusteampacker-flatpak.gpg
 flatpak remote-add --user \
   --gpg-import=/tmp/gnusteampacker-flatpak.gpg \
-  gnusteampacker https://savagecore.github.io/GnuSteamPacker/
+  gnusteampacker https://SavageCore.github.io/GnuSteamPacker/
 
 # Install
 flatpak install gnusteampacker org.gnusteampacker.GnuSteamPacker

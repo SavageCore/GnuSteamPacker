@@ -53,7 +53,6 @@ def _write_job(
     username: str,
     password: str,
     output_dir: Path,
-    steam_guard_code: str | None = None,
 ) -> Path:
     platform, bitness = PLATFORM_STEAMCMD[item.platform]
     lines = [
@@ -62,12 +61,9 @@ def _write_job(
         f"force_install_dir {output_dir}",
     ]
     if password:
-        login_line = f"login {username} {password}"
-        if steam_guard_code:
-            login_line += f" {steam_guard_code}"
-        lines.append(login_line)
+        lines.append(f"login {username} {password}")
     else:
-        lines.append(f"login {username}")
+        lines.append(f"login {username}")  # uses ~/.local/share/Steam/ cached credentials
     lines.append(f"@sSteamCmdForcePlatformType {platform}")
     if bitness:
         lines.append(f"@sSteamCmdForcePlatformBitness {bitness}")
@@ -92,11 +88,10 @@ async def run_download(
     password: str,
     output_dir: Path,
     progress_cb: Callable[[float, str], None] | None = None,
-    steam_guard_code: str | None = None,
 ) -> tuple[bool, str]:
     """Run SteamCMD for item. Returns (success, error_reason)."""
     output_dir.mkdir(parents=True, exist_ok=True)
-    job = _write_job(item, username, password, output_dir, steam_guard_code)
+    job = _write_job(item, username, password, output_dir)
     log.debug("SteamCMD job script:\n%s", job.read_text())
     cmd = [str(steamcmd_path), "+runscript", str(job)]
     log.debug("Running: %s  (cwd=%s)", " ".join(cmd), steamcmd_path.parent)
@@ -117,7 +112,7 @@ async def run_download(
                 m = _PROGRESS_RE.search(line)
                 if m:
                     progress_cb(float(m.group(1)) / 100.0, line)
-                elif "Logging in using" in line:
+                elif "Logging in" in line:
                     progress_cb(0.0, line)
         await proc.wait()
         log.debug("SteamCMD exited with code %s", proc.returncode)
@@ -139,8 +134,6 @@ def _check_logs(steamcmd_dir: Path, stdout: str = "") -> tuple[bool, str]:
     log.debug("content_log.txt:\n%s", content or "(empty)")
     log.debug("connection_log.txt:\n%s", connection or "(empty)")
 
-    # Stdout is the primary signal — log files may point to a different Steam
-    # installation's log directory and often read empty.
     if "Success! App" in stdout:
         return True, ""
 

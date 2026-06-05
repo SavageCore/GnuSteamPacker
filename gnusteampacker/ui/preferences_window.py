@@ -19,32 +19,48 @@ class PreferencesWindow(Adw.PreferencesDialog):
     def __init__(self):
         super().__init__(title="Preferences")
         self._conf = cfg.load()
-        self._build_steamcmd_page()
+        self._build_depotdownloader_page()
         self._build_output_page()
         self._build_credentials_page()
         self._build_appearance_page()
 
-    # ── SteamCMD ─────────────────────────────────────────────────────────
+    # ── DepotDownloader ───────────────────────────────────────────────────
 
-    def _build_steamcmd_page(self) -> None:
-        page = Adw.PreferencesPage(title="SteamCMD", icon_name="utilities-terminal-symbolic")
+    def _build_depotdownloader_page(self) -> None:
+        page = Adw.PreferencesPage(title="Downloaders", icon_name="utilities-terminal-symbolic")
         self.add(page)
 
-        group = Adw.PreferencesGroup(title="SteamCMD")
-        page.add(group)
+        sc_group = Adw.PreferencesGroup(title="SteamCMD")
+        page.add(sc_group)
 
-        self._steamcmd_path = Adw.EntryRow(title="Path to steamcmd.sh")
-        self._steamcmd_path.set_text(self._conf.get("steamcmd_path", ""))
-        self._steamcmd_path.connect("changed", lambda r: self._save("steamcmd_path", r.get_text()))
-        group.add(self._steamcmd_path)
+        self._sc_path = Adw.EntryRow(title="Path to SteamCMD")
+        self._sc_path.set_text(self._conf.get("steamcmd_path", ""))
+        self._sc_path.connect("changed", lambda r: self._save("steamcmd_path", r.get_text()))
+        sc_group.add(self._sc_path)
 
-        self._auto_dl = Adw.SwitchRow(title="Auto-download if missing")
-        self._auto_dl.set_active(bool(self._conf.get("steamcmd_auto_download", True)))
-        self._auto_dl.connect(
+        self._sc_auto_dl = Adw.SwitchRow(title="Auto-download if missing")
+        self._sc_auto_dl.set_active(bool(self._conf.get("steamcmd_auto_download", True)))
+        self._sc_auto_dl.connect(
             "notify::active",
             lambda r, _: self._save("steamcmd_auto_download", r.get_active()),
         )
-        group.add(self._auto_dl)
+        sc_group.add(self._sc_auto_dl)
+
+        dd_group = Adw.PreferencesGroup(title="DepotDownloader")
+        page.add(dd_group)
+
+        self._dd_path = Adw.EntryRow(title="Path to DepotDownloader")
+        self._dd_path.set_text(self._conf.get("depotdownloader_path", ""))
+        self._dd_path.connect("changed", lambda r: self._save("depotdownloader_path", r.get_text()))
+        dd_group.add(self._dd_path)
+
+        self._auto_dl = Adw.SwitchRow(title="Auto-download if missing")
+        self._auto_dl.set_active(bool(self._conf.get("depotdownloader_auto_download", True)))
+        self._auto_dl.connect(
+            "notify::active",
+            lambda r, _: self._save("depotdownloader_auto_download", r.get_active()),
+        )
+        dd_group.add(self._auto_dl)
 
     # ── Output ────────────────────────────────────────────────────────────
 

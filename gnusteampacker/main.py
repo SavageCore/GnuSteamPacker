@@ -65,7 +65,7 @@ class GnuSteamPackerApp(Adw.Application):
             application_icon=APP_ID,
             version=__version__,
             comments="Download and package Steam games on Linux.",
-            website="https://github.com/savagecore/GnuSteamPacker",
+            website="https://github.com/SavageCore/GnuSteamPacker",
             license_type=Gtk.License.GPL_3_0,
             developers=["Oliver Sayers"],
         )
@@ -73,7 +73,9 @@ class GnuSteamPackerApp(Adw.Application):
 
 
 def main() -> int:
-    logging.basicConfig(level=logging.WARNING)
+    import os
+    level = logging.DEBUG if os.getenv("GNUSTEAMPACKER_DEBUG") else logging.WARNING
+    logging.basicConfig(level=level, format="%(name)s %(levelname)s %(message)s")
     app = GnuSteamPackerApp()
     return app.run(sys.argv)
 
