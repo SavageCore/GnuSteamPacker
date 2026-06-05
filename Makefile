@@ -41,6 +41,7 @@ deb:
 
 requirements.txt:
 	uv export --no-dev -o requirements.txt
+	sed -i '/^-e \./d' requirements.txt
 
 appimage: requirements.txt
 	python-appimage build app -p 3.11 .

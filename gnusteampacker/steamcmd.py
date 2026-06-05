@@ -53,6 +53,7 @@ def _write_job(
     username: str,
     password: str,
     output_dir: Path,
+    steam_guard_code: str | None = None,
 ) -> Path:
     platform, bitness = PLATFORM_STEAMCMD[item.platform]
     lines = [
@@ -61,7 +62,10 @@ def _write_job(
         f"force_install_dir {output_dir}",
     ]
     if password:
-        lines.append(f"login {username} {password}")
+        login_line = f"login {username} {password}"
+        if steam_guard_code:
+            login_line += f" {steam_guard_code}"
+        lines.append(login_line)
     else:
         lines.append(f"login {username}")
     lines.append(f"@sSteamCmdForcePlatformType {platform}")
@@ -88,10 +92,11 @@ async def run_download(
     password: str,
     output_dir: Path,
     progress_cb: Callable[[float, str], None] | None = None,
+    steam_guard_code: str | None = None,
 ) -> tuple[bool, str]:
     """Run SteamCMD for item. Returns (success, error_reason)."""
     output_dir.mkdir(parents=True, exist_ok=True)
-    job = _write_job(item, username, password, output_dir)
+    job = _write_job(item, username, password, output_dir, steam_guard_code)
     log.debug("SteamCMD job script:\n%s", job.read_text())
     cmd = [str(steamcmd_path), "+runscript", str(job)]
     log.debug("Running: %s  (cwd=%s)", " ".join(cmd), steamcmd_path.parent)

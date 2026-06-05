@@ -120,6 +120,9 @@ class MainWindow(Adw.ApplicationWindow):
                 self._start_item(item)
 
     def _retry_item(self, item: QueueItem) -> None:
+        if item.status == Status.STEAMGUARD:
+            self._show_steamguard_dialog(item)
+            return
         item.status = Status.READY
         item.progress = 0.0
         item.error_detail = ""
@@ -138,5 +141,39 @@ class MainWindow(Adw.ApplicationWindow):
         row = self._rows.get(id(item))
         if row:
             row.update(item)
+        if item.status == Status.STEAMGUARD:
+            self._show_steamguard_dialog(item)
         return False
+
+    def _show_steamguard_dialog(self, item: QueueItem) -> None:
+        dialog = Adw.AlertDialog(
+            heading="Steam Guard Required",
+            body="Enter the code from your email or authenticator app.",
+        )
+        entry = Gtk.Entry(placeholder_text="XXXXX", activates_default=True)
+        dialog.set_extra_child(entry)
+        dialog.add_response("cancel", "Cancel")
+        dialog.add_response("retry", "Retry")
+        dialog.set_default_response("retry")
+        dialog.set_response_appearance("retry", Adw.ResponseAppearance.SUGGESTED)
+
+        def on_response(_dlg, response: str) -> None:
+            if response == "retry":
+                self._retry_with_code(item, entry.get_text().strip())
+
+        dialog.connect("response", on_response)
+        dialog.present(self)
+
+    def _retry_with_code(self, item: QueueItem, steam_guard_code: str) -> None:
+        item.status = Status.READY
+        item.progress = 0.0
+        item.error_detail = ""
+        row = self._rows.get(id(item))
+        if row:
+            row.update(item)
+
+        def update_cb(updated_item: QueueItem) -> None:
+            GLib.idle_add(self._on_item_updated, updated_item)
+
+        async_run(worker.process_item(item, update_cb, steam_guard_code=steam_guard_code))
 

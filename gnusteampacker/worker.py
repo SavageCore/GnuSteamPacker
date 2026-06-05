@@ -14,7 +14,9 @@ log = logging.getLogger(__name__)
 UpdateCB = Callable[[QueueItem], None]
 
 
-async def process_item(item: QueueItem, update_cb: UpdateCB) -> None:
+async def process_item(
+    item: QueueItem, update_cb: UpdateCB, steam_guard_code: str | None = None
+) -> None:
     conf = cfg.load()
     steamcmd_path = Path(conf["steamcmd_path"])
     output_base = Path(conf["output_dir"])
@@ -60,7 +62,7 @@ async def process_item(item: QueueItem, update_cb: UpdateCB) -> None:
 
     try:
         ok, reason = await steamcmd.run_download(
-            item, steamcmd_path, username, password, install_dir, dl_progress
+            item, steamcmd_path, username, password, install_dir, dl_progress, steam_guard_code
         )
     except Exception as e:
         push(Status.FAIL, detail=str(e))
