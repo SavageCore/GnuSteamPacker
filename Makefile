@@ -41,7 +41,7 @@ deb:
 
 appimage:
 	uv export --no-dev --no-hashes --no-annotate -o requirements.txt
-	sed -i '/^-e \./d' requirements.txt
+	sed -i '/^-e \./d; s/ ;.*//' requirements.txt
 	python-appimage build app -p 3.11 .
 
 clean:
