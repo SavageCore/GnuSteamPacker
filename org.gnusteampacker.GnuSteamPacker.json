@@ -1,9 +1,9 @@
 {
   "app-id": "org.gnusteampacker.GnuSteamPacker",
   "runtime": "org.gnome.Platform",
-  "runtime-version": "47",
+  "runtime-version": "50",
   "sdk": "org.gnome.Sdk",
-  "sdk-version": "47",
+  "sdk-version": "50",
   "command": "gnusteampacker",
   "finish-args": [
     "--share=network",
