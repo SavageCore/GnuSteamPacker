@@ -98,6 +98,12 @@ make lint
 make format
 ```
 
+Install pre-commit hooks (runs ruff automatically on each commit):
+
+```bash
+uv run pre-commit install
+```
+
 ## Packaging
 
 Build a Flatpak:
