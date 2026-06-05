@@ -1,4 +1,4 @@
-.PHONY: dev run watch lint format dev-icons flatpak rpm deb appimage clean
+.PHONY: dev run watch lint format dev-icons flatpak flatpak-bundle flatpak-run rpm deb appimage clean
 
 dev:
 	uv venv --python /usr/bin/python3 --system-site-packages --clear
@@ -26,7 +26,10 @@ dev-icons:
 	@echo "Icon installed. Restart the shell or re-login if icon is still missing."
 
 flatpak:
-	flatpak-builder --force-clean build-dir org.gnusteampacker.GnuSteamPacker.json
+	flatpak-builder --force-clean --repo=flatpak-repo build-dir org.gnusteampacker.GnuSteamPacker.json
+
+flatpak-bundle: flatpak
+	flatpak build-bundle flatpak-repo gnusteampacker.flatpak org.gnusteampacker.GnuSteamPacker
 
 flatpak-run:
 	flatpak-builder --run build-dir org.gnusteampacker.GnuSteamPacker.json gnusteampacker
@@ -45,4 +48,4 @@ appimage:
 	python-appimage build app -p 3.11 .
 
 clean:
-	rm -rf build-dir .flatpak-builder requirements.txt __pycache__ gnusteampacker/__pycache__ gnusteampacker/ui/__pycache__
+	rm -rf build-dir .flatpak-builder flatpak-repo requirements.txt __pycache__ gnusteampacker/__pycache__ gnusteampacker/ui/__pycache__

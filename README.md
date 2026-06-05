@@ -17,7 +17,32 @@ Features:
 | Fedora, RHEL, openSUSE | [.rpm](https://github.com/SavageCore/GnuSteamPacker/releases/latest) |
 | Debian, Ubuntu, Mint | [.deb](https://github.com/SavageCore/GnuSteamPacker/releases/latest) |
 | Any Linux (x86_64) | [.AppImage](https://github.com/SavageCore/GnuSteamPacker/releases/latest) |
-| Flatpak | [.flatpak](https://github.com/SavageCore/GnuSteamPacker/releases/latest) |
+| Flatpak | [Remote (auto-updates)](#flatpak) · [.flatpak bundle](https://github.com/SavageCore/GnuSteamPacker/releases/latest) |
+
+## Flatpak
+
+Install via the self-hosted remote for automatic updates:
+
+```bash
+# Add remote (once)
+curl -sL https://savagecore.github.io/GnuSteamPacker/gnusteampacker-flatpak.gpg \
+  -o /tmp/gnusteampacker-flatpak.gpg
+flatpak remote-add --user \
+  --gpg-import=/tmp/gnusteampacker-flatpak.gpg \
+  gnusteampacker https://savagecore.github.io/GnuSteamPacker/
+
+# Install
+flatpak install gnusteampacker org.gnusteampacker.GnuSteamPacker
+
+# Update (or use GNOME Software / Flatpost)
+flatpak update org.gnusteampacker.GnuSteamPacker
+```
+
+Alternatively, install the bundle directly from [Releases](https://github.com/SavageCore/GnuSteamPacker/releases/latest) (no automatic updates):
+
+```bash
+flatpak install --user --bundle gnusteampacker.flatpak
+```
 
 ## Requirements
 
