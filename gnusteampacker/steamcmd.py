@@ -41,7 +41,8 @@ async def ensure_steamcmd(path: Path, progress_cb: Callable[[str], None] | None 
     if progress_cb:
         progress_cb("Initialising SteamCMD…")
     proc = await asyncio.create_subprocess_exec(
-        str(path), "+quit",
+        str(path),
+        "+quit",
         stdout=asyncio.subprocess.DEVNULL,
         stderr=asyncio.subprocess.DEVNULL,
     )

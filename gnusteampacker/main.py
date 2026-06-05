@@ -74,6 +74,7 @@ class GnuSteamPackerApp(Adw.Application):
 
 def main() -> int:
     import os
+
     level = logging.DEBUG if os.getenv("GNUSTEAMPACKER_DEBUG") else logging.WARNING
     logging.basicConfig(level=level, format="%(name)s %(levelname)s %(message)s")
     app = GnuSteamPackerApp()

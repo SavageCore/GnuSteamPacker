@@ -33,7 +33,8 @@ async def compress(
     out_path = output_dir / (archive_name + ".7z")
 
     cmd = [
-        sevenz, "a",
+        sevenz,
+        "a",
         f"-mx{level}",
         f"-mmt={threads}",
         "-sdel",

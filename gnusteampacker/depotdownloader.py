@@ -37,8 +37,11 @@ async def ensure_depotdownloader(
         async with session.get(_GITHUB_LATEST, timeout=aiohttp.ClientTimeout(total=15)) as r:
             release = await r.json(content_type=None)
     asset_url = next(
-        (a["browser_download_url"] for a in release.get("assets", [])
-         if a["name"].endswith(_ASSET_SUFFIX)),
+        (
+            a["browser_download_url"]
+            for a in release.get("assets", [])
+            if a["name"].endswith(_ASSET_SUFFIX)
+        ),
         None,
     )
     if not asset_url:
@@ -76,10 +79,14 @@ async def run_download(
     platform, arch = PLATFORM_STEAMCMD[item.platform]
     cmd = [
         str(dd_path),
-        "-app", str(item.appid),
-        "-os", platform,
-        "-dir", str(install_dir),
-        "-username", username,
+        "-app",
+        str(item.appid),
+        "-os",
+        platform,
+        "-dir",
+        str(install_dir),
+        "-username",
+        username,
         "-remember-password",
         "-no-mobile",
     ]
@@ -133,7 +140,7 @@ async def _stream_with_guard(
     while True:
         try:
             chunk = await asyncio.wait_for(proc.stdout.read(4096), timeout=60.0)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             decoded = buf.decode(errors="replace")
             if "STEAM GUARD!" in decoded:
                 if steam_guard_code:
@@ -198,10 +205,14 @@ async def run_manifest_only(
     platform, arch = PLATFORM_STEAMCMD[item.platform]
     cmd = [
         str(dd_path),
-        "-app", str(item.appid),
-        "-os", platform,
-        "-dir", str(install_dir),
-        "-username", username,
+        "-app",
+        str(item.appid),
+        "-os",
+        platform,
+        "-dir",
+        str(install_dir),
+        "-username",
+        username,
         "-remember-password",
         "-no-mobile",
         "-manifest-only",

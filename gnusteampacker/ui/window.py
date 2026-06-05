@@ -186,4 +186,3 @@ class MainWindow(Adw.ApplicationWindow):
             GLib.idle_add(self._on_item_updated, updated_item)
 
         async_run(worker.process_item(item, update_cb, steam_guard_code=steam_guard_code))
-

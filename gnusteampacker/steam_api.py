@@ -21,9 +21,7 @@ STORE_DETAILS = "https://store.steampowered.com/api/appdetails?appids={appid}"
 DEPOT_NAMES = "https://raw.githubusercontent.com/Masquerade64/SteamDepotNames/main/depots.ini"
 
 _HEADERS = {
-    "User-Agent": (
-        "Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0"
-    )
+    "User-Agent": ("Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0")
 }
 
 # Parses: data-ds-appid="12345" and <div class="match_name ...">Game Title</div>
@@ -60,10 +58,7 @@ async def search_games(term: str) -> list[dict[str, str]]:
     names = _RE_NAME.findall(html)
     log.debug("search_games: found %d appids, %d names", len(appids), len(names))
 
-    results = [
-        {"appid": aid, "name": name}
-        for aid, name in zip(appids, names)
-    ]
+    results = [{"appid": aid, "name": name} for aid, name in zip(appids, names)]
     log.debug("search_games: returning %s", results)
     return results
 

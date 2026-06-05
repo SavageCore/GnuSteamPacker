@@ -45,9 +45,7 @@ async def process_item(
     # ── 1. Ensure tools are available ─────────────────────────────────────
     if conf.get("steamcmd_auto_download", True):
         try:
-            await steamcmd.ensure_steamcmd(
-                sc_path, lambda msg: push(Status.GETINFO, 0, msg)
-            )
+            await steamcmd.ensure_steamcmd(sc_path, lambda msg: push(Status.GETINFO, 0, msg))
         except Exception as e:
             push(Status.FAIL, detail=f"SteamCMD install failed: {e}")
             return
@@ -125,7 +123,9 @@ async def process_item(
             item, dd_path, username, password, install_dir
         )
         if not ok:
-            log.warning("DepotDownloader manifest-only failed (%s) — depotcache will be empty", reason)
+            log.warning(
+                "DepotDownloader manifest-only failed (%s) — depotcache will be empty", reason
+            )
     except Exception as e:
         log.warning("DepotDownloader manifest-only error: %s — depotcache will be empty", e)
 
