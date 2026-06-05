@@ -22,11 +22,11 @@ class Status(StrEnum):
 class QueueItem:
     appid: str
     game_name: str
-    platform: str           # "win64" | "win32" | "lin64" | "lin32" | "macos"
-    branch: str             # "public" | custom name
-    branch_password: str    # "" if none
+    platform: str  # "win64" | "win32" | "lin64" | "lin32" | "macos"
+    branch: str  # "public" | custom name
+    branch_password: str  # "" if none
     status: Status = Status.READY
-    progress: float = 0.0   # 0.0–1.0
+    progress: float = 0.0  # 0.0–1.0
     build_id: str = ""
     build_time: str = ""
     depot_list: list[str] = field(default_factory=list)
@@ -45,9 +45,9 @@ class QueueItem:
 
     @property
     def archive_name(self) -> str:
-        safe = self.game_name.replace(" ", "_").replace(":", "").replace("/", "_")
-        plat = self.platform
-        branch = self.branch or "public"
+        safe = self.game_name.replace(" ", ".").replace(":", "").replace("/", "_")
+        plat = self.platform.capitalize()
+        branch = self.branch.capitalize() or "Public"
         build = self.build_id or "0"
         return f"{safe}.Build.{build}.{plat}.{branch}"
 
