@@ -40,7 +40,7 @@ deb:
 	nfpm package --packager deb --config nfpm.yml
 
 appimage:
-	uv export --no-dev -o requirements.txt
+	uv export --no-dev --no-hashes --no-annotate -o requirements.txt
 	sed -i '/^-e \./d' requirements.txt
 	python-appimage build app -p 3.11 .
 
