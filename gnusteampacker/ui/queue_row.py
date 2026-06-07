@@ -86,6 +86,7 @@ class QueueRow(Adw.ActionRow):
             Status.BADLOGIN,
             Status.RATELIMITED,
             Status.NOSUB,
+            Status.AUTHENTICATING,
         ):
             subtitle = f"{subtitle}  ·  {item.error_detail}"
         return subtitle

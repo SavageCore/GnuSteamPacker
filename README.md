@@ -4,13 +4,13 @@ A Linux-native GUI for downloading, cleaning, and packaging Steam games for arch
 
 Features:
 - Search Steam for games by name or AppID
-- Download via DepotDownloader (auto-installed on first run)
+- Download via SteamCMD
 - Generate clean ACF manifest files
 - Compress to a single `.7z` archive
 - Generate BBCode release text for *that* Russian Steam forum
 - Stores Steam credentials in the system keyring (GNOME Keyring / KWallet)
 - First run prompts for Steam login; later runs can auto-login from remembered Steam session data
-- Supports Steam Guard code entry and optional `qr` login flow via Steam mobile app
+- Supports Steam Guard code entry
 
 ## Download
 

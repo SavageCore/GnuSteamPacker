@@ -19,14 +19,14 @@ class PreferencesWindow(Adw.PreferencesDialog):
     def __init__(self):
         super().__init__(title="Preferences")
         self._conf = cfg.load()
-        self._build_depotdownloader_page()
+        self._build_downloaders_page()
         self._build_output_page()
         self._build_credentials_page()
         self._build_appearance_page()
 
-    # ── DepotDownloader ───────────────────────────────────────────────────
+    # ── Downloaders ───────────────────────────────────────────────────────
 
-    def _build_depotdownloader_page(self) -> None:
+    def _build_downloaders_page(self) -> None:
         page = Adw.PreferencesPage(title="Downloaders", icon_name="utilities-terminal-symbolic")
         self.add(page)
 
@@ -45,22 +45,6 @@ class PreferencesWindow(Adw.PreferencesDialog):
             lambda r, _: self._save("steamcmd_auto_download", r.get_active()),
         )
         sc_group.add(self._sc_auto_dl)
-
-        dd_group = Adw.PreferencesGroup(title="DepotDownloader")
-        page.add(dd_group)
-
-        self._dd_path = Adw.EntryRow(title="Path to DepotDownloader")
-        self._dd_path.set_text(self._conf.get("depotdownloader_path", ""))
-        self._dd_path.connect("changed", lambda r: self._save("depotdownloader_path", r.get_text()))
-        dd_group.add(self._dd_path)
-
-        self._auto_dl = Adw.SwitchRow(title="Auto-download if missing")
-        self._auto_dl.set_active(bool(self._conf.get("depotdownloader_auto_download", True)))
-        self._auto_dl.connect(
-            "notify::active",
-            lambda r, _: self._save("depotdownloader_auto_download", r.get_active()),
-        )
-        dd_group.add(self._auto_dl)
 
     # ── Output ────────────────────────────────────────────────────────────
 
@@ -137,13 +121,18 @@ class PreferencesWindow(Adw.PreferencesDialog):
         group = Adw.PreferencesGroup(title="Steam credentials")
         group.set_description(
             "Username/password are stored in GNOME Keyring (or a local file if unavailable). "
-            "SteamCMD/DepotDownloader keep their own login session when remembered login is"
-            " enabled."
+            "SteamCMD keeps its own login session when remembered login is enabled."
         )
         page.add(group)
 
+        saved_username = credentials.get_username().strip()
+        if saved_username.lower() == "qr":
+            # Clear legacy sentinel value from older QR-login implementation.
+            credentials.clear_username()
+            saved_username = ""
+
         self._username_row = Adw.EntryRow(title="Username")
-        self._username_row.set_text(credentials.get_username())
+        self._username_row.set_text(saved_username)
         self._username_row.connect("changed", lambda r: credentials.set_username(r.get_text()))
         group.add(self._username_row)
 

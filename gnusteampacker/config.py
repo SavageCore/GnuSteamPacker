@@ -12,8 +12,6 @@ _cpu = os.cpu_count() or 4
 DEFAULTS = {
     "steamcmd_path": str(DATA_DIR / "steamcmd" / "steamcmd.sh"),
     "steamcmd_auto_download": True,
-    "depotdownloader_path": str(DATA_DIR / "depotdownloader" / "DepotDownloader"),
-    "depotdownloader_auto_download": True,
     "output_dir": str(Path.home() / "GnuSteamPacker"),
     "color_scheme": "default",  # "default" | "light" | "dark"
     "compression_level": 5,

@@ -6,11 +6,11 @@ from pathlib import Path
 
 import vdf
 
-# Matches data rows in DepotDownloader manifest .txt files:
+# Matches data rows in manifest .txt files:
 #   "  <size>  <chunks>  <sha40hex>  <flags>  path/to/entry"
 _MANIFEST_LINE_RE = re.compile(r"^\s+\d+\s+\d+\s+[0-9a-f]{40}\s+\d+\s+(.+)$")
 _MANIFEST_TXT_RE = re.compile(r"^manifest_(\d+)_\d+\.txt$")
-_ROOT_SKIP = {"steamapps", ".DepotDownloader", "depotcache"}
+_ROOT_SKIP = {"steamapps", "depotcache"}
 _SHARED_ROOT = "Steamworks Shared"
 
 
@@ -52,21 +52,10 @@ def reorganise(
             dest.mkdir(parents=True, exist_ok=True)
             shutil.move(str(entry), str(dest / entry.name))
 
-    # Delete manifest .txt files — they are DepotDownloader debug exports,
+    # Delete manifest .txt files — they are metadata exports,
     # not part of the Steam game content.
     for txt in install_dir.glob("manifest_*.txt"):
         txt.unlink(missing_ok=True)
-
-    # Promote .DepotDownloader/*.manifest → depotcache/.
-    dd_cache = install_dir / ".DepotDownloader"
-    if dd_cache.exists():
-        depotcache = install_dir / "depotcache"
-        depotcache.mkdir(exist_ok=True)
-        for f in dd_cache.glob("*.manifest"):
-            if selected_manifest_files is not None and f.name not in selected_manifest_files:
-                continue
-            shutil.move(str(f), str(depotcache / f.name))
-        shutil.rmtree(dd_cache, ignore_errors=True)
 
     _fix_known_case_mismatches(install_dir, main_installdir)
 
@@ -116,7 +105,7 @@ def _find_installdir(install_dir: Path, appid: str | int) -> str | None:
 
 
 def _parse_root_entries(txt_path: Path) -> set[str]:
-    """Extract unique top-level names from a DepotDownloader manifest .txt file."""
+    """Extract unique top-level names from a manifest .txt file."""
     roots: set[str] = set()
     for line in txt_path.read_text(errors="replace").splitlines():
         m = _MANIFEST_LINE_RE.match(line)

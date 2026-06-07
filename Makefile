@@ -1,4 +1,4 @@
-.PHONY: dev run watch lint format dev-icons flatpak flatpak-bundle flatpak-run rpm deb appimage clean
+.PHONY: dev run watch lint format dev-icons flatpak flatpak-bundle flatpak-run rpm deb appimage clear-auth clean
 
 dev:
 	uv venv --python /usr/bin/python3 --system-site-packages --clear
@@ -46,6 +46,9 @@ appimage:
 	uv export --no-dev --no-hashes --no-annotate -o requirements.txt
 	sed -i '/^-e \./d; s/ ;.*//' requirements.txt
 	python-appimage build app -p 3.11 .
+
+clear-auth:
+	uv run python -c "from pathlib import Path; from gnusteampacker import config as cfg, credentials, steamcmd; conf = cfg.load(); credentials.clear_username(); credentials.clear_password(); steamcmd.clear_cached_login(Path(conf['steamcmd_path'])); [p.unlink(missing_ok=True) for p in (cfg.CONFIG_DIR / '.username', cfg.CONFIG_DIR / '.password', cfg.CONFIG_DIR / '.credentials')]; print('Cleared saved auth credentials and login caches.')"
 
 clean:
 	rm -rf build-dir .flatpak-builder flatpak-repo requirements.txt __pycache__ gnusteampacker/__pycache__ gnusteampacker/ui/__pycache__
