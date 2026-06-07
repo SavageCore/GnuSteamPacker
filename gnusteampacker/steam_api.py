@@ -91,20 +91,28 @@ async def get_game_info(appid: str) -> dict[str, Any]:
     for depot_id, depot_data in depots.items():
         if not depot_id.isdigit():
             continue
-        # API returns manifests as {branch: {gid, size, download}} — flatten to {branch: gid}
-        manifests: dict[str, str] = {}
+        # Preserve full manifest metadata so downstream code can compute
+        # InstalledDepots sizes and BytesToDownload accurately.
+        manifests: dict[str, dict[str, str]] = {}
         size = ""
         for branch, branch_data in depot_data.get("manifests", {}).items():
             if isinstance(branch_data, dict):
-                manifests[branch] = branch_data.get("gid", "")
+                manifests[branch] = {
+                    "gid": str(branch_data.get("gid", "")),
+                    "size": str(branch_data.get("size", "")),
+                    "download": str(branch_data.get("download", "")),
+                }
                 if branch == "public":
                     size = branch_data.get("size", "")
             else:
-                manifests[branch] = str(branch_data)
+                manifests[branch] = {"gid": str(branch_data), "size": "", "download": ""}
         result["depots"][depot_id] = {
             "name": depot_data.get("name", ""),
             "manifests": manifests,
             "depotfromapp": str(depot_data.get("depotfromapp", "")),
+            "sharedinstall": str(depot_data.get("sharedinstall", "")),
+            "dlcappid": str(depot_data.get("dlcappid", "")),
+            "oslist": str(depot_data.get("config", {}).get("oslist", "")),
             "size": size,
         }
 

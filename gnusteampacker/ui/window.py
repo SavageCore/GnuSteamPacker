@@ -7,7 +7,7 @@ gi.require_version("Adw", "1")
 from gi.repository import Adw, Gio, GLib, Gtk
 
 from gnusteampacker import config as cfg
-from gnusteampacker import worker
+from gnusteampacker import credentials, worker
 from gnusteampacker.async_runner import run as async_run
 from gnusteampacker.queue_model import QueueItem, Status
 from gnusteampacker.ui.add_game_dialog import AddGameDialog
@@ -128,14 +128,27 @@ class MainWindow(Adw.ApplicationWindow):
     # ── Download ─────────────────────────────────────────────────────────
 
     def _on_start_all(self, _btn) -> None:
+        ready_items = [item for item in self._items if item.status == Status.READY]
+        if not ready_items:
+            return
         self._start_btn.set_sensitive(False)
-        for item in self._items:
-            if item.status == Status.READY:
-                self._start_item(item)
+
+        def _start_ready(auth) -> None:
+            for item in ready_items:
+                self._start_item(item, auth_override=auth)
+
+        self._ensure_login_then(_start_ready, on_cancel=self._update_start_button_state)
 
     def _retry_item(self, item: QueueItem) -> None:
         if item.status == Status.STEAMGUARD:
             self._show_steamguard_dialog(item)
+            return
+        if item.status == Status.BADLOGIN:
+            self._ensure_login_then(
+                lambda auth: self._retry_with_auth(item, auth),
+                on_cancel=self._update_start_button_state,
+                force_prompt=True,
+            )
             return
         item.status = Status.READY
         item.progress = 0.0
@@ -143,13 +156,13 @@ class MainWindow(Adw.ApplicationWindow):
         row = self._rows.get(id(item))
         if row:
             row.update(item)
-        self._start_item(item)
+        self._start_item(item, auth_override=None)
 
-    def _start_item(self, item: QueueItem) -> None:
+    def _start_item(self, item: QueueItem, auth_override: dict | None = None) -> None:
         def update_cb(updated_item: QueueItem) -> None:
             GLib.idle_add(self._on_item_updated, updated_item)
 
-        async_run(worker.process_item(item, update_cb))
+        async_run(worker.process_item(item, update_cb, auth_override=auth_override))
 
     def _on_item_updated(self, item: QueueItem) -> bool:
         row = self._rows.get(id(item))
@@ -200,3 +213,89 @@ class MainWindow(Adw.ApplicationWindow):
             GLib.idle_add(self._on_item_updated, updated_item)
 
         async_run(worker.process_item(item, update_cb, steam_guard_code=steam_guard_code))
+
+    def _retry_with_auth(self, item: QueueItem, auth_override: dict | None) -> None:
+        item.status = Status.READY
+        item.progress = 0.0
+        item.error_detail = ""
+        row = self._rows.get(id(item))
+        if row:
+            row.update(item)
+        self._start_item(item, auth_override=auth_override)
+
+    def _update_start_button_state(self) -> None:
+        has_ready = any(i.status == Status.READY for i in self._items)
+        self._start_btn.set_sensitive(has_ready)
+
+    def _ensure_login_then(
+        self,
+        on_submit,
+        on_cancel=None,
+        force_prompt: bool = False,
+    ) -> None:
+        conf = cfg.load()
+        username = credentials.get_username().strip()
+        if username and not force_prompt:
+            on_submit(None)
+            return
+
+        dialog = Adw.AlertDialog(
+            heading="Steam Login",
+            body='Enter credentials. Use username "qr" to log in via Steam mobile QR.',
+        )
+        dialog.add_response("cancel", "Cancel")
+        dialog.add_response("login", "Continue")
+        dialog.set_default_response("login")
+        dialog.set_response_appearance("login", Adw.ResponseAppearance.SUGGESTED)
+
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
+
+        username_entry = Gtk.Entry(placeholder_text="Username or qr")
+        username_entry.set_text(username)
+        box.append(username_entry)
+
+        password_entry = Gtk.PasswordEntry()
+        password_entry.set_placeholder_text("Password (optional for remembered login or qr)")
+        password_entry.set_text(credentials.get_password())
+        box.append(password_entry)
+
+        remember_check = Gtk.CheckButton(label="Remember login session")
+        remember_check.set_active(bool(conf.get("remember_login", True)))
+        box.append(remember_check)
+
+        skip_confirm_check = Gtk.CheckButton(label="Prefer code entry over app confirmation")
+        skip_confirm_check.set_active(bool(conf.get("login_skip_app_confirmation", False)))
+        box.append(skip_confirm_check)
+
+        dialog.set_extra_child(box)
+
+        def _on_response(_dlg, response: str) -> None:
+            if response != "login":
+                if on_cancel:
+                    on_cancel()
+                return
+
+            entered_username = username_entry.get_text().strip()
+            if not entered_username:
+                if on_cancel:
+                    on_cancel()
+                return
+
+            auth = {
+                "username": entered_username,
+                "password": password_entry.get_text(),
+                "remember_login": remember_check.get_active(),
+                "login_skip_app_confirmation": skip_confirm_check.get_active(),
+            }
+            conf["remember_login"] = auth["remember_login"]
+            conf["login_skip_app_confirmation"] = auth["login_skip_app_confirmation"]
+            cfg.save(conf)
+            credentials.set_username(auth["username"])
+            if auth["username"].lower() == "qr":
+                credentials.clear_password()
+            else:
+                credentials.set_password(auth["password"])
+            on_submit(auth)
+
+        dialog.connect("response", _on_response)
+        dialog.present(self)

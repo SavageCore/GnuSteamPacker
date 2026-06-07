@@ -1,4 +1,4 @@
-"""Organise SteamCMD output into the expected archive layout."""
+"""Organise downloader output into the expected Steam library layout."""
 
 import re
 import shutil
@@ -11,18 +11,19 @@ import vdf
 _MANIFEST_LINE_RE = re.compile(r"^\s+\d+\s+\d+\s+[0-9a-f]{40}\s+\d+\s+(.+)$")
 _MANIFEST_TXT_RE = re.compile(r"^manifest_(\d+)_\d+\.txt$")
 _ROOT_SKIP = {"steamapps", ".DepotDownloader", "depotcache"}
+_SHARED_ROOT = "Steamworks Shared"
 
 
-def reorganise(install_dir: Path, appid: str | int) -> None:
-    """Reorganise SteamCMD output into the SSP-compatible archive layout.
-
-    SteamCMD places all game content (main depot + shared depots) flat at
-    install_dir/. The manifest .txt files written by DepotDownloader tell us
-    which root-level entries belong to which installdir so we can split them
-    correctly (e.g. _CommonRedist → Steamworks Shared).
-    """
+def reorganise(
+    install_dir: Path,
+    appid: str | int,
+    main_installdir: str | None = None,
+    shared_installdir: str = _SHARED_ROOT,
+    selected_manifest_files: set[str] | None = None,
+) -> None:
+    """Move payload files under steamapps/common and keep shared redistributables separate."""
     depot_map = _build_depot_map(install_dir, appid)
-    main_installdir = _find_installdir(install_dir, appid)
+    main_installdir = main_installdir or _find_installdir(install_dir, appid)
 
     # Build root-entry → installdir mapping from manifest .txt files.
     root_to_installdir: dict[str, str] = {}
@@ -39,6 +40,11 @@ def reorganise(install_dir: Path, appid: str | int) -> None:
     # Move game content from root to steamapps/common/<installdir>/.
     for entry in list(install_dir.iterdir()):
         if entry.name in _ROOT_SKIP or _MANIFEST_TXT_RE.match(entry.name):
+            continue
+        if entry.name == "_CommonRedist":
+            dest = install_dir / "steamapps" / "common" / shared_installdir
+            dest.mkdir(parents=True, exist_ok=True)
+            shutil.move(str(entry), str(dest / entry.name))
             continue
         installdir = root_to_installdir.get(entry.name) or main_installdir
         if installdir:
@@ -57,8 +63,12 @@ def reorganise(install_dir: Path, appid: str | int) -> None:
         depotcache = install_dir / "depotcache"
         depotcache.mkdir(exist_ok=True)
         for f in dd_cache.glob("*.manifest"):
+            if selected_manifest_files is not None and f.name not in selected_manifest_files:
+                continue
             shutil.move(str(f), str(depotcache / f.name))
         shutil.rmtree(dd_cache, ignore_errors=True)
+
+    _fix_known_case_mismatches(install_dir, main_installdir)
 
 
 def _build_depot_map(install_dir: Path, appid: str | int) -> dict[str, str]:
@@ -115,3 +125,15 @@ def _parse_root_entries(txt_path: Path) -> set[str]:
             if root:
                 roots.add(root)
     return roots
+
+
+def _fix_known_case_mismatches(install_dir: Path, main_installdir: str | None) -> None:
+    if not main_installdir:
+        return
+    game_root = install_dir / "steamapps" / "common" / main_installdir
+    lower_openal = game_root / "openal32.dll"
+    upper_openal = game_root / "OpenAL32.dll"
+    if lower_openal.exists() and upper_openal.exists():
+        lower_openal.unlink(missing_ok=True)
+    elif lower_openal.exists() and not upper_openal.exists():
+        lower_openal.rename(upper_openal)

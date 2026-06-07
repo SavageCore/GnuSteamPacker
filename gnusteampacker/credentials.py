@@ -74,6 +74,14 @@ def set_password(value: str) -> None:
     _fallback_write("password", value)
 
 
+def clear_password() -> None:
+    set_password("")
+
+
+def clear_username() -> None:
+    set_username("")
+
+
 def _fallback_path(key: str) -> Path:
     return CONFIG_DIR / f".{key}"
 

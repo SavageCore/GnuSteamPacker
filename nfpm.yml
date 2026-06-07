@@ -4,7 +4,7 @@ version: "0.1.0"
 release: 1
 section: utils
 priority: optional
-maintainer: Oliver Sayers <oliver.sayers@gmail.com>
+maintainer: SavageCore <talk@savagecore.uk>
 description: |
   GnuSteamPacker — Linux-native Steam game downloader and packager.
   Downloads Steam games via SteamCMD, strips sensitive data from ACF files,

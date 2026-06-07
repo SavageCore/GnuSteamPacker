@@ -65,5 +65,6 @@ class QueueItem:
         return self.status in (
             Status.FAIL,
             Status.STEAMGUARD,
+            Status.BADLOGIN,
             Status.RATELIMITED,
         )

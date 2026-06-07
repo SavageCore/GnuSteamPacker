@@ -3,6 +3,13 @@
 from gnusteampacker.queue_model import QueueItem
 
 
+def _manifest_gid(manifests: dict, branch: str) -> str:
+    entry = manifests.get(branch) or manifests.get("public")
+    if isinstance(entry, dict):
+        return str(entry.get("gid", "unknown"))
+    return str(entry or "unknown")
+
+
 def generate(item: QueueItem) -> str:
     platform_label = item.platform.capitalize()
     branch = (item.branch or "public").capitalize()
@@ -32,13 +39,23 @@ def build_depot_list(
     manifest_overrides: dict[str, str] | None = None,
 ) -> list[str]:
     lines: list[str] = []
-    for depot_id, depot_data in game_info.get("depots", {}).items():
+    depots = game_info.get("depots", {})
+    depot_iter = (
+        [(depot_id, depots.get(depot_id, {})) for depot_id in manifest_overrides]
+        if manifest_overrides
+        else list(depots.items())
+    )
+    for depot_id, depot_data in depot_iter:
+        if not depot_id.isdigit():
+            continue
+        if manifest_overrides is not None and depot_id not in manifest_overrides:
+            continue
         name = depot_data.get("name") or depot_names.get(depot_id, "")
         if manifest_overrides and depot_id in manifest_overrides:
             manifest_id = manifest_overrides[depot_id]
         else:
             manifests = depot_data.get("manifests", {})
-            manifest_id = manifests.get(branch) or manifests.get("public") or "unknown"
+            manifest_id = _manifest_gid(manifests, branch)
         label = f"{depot_id} - {name}" if name else depot_id
         lines.append(f"{label} [Manifest {manifest_id}]")
     return lines

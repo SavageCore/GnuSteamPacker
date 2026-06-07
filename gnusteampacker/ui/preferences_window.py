@@ -136,7 +136,9 @@ class PreferencesWindow(Adw.PreferencesDialog):
 
         group = Adw.PreferencesGroup(title="Steam credentials")
         group.set_description(
-            "Credentials are stored in GNOME Keyring (or a local file if unavailable)."
+            "Username/password are stored in GNOME Keyring (or a local file if unavailable). "
+            "SteamCMD/DepotDownloader keep their own login session when remembered login is"
+            " enabled."
         )
         page.add(group)
 
@@ -149,6 +151,29 @@ class PreferencesWindow(Adw.PreferencesDialog):
         self._password_row.set_text(credentials.get_password())
         self._password_row.connect("changed", lambda r: credentials.set_password(r.get_text()))
         group.add(self._password_row)
+
+        self._remember_login = Adw.SwitchRow(title="Remember login session")
+        self._remember_login.set_subtitle(
+            "Use Steam tool refresh/session tokens so later runs can auto-login."
+        )
+        self._remember_login.set_active(bool(self._conf.get("remember_login", True)))
+        self._remember_login.connect(
+            "notify::active",
+            lambda r, _: self._save("remember_login", r.get_active()),
+        )
+        group.add(self._remember_login)
+
+        self._skip_confirm = Adw.SwitchRow(title="Prefer code entry over app confirmation")
+        self._skip_confirm.set_subtitle(
+            "Use code-based Steam Guard flow when supported instead of waiting on mobile"
+            " app confirmation."
+        )
+        self._skip_confirm.set_active(bool(self._conf.get("login_skip_app_confirmation", False)))
+        self._skip_confirm.connect(
+            "notify::active",
+            lambda r, _: self._save("login_skip_app_confirmation", r.get_active()),
+        )
+        group.add(self._skip_confirm)
 
     # ── Appearance ────────────────────────────────────────────────────────
 

@@ -15,8 +15,7 @@ class QueueRow(Adw.ActionRow):
         self._retry_cb = retry_cb
 
         self.set_title(item.game_name or f"AppID {item.appid}")
-        branch = item.branch or "public"
-        self.set_subtitle(f"AppID: {item.appid}  ·  {item.display_platform}  ·  Branch: {branch}")
+        self.set_subtitle(self._build_subtitle(item))
 
         box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4, valign=Gtk.Align.CENTER)
 
@@ -54,7 +53,9 @@ class QueueRow(Adw.ActionRow):
     def update(self, item: QueueItem) -> None:
         self._item = item
         self.set_title(item.game_name or f"AppID {item.appid}")
+        self.set_subtitle(self._build_subtitle(item))
         self._status_label.set_text(item.status.value)
+        self.set_tooltip_text(item.error_detail or None)
 
         downloading = item.status == Status.DOWNLOADING
         compressing = item.status == Status.COMPRESSING
@@ -76,3 +77,15 @@ class QueueRow(Adw.ActionRow):
             self._status_label.add_css_class("error")
         elif item.status == Status.STEAMGUARD:
             self._status_label.add_css_class("warning")
+
+    def _build_subtitle(self, item: QueueItem) -> str:
+        branch = item.branch or "public"
+        subtitle = f"AppID: {item.appid}  ·  {item.display_platform}  ·  Branch: {branch}"
+        if item.error_detail and item.status in (
+            Status.FAIL,
+            Status.BADLOGIN,
+            Status.RATELIMITED,
+            Status.NOSUB,
+        ):
+            subtitle = f"{subtitle}  ·  {item.error_detail}"
+        return subtitle

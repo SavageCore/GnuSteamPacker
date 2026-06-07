@@ -67,7 +67,7 @@ class GnuSteamPackerApp(Adw.Application):
             comments="Download and package Steam games on Linux.",
             website="https://github.com/SavageCore/GnuSteamPacker",
             license_type=Gtk.License.GPL_3_0,
-            developers=["Oliver Sayers"],
+            developers=["SavageCore"],
         )
         dialog.present(self._window)
 
@@ -75,8 +75,20 @@ class GnuSteamPackerApp(Adw.Application):
 def main() -> int:
     import os
 
+    conf = cfg.load()
     level = logging.DEBUG if os.getenv("GNUSTEAMPACKER_DEBUG") else logging.WARNING
-    logging.basicConfig(level=level, format="%(name)s %(levelname)s %(message)s")
+    log_file = Path(conf["steamcmd_path"]).parent / "gnusteampacker.log"
+    log_file.parent.mkdir(parents=True, exist_ok=True)
+    handlers: list[logging.Handler] = [logging.StreamHandler()]
+    try:
+        handlers.append(logging.FileHandler(log_file, encoding="utf-8"))
+    except OSError:
+        pass
+    logging.basicConfig(
+        level=level,
+        format="%(asctime)s %(name)s %(levelname)s %(message)s",
+        handlers=handlers,
+    )
     app = GnuSteamPackerApp()
     return app.run(sys.argv)
 

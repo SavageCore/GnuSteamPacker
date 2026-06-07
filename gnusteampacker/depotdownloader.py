@@ -72,6 +72,8 @@ async def run_download(
     install_dir: Path,
     progress_cb: Callable[[float, str], None] | None = None,
     steam_guard_code: str | None = None,
+    remember_login: bool = True,
+    skip_app_confirmation: bool = False,
 ) -> tuple[bool, str]:
     """Run DepotDownloader for item. Returns (success, error_reason)."""
     install_dir.mkdir(parents=True, exist_ok=True)
@@ -85,14 +87,19 @@ async def run_download(
         platform,
         "-dir",
         str(install_dir),
-        "-username",
-        username,
-        "-remember-password",
-        "-no-mobile",
     ]
+    use_qr = username.lower() == "qr"
+    if use_qr:
+        cmd += ["-qr"]
+    else:
+        cmd += ["-username", username]
+        if remember_login:
+            cmd += ["-remember-password"]
+        if skip_app_confirmation:
+            cmd += ["-no-mobile"]
     if arch:
         cmd += ["-osarch", arch]
-    if password:
+    if password and not use_qr:
         cmd += ["-password", password]
 
     branch = item.branch or "public"
@@ -108,6 +115,7 @@ async def run_download(
         stdin=asyncio.subprocess.PIPE,
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.STDOUT,
+        cwd=str(dd_path.parent),
     )
 
     output, sg_reason = await _stream_with_guard(proc, steam_guard_code, progress_cb)
@@ -198,6 +206,8 @@ async def run_manifest_only(
     password: str,
     install_dir: Path,
     progress_cb: Callable[[float, str], None] | None = None,
+    remember_login: bool = True,
+    skip_app_confirmation: bool = False,
 ) -> tuple[bool, str]:
     """Run DepotDownloader with -manifest-only to fetch .manifest files without game content."""
     install_dir.mkdir(parents=True, exist_ok=True)
@@ -211,15 +221,20 @@ async def run_manifest_only(
         platform,
         "-dir",
         str(install_dir),
-        "-username",
-        username,
-        "-remember-password",
-        "-no-mobile",
         "-manifest-only",
     ]
+    use_qr = username.lower() == "qr"
+    if use_qr:
+        cmd += ["-qr"]
+    else:
+        cmd += ["-username", username]
+        if remember_login:
+            cmd += ["-remember-password"]
+        if skip_app_confirmation:
+            cmd += ["-no-mobile"]
     if arch:
         cmd += ["-osarch", arch]
-    if password:
+    if password and not use_qr:
         cmd += ["-password", password]
 
     branch = item.branch or "public"
@@ -235,6 +250,7 @@ async def run_manifest_only(
         stdin=asyncio.subprocess.PIPE,
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.STDOUT,
+        cwd=str(dd_path.parent),
     )
 
     output, sg_reason = await _stream_with_guard(proc, None, progress_cb)
@@ -259,7 +275,15 @@ def _check_output(output: str, returncode: int | None) -> tuple[bool, str]:
         return True, ""
     if "is not available from this account" in output or "No subscription" in output:
         return False, "nosub"
-    if "Invalid Password" in output or "Unable to get steam3" in output:
+    badlogin_errors = (
+        "Invalid Password",
+        "Unable to get steam3",
+        "Invalid refresh token",
+        "refresh token is invalid",
+        "refresh token expired",
+        "refresh token revoked",
+    )
+    if any(s in output for s in badlogin_errors):
         return False, "badlogin"
     if "Two-factor code mismatch" in output or "previous 2-factor auth code" in output:
         return False, "steamguard"
@@ -268,3 +292,13 @@ def _check_output(output: str, returncode: int | None) -> tuple[bool, str]:
     if returncode == 0:
         return True, ""
     return False, "fail"
+
+
+def clear_cached_login(dd_path: Path) -> None:
+    """Clear DepotDownloader cached auth data."""
+    cache_dir = dd_path.parent / ".DepotDownloader"
+    if not cache_dir.exists():
+        return
+    for path in cache_dir.rglob("*"):
+        if path.is_file():
+            path.unlink(missing_ok=True)

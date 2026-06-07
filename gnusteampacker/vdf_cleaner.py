@@ -5,7 +5,7 @@ from pathlib import Path
 
 import vdf
 
-KEYS_TO_ZERO = {"LastOwner", "LauncherPath", "UserID", "AccountID"}
+KEYS_TO_ZERO = {"LastOwner", "LauncherPath"}
 
 
 def clean_acf(path: Path) -> None:

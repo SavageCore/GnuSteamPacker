@@ -2,7 +2,9 @@
 
 import asyncio
 import logging
+import os
 import re
+import shutil
 import tarfile
 import tempfile
 from collections.abc import Callable
@@ -54,17 +56,20 @@ def _write_job(
     username: str,
     password: str,
     output_dir: Path,
+    remember_login: bool = True,
+    steam_guard_code: str | None = None,
 ) -> Path:
     platform, bitness = PLATFORM_STEAMCMD[item.platform]
     lines = [
         "@ShutdownOnFailedCommand 1",
         "@NoPromptForPassword 1",
-        f"force_install_dir {output_dir}",
     ]
-    if password:
+    if password and steam_guard_code:
+        lines.append(f"login {username} {password} {steam_guard_code}")
+    elif password:
         lines.append(f"login {username} {password}")
     else:
-        lines.append(f"login {username}")  # uses ~/.local/share/Steam/ cached credentials
+        lines.append(f"login {username}")  # uses SteamCMD cached credentials
     lines.append(f"@sSteamCmdForcePlatformType {platform}")
     if bitness:
         lines.append(f"@sSteamCmdForcePlatformBitness {bitness}")
@@ -89,20 +94,51 @@ async def run_download(
     password: str,
     output_dir: Path,
     progress_cb: Callable[[float, str], None] | None = None,
+    remember_login: bool = True,
+    steam_guard_code: str | None = None,
 ) -> tuple[bool, str]:
     """Run SteamCMD for item. Returns (success, error_reason)."""
-    output_dir.mkdir(parents=True, exist_ok=True)
-    job = _write_job(item, username, password, output_dir)
+    steamcmd_dir = steamcmd_path.parent
+    cleanup_roots = [
+        steamcmd_dir,
+        steamcmd_dir / ".home" / "Steam",
+    ]
+    for root in cleanup_roots:
+        for stale_dir in ("steamapps", "depotcache", "logs"):
+            p = root / stale_dir
+            if p.exists():
+                if p.is_dir():
+                    shutil.rmtree(p, ignore_errors=True)
+                else:
+                    p.unlink(missing_ok=True)
+    home_dir = steamcmd_dir / ".home"
+    xdg_data_home = home_dir / ".local" / "share"
+    xdg_data_home.mkdir(parents=True, exist_ok=True)
+
+    job = _write_job(
+        item,
+        username,
+        password,
+        output_dir,
+        remember_login=remember_login,
+        steam_guard_code=steam_guard_code,
+    )
     log.debug("SteamCMD job script:\n%s", job.read_text())
     cmd = [str(steamcmd_path), "+runscript", str(job)]
     log.debug("Running: %s  (cwd=%s)", " ".join(cmd), steamcmd_path.parent)
     stdout_lines: list[str] = []
+    return_code = 1
     try:
         proc = await asyncio.create_subprocess_exec(
             *cmd,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.STDOUT,
             cwd=str(steamcmd_path.parent),
+            env={
+                **os.environ,
+                "HOME": str(home_dir),
+                "XDG_DATA_HOME": str(xdg_data_home),
+            },
         )
         assert proc.stdout is not None
         async for raw in proc.stdout:
@@ -116,14 +152,15 @@ async def run_download(
                 elif "Logging in" in line:
                     progress_cb(0.0, line)
         await proc.wait()
+        return_code = int(proc.returncode or 0)
         log.debug("SteamCMD exited with code %s", proc.returncode)
     finally:
         job.unlink(missing_ok=True)
 
-    return _check_logs(steamcmd_path.parent, "\n".join(stdout_lines))
+    return _check_logs(steamcmd_path.parent, "\n".join(stdout_lines), return_code)
 
 
-def _check_logs(steamcmd_dir: Path, stdout: str = "") -> tuple[bool, str]:
+def _check_logs(steamcmd_dir: Path, stdout: str = "", return_code: int = 0) -> tuple[bool, str]:
     logs = steamcmd_dir / "logs"
 
     def read(name: str) -> str:
@@ -135,7 +172,7 @@ def _check_logs(steamcmd_dir: Path, stdout: str = "") -> tuple[bool, str]:
     log.debug("content_log.txt:\n%s", content or "(empty)")
     log.debug("connection_log.txt:\n%s", connection or "(empty)")
 
-    if "Success! App" in stdout:
+    if "Success! App" in stdout and return_code == 0:
         return True, ""
 
     combined = stdout + content + connection
@@ -143,7 +180,15 @@ def _check_logs(steamcmd_dir: Path, stdout: str = "") -> tuple[bool, str]:
         return False, "nosub"
     if "Rate Limit Exceeded" in combined:
         return False, "ratelimited"
-    if "Invalid Password" in combined:
+    badlogin_errors = (
+        "Invalid Password",
+        "invalid password",
+        "invalid refresh token",
+        "refresh token expired",
+        "refresh token revoked",
+        "failed to log in",
+    )
+    if any(s in combined for s in badlogin_errors):
         return False, "badlogin"
     steamguard_errors = (
         "Two-factor code mismatch",
@@ -153,4 +198,22 @@ def _check_logs(steamcmd_dir: Path, stdout: str = "") -> tuple[bool, str]:
     )
     if any(s in combined for s in steamguard_errors):
         return False, "steamguard"
+    if return_code != 0:
+        return False, "unknown"
+    if "Success! App" not in stdout:
+        return False, "unknown"
     return True, ""
+
+
+def clear_cached_login(steamcmd_path: Path) -> None:
+    """Clear SteamCMD auth cache to force a fresh login flow."""
+    steamcmd_dir = steamcmd_path.parent
+    cache_paths = (
+        steamcmd_dir / "config" / "config.vdf",
+        steamcmd_dir / "config" / "loginusers.vdf",
+        steamcmd_dir / "config" / "SteamAppData.vdf",
+    )
+    for p in cache_paths:
+        p.unlink(missing_ok=True)
+    for p in steamcmd_dir.glob("ssfn*"):
+        p.unlink(missing_ok=True)

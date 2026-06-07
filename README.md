@@ -9,6 +9,8 @@ Features:
 - Compress to a single `.7z` archive
 - Generate BBCode release text for *that* Russian Steam forum
 - Stores Steam credentials in the system keyring (GNOME Keyring / KWallet)
+- First run prompts for Steam login; later runs can auto-login from remembered Steam session data
+- Supports Steam Guard code entry and optional `qr` login flow via Steam mobile app
 
 ## Download
 
@@ -102,6 +104,12 @@ Install pre-commit hooks (runs ruff automatically on each commit):
 
 ```bash
 uv run pre-commit install
+```
+
+Compare generated output against SuperSteamPacker references:
+
+```bash
+python scripts/compare_outputs.py
 ```
 
 ## Packaging

@@ -37,7 +37,6 @@ async def compress(
         "a",
         f"-mx{level}",
         f"-mmt={threads}",
-        "-sdel",
         "-pcs.rin.ru",
         "-mhe=on",
         str(out_path),
