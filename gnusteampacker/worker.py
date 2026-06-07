@@ -352,7 +352,8 @@ async def process_item(
     compression_level = int(conf.get("compression_level", 5))
     compression_threads = int(conf.get("compression_threads", 1))
     username = (auth_override or {}).get("username", credentials.get_username()).strip()
-    password = (auth_override or {}).get("password", credentials.get_password())
+    stored_password = credentials.get_password()
+    password = (auth_override or {}).get("password", stored_password)
     remember_login = bool(
         (auth_override or {}).get("remember_login", conf.get("remember_login", True))
     )
@@ -420,13 +421,18 @@ async def process_item(
         else:
             push(Status.DOWNLOADING, pct)
 
+    prefer_cached_login = (
+        use_steamcmd_download and remember_login and steam_guard_code is None and bool(username)
+    )
+    steamcmd_password = "" if prefer_cached_login else password
+
     if use_steamcmd_download:
         try:
             ok, reason = await steamcmd.run_download(
                 item,
                 sc_path,
                 username,
-                password,
+                steamcmd_password,
                 install_dir,
                 sc_progress,
                 remember_login=remember_login,
@@ -435,6 +441,21 @@ async def process_item(
         except Exception as e:
             push(Status.FAIL, detail=str(e))
             return
+        if not ok and reason == "badlogin" and prefer_cached_login:
+            try:
+                ok, reason = await steamcmd.run_download(
+                    item,
+                    sc_path,
+                    username,
+                    stored_password,
+                    install_dir,
+                    sc_progress,
+                    remember_login=remember_login,
+                    steam_guard_code=steam_guard_code,
+                )
+            except Exception as e:
+                push(Status.FAIL, detail=str(e))
+                return
     else:
         try:
             ok, reason = await depotdownloader.run_download(
