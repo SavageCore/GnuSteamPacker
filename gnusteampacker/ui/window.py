@@ -25,6 +25,7 @@ class MainWindow(Adw.ApplicationWindow):
 
         self._items: list[QueueItem] = []
         self._rows: dict[int, QueueRow] = {}  # id(item) → row
+        self._is_batch_running = False
 
         self._build_ui()
 
@@ -110,7 +111,7 @@ class MainWindow(Adw.ApplicationWindow):
         self._rows[id(item)] = row
         self._list_box.append(row)
         self._refresh_stack()
-        self._start_btn.set_sensitive(True)
+        self._update_start_button_state()
 
     def _remove_item(self, item: QueueItem) -> None:
         row = self._rows.pop(id(item), None)
@@ -119,8 +120,7 @@ class MainWindow(Adw.ApplicationWindow):
         if item in self._items:
             self._items.remove(item)
         self._refresh_stack()
-        has_ready = any(i.status == Status.READY for i in self._items)
-        self._start_btn.set_sensitive(has_ready)
+        self._update_start_button_state()
 
     def _refresh_stack(self) -> None:
         self._stack.set_visible_child_name("queue" if self._items else "empty")
@@ -128,16 +128,73 @@ class MainWindow(Adw.ApplicationWindow):
     # ── Download ─────────────────────────────────────────────────────────
 
     def _on_start_all(self, _btn) -> None:
+        if self._is_batch_running:
+            return
         ready_items = [item for item in self._items if item.status == Status.READY]
         if not ready_items:
             return
         self._start_btn.set_sensitive(False)
 
         def _start_ready(auth) -> None:
-            for item in ready_items:
-                self._start_item(item, auth_override=auth)
+            self._is_batch_running = True
+            async_run(
+                self._run_ready_items_sequentially(ready_items, auth),
+                done_cb=lambda _result, _exc: self._on_batch_done(),
+            )
 
         self._ensure_login_then(_start_ready, on_cancel=self._update_start_button_state)
+
+    async def _run_ready_items_sequentially(
+        self,
+        ready_items: list[QueueItem],
+        auth_override: dict | None,
+    ) -> None:
+        conf = cfg.load()
+
+        def update_cb(updated_item: QueueItem) -> None:
+            GLib.idle_add(self._on_item_updated, updated_item)
+
+        base_auth = auth_override
+        if base_auth is None:
+            username = credentials.get_username().strip()
+            if username:
+                base_auth = {
+                    "username": username,
+                    "password": credentials.get_password(),
+                    "remember_login": bool(conf.get("remember_login", True)),
+                    "login_skip_app_confirmation": bool(
+                        conf.get("login_skip_app_confirmation", False)
+                    ),
+                }
+
+        remember_login = bool(
+            (base_auth or {}).get("remember_login", conf.get("remember_login", True))
+        )
+        username = (base_auth or {}).get("username", credentials.get_username()).strip()
+
+        for idx, item in enumerate(ready_items):
+            per_item_auth = base_auth
+            # Match SSP queue behavior: password is only passed for the first queued job.
+            if idx > 0 and remember_login and username:
+                per_item_auth = {
+                    "username": username,
+                    "password": "",
+                    "remember_login": remember_login,
+                    "login_skip_app_confirmation": bool(
+                        (base_auth or {}).get(
+                            "login_skip_app_confirmation",
+                            conf.get("login_skip_app_confirmation", False),
+                        )
+                    ),
+                }
+            await worker.process_item(item, update_cb, auth_override=per_item_auth)
+            if item.status in (Status.BADLOGIN, Status.STEAMGUARD):
+                break
+
+    def _on_batch_done(self) -> bool:
+        self._is_batch_running = False
+        self._update_start_button_state()
+        return False
 
     def _retry_item(self, item: QueueItem) -> None:
         if item.status == Status.STEAMGUARD:
@@ -225,7 +282,7 @@ class MainWindow(Adw.ApplicationWindow):
 
     def _update_start_button_state(self) -> None:
         has_ready = any(i.status == Status.READY for i in self._items)
-        self._start_btn.set_sensitive(has_ready)
+        self._start_btn.set_sensitive(has_ready and not self._is_batch_running)
 
     def _ensure_login_then(
         self,
