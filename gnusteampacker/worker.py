@@ -356,8 +356,6 @@ async def process_item(
     shutil.rmtree(install_dir, ignore_errors=True)
     (output_base / f"{item.archive_name}.7z").unlink(missing_ok=True)
     (output_base / f"{item.archive_name}.txt").unlink(missing_ok=True)
-    if not remember_login:
-        steamcmd.clear_cached_login(sc_path)
 
     def sc_progress(pct: float, line: str) -> None:
         low = line.lower()
@@ -366,7 +364,7 @@ async def process_item(
             return
         push(Status.DOWNLOADING, pct)
 
-    prefer_cached_login = remember_login and steam_guard_code is None and bool(username)
+    prefer_cached_login = steam_guard_code is None and bool(username)
     steamcmd_password = "" if prefer_cached_login else password
 
     try:

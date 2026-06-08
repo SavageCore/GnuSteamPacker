@@ -1,5 +1,7 @@
 """Main application window."""
 
+from pathlib import Path
+
 import gi
 
 gi.require_version("Gtk", "4.0")
@@ -7,7 +9,7 @@ gi.require_version("Adw", "1")
 from gi.repository import Adw, Gio, GLib, Gtk
 
 from gnusteampacker import config as cfg
-from gnusteampacker import credentials, worker
+from gnusteampacker import credentials, steamcmd, worker
 from gnusteampacker.async_runner import run as async_run
 from gnusteampacker.queue_model import QueueItem, Status
 from gnusteampacker.ui.add_game_dialog import AddGameDialog
@@ -35,6 +37,8 @@ class MainWindow(Adw.ApplicationWindow):
             conf["window_width"] = self.get_width()
             conf["window_height"] = self.get_height()
         conf["window_maximized"] = self.is_maximized()
+        if not bool(conf.get("remember_login", True)):
+            steamcmd.clear_cached_login(Path(conf["steamcmd_path"]))
         cfg.save(conf)
         return False
 
