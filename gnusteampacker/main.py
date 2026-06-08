@@ -67,7 +67,17 @@ class GnuSteamPackerApp(Adw.Application):
             comments="Download and package Steam games on Linux.",
             website="https://github.com/SavageCore/GnuSteamPacker",
             license_type=Gtk.License.GPL_3_0,
+            copyright="© 2026 SavageCore",
             developers=["SavageCore"],
+        )
+        dialog.add_link("Donate", "https://ko-fi.com/savagecore")
+        dialog.add_acknowledgement_section(
+            "Third-Party Libraries and Special Thanks",
+            [
+                "aiohttp https://github.com/aio-libs/aiohttp",
+                "vdf https://github.com/ValvePython/vdf",
+                "SecretStorage https://github.com/mitya57/secretstorage",
+            ],
         )
         dialog.present(self._window)
 
