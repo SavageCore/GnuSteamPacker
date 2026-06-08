@@ -27,7 +27,12 @@ _locale_dir = Path(__file__).parent / "locale"
 # Native display names for languages the app ships translations for.
 _NATIVE_NAMES = {
     "en": "English",
+    "de": "Deutsch",
+    "fr": "Français",
+    "ja": "日本語",
+    "nl": "Nederlands",
     "ru": "Русский",
+    "uk": "Українська",
 }
 
 _language = cfg.load().get("language", "system")

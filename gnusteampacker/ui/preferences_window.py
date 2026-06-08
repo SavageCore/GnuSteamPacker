@@ -196,6 +196,7 @@ class PreferencesWindow(Adw.PreferencesDialog):
         if idx == Gtk.INVALID_LIST_POSITION:
             return
         self._save("language", self._language_codes[idx])
+        self.add_toast(Adw.Toast(title=_("Restart GnuSteamPacker to apply a language change")))
 
     def _on_scheme_changed(self, row: Adw.ComboRow, _param) -> None:
         from gi.repository import Adw as _Adw

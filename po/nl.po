@@ -142,7 +142,7 @@ msgstr "Ultra"
 
 #: gnusteampacker/ui/preferences_window.py:21 gnusteampacker/ui/window.py:99
 msgid "Preferences"
-msgstr "named@@0"
+msgstr "Voorkeuren"
 
 #: gnusteampacker/ui/preferences_window.py:31
 msgid "Downloaders"

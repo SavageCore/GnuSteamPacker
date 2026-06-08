@@ -150,7 +150,7 @@ msgstr "Téléchargeurs"
 
 #: gnusteampacker/ui/preferences_window.py:34
 msgid "SteamCMD"
-msgstr "format@@0 SteamCMD"
+msgstr "SteamCMD"
 
 #: gnusteampacker/ui/preferences_window.py:37
 msgid "Path to SteamCMD"

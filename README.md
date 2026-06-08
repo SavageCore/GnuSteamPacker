@@ -115,11 +115,7 @@ python scripts/compare_outputs.py
 
 ## Translations
 
-GnuSteamPacker is translated via [Weblate](https://weblate.org/). If you'd like to contribute a translation or improve an existing one, head to the project's Weblate page — no Git knowledge required, just sign in and start translating.
-
-Recommended Weblate component setup for maintainers adding this project:
-- **gettext PO** component — file mask `po/*.po`, template `po/gnusteampacker.pot`
-- **Desktop Entry translations** component — file mask `data/*.desktop`
+GnuSteamPacker is translated via [Crowdin](https://crowdin.com/project/gnusteampacker). If you'd like to contribute a translation or improve an existing one, head to the project's Crowdin page — no Git knowledge required, just sign in and start translating.
 
 Local development commands for working with translations directly:
 
