@@ -4,11 +4,14 @@ Callbacks are always delivered on the GLib main loop (safe for UI updates).
 """
 
 import asyncio
+import logging
 import threading
 from collections.abc import Callable, Coroutine
 from typing import Any
 
 from gi.repository import GLib
+
+log = logging.getLogger(__name__)
 
 _loop: asyncio.AbstractEventLoop | None = None
 _thread: threading.Thread | None = None
@@ -35,6 +38,7 @@ def run(coro: Coroutine, done_cb: Callable[[Any, Exception | None], None] | None
             if done_cb:
                 GLib.idle_add(done_cb, result, None)
         except Exception as exc:
+            log.exception("Unhandled exception in async task")
             if done_cb:
                 GLib.idle_add(done_cb, None, exc)
 

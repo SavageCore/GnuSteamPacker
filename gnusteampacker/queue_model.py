@@ -51,8 +51,15 @@ class QueueItem:
 
     @property
     def archive_name(self) -> str:
+        _plat_labels = {
+            "win64": "Win64",
+            "win32": "Win32",
+            "lin64": "Linux64",
+            "lin32": "Linux32",
+            "macos": "MacOS",
+        }
         safe = self.game_name.replace(" ", ".").replace(":", "").replace("/", "_")
-        plat = self.platform.capitalize()
+        plat = _plat_labels.get(self.platform, self.platform.capitalize())
         branch = self.branch.capitalize() or "Public"
         build = self.build_id or "0"
         return f"{safe}.Build.{build}.{plat}.{branch}"

@@ -11,7 +11,14 @@ def _manifest_gid(manifests: dict, branch: str) -> str:
 
 
 def generate(item: QueueItem) -> str:
-    platform_label = item.platform.capitalize()
+    _plat_labels = {
+        "win64": "Win64",
+        "win32": "Win32",
+        "lin64": "Linux64",
+        "lin32": "Linux32",
+        "macos": "MacOS",
+    }
+    platform_label = _plat_labels.get(item.platform, item.platform.capitalize())
     branch = (item.branch or "public").capitalize()
     build_id = item.build_id or "unknown"
     build_time = item.build_time or "unknown"

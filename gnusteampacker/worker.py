@@ -28,6 +28,11 @@ UpdateCB = Callable[[QueueItem], None]
 _MANIFEST_RE = re.compile(r"^(\d+)_(\d+)\.manifest$")
 
 
+def _ignore_dangling_symlinks(src: str, names: list[str]) -> set[str]:
+    """Skip dangling symlinks — valid ones (e.g. .so soname aliases) are preserved."""
+    return {n for n in names if (p := Path(src, n)).is_symlink() and not p.exists()}
+
+
 def _depot_list_from_acfs(steamapps_dir: Path, depot_names: dict[str, str]) -> list[str]:
     lines: list[str] = []
     for acf in sorted(steamapps_dir.glob("appmanifest_*.acf")):
@@ -151,138 +156,154 @@ async def process_item(
         push(status_map.get(reason, Status.FAIL), detail=reason)
         return
 
-    steam_roots = [
-        sc_path.parent,
-        sc_path.parent / ".home" / "Steam",
-    ]
-    manifest_name = f"appmanifest_{item.appid}.acf"
-    steam_root = next(
-        (root for root in steam_roots if (root / "steamapps" / manifest_name).exists()),
-        None,
-    )
-    if steam_root is None:
-        push(
-            Status.FAIL,
-            detail=_("SteamCMD output missing appmanifest for app {appid} in: {paths}").format(
-                appid=item.appid, paths=", ".join(str(p) for p in steam_roots)
-            ),
+    try:
+        steam_roots = [
+            sc_path.parent,
+            sc_path.parent / ".home" / "Steam",
+        ]
+        manifest_name = f"appmanifest_{item.appid}.acf"
+        steam_root = next(
+            (root for root in steam_roots if (root / "steamapps" / manifest_name).exists()),
+            None,
         )
-        return
-    steamapps_src = steam_root / "steamapps"
-    depotcache_src = steam_root / "depotcache"
-    install_dir.mkdir(parents=True, exist_ok=True)
-    shutil.rmtree(install_dir / "steamapps", ignore_errors=True)
-    shutil.rmtree(install_dir / "depotcache", ignore_errors=True)
-    steamapps_dest = install_dir / "steamapps"
-    depotcache_dest = install_dir / "depotcache"
-    steamapps_dest.mkdir(parents=True, exist_ok=True)
-    (steamapps_dest / "common").mkdir(parents=True, exist_ok=True)
-
-    main_acf_src = steamapps_src / f"appmanifest_{item.appid}.acf"
-    shutil.copy2(main_acf_src, steamapps_dest / main_acf_src.name)
-    with main_acf_src.open(encoding="utf-8", errors="replace") as f:
-        main_state = vdf.load(f).get("AppState", {})
-
-    shared_source_appids = {
-        str(appid)
-        for appid in (main_state.get("SharedDepots", {}) or {}).values()
-        if str(appid).isdigit()
-    }
-    shared_depot_ids = {
-        str(depot_id)
-        for depot_id in (main_state.get("SharedDepots", {}) or {}).keys()
-        if str(depot_id).isdigit()
-    }
-    relevant_ids = {str(item.appid)}
-    relevant_ids.update(
-        str(depot_id) for depot_id in (main_state.get("InstalledDepots", {}) or {}).keys()
-    )
-    relevant_ids.update(shared_depot_ids)
-
-    installdir = str(main_state.get("installdir", "")).strip()
-    if installdir:
-        src_common = steamapps_src / "common" / installdir
-        if src_common.exists():
-            shutil.copytree(
-                src_common,
-                steamapps_dest / "common" / installdir,
-                dirs_exist_ok=True,
+        if steam_root is None:
+            push(
+                Status.FAIL,
+                detail=_("SteamCMD output missing appmanifest for app {appid} in: {paths}").format(
+                    appid=item.appid, paths=", ".join(str(p) for p in steam_roots)
+                ),
             )
-            volatile_ui_file = steamapps_dest / "common" / installdir / "imgui.ini"
-            volatile_ui_file.unlink(missing_ok=True)
+            return
+        steamapps_src = steam_root / "steamapps"
+        depotcache_src = steam_root / "depotcache"
+        install_dir.mkdir(parents=True, exist_ok=True)
+        shutil.rmtree(install_dir / "steamapps", ignore_errors=True)
+        shutil.rmtree(install_dir / "depotcache", ignore_errors=True)
+        steamapps_dest = install_dir / "steamapps"
+        depotcache_dest = install_dir / "depotcache"
+        steamapps_dest.mkdir(parents=True, exist_ok=True)
+        (steamapps_dest / "common").mkdir(parents=True, exist_ok=True)
 
-    for shared_appid in sorted(shared_source_appids):
-        shared_acf_src = steamapps_src / f"appmanifest_{shared_appid}.acf"
-        if not shared_acf_src.exists():
-            continue
-        shutil.copy2(shared_acf_src, steamapps_dest / shared_acf_src.name)
-        with shared_acf_src.open(encoding="utf-8", errors="replace") as f:
-            shared_state = vdf.load(f).get("AppState", {})
-        shared_installdir = str(shared_state.get("installdir", "")).strip()
-        if not shared_installdir:
-            continue
-        src_shared = steamapps_src / "common" / shared_installdir
-        if not src_shared.exists():
-            continue
-        install_scripts = shared_state.get("InstallScripts", {}) or {}
-        for depot_id in sorted(shared_depot_ids):
-            script_path = str(install_scripts.get(depot_id, "")).replace("\\", "/").strip("/")
-            if not script_path:
-                continue
-            rel_dir = Path(script_path).parent
-            src_dir = src_shared / rel_dir
-            dest_dir = steamapps_dest / "common" / shared_installdir / rel_dir
-            if src_dir.exists() and src_dir.is_dir():
-                shutil.copytree(src_dir, dest_dir, dirs_exist_ok=True)
+        main_acf_src = steamapps_src / f"appmanifest_{item.appid}.acf"
+        shutil.copy2(main_acf_src, steamapps_dest / main_acf_src.name)
+        with main_acf_src.open(encoding="utf-8", errors="replace") as f:
+            main_state = vdf.load(f).get("AppState", {})
 
-    if depotcache_src.exists():
-        depotcache_dest.mkdir(parents=True, exist_ok=True)
-        for manifest in depotcache_src.glob("*.manifest"):
-            m = _MANIFEST_RE.match(manifest.name)
-            if not m:
-                continue
-            if m.group(1) not in relevant_ids:
-                continue
-            shutil.copy2(manifest, depotcache_dest / manifest.name)
+        shared_source_appids = {
+            str(appid)
+            for appid in (main_state.get("SharedDepots", {}) or {}).values()
+            if str(appid).isdigit()
+        }
+        shared_depot_ids = {
+            str(depot_id)
+            for depot_id in (main_state.get("SharedDepots", {}) or {}).keys()
+            if str(depot_id).isdigit()
+        }
+        relevant_ids = {str(item.appid)}
+        relevant_ids.update(
+            str(depot_id) for depot_id in (main_state.get("InstalledDepots", {}) or {}).keys()
+        )
+        relevant_ids.update(shared_depot_ids)
 
-    # Guard: game files should exist after download handoff.
-    steam_common = install_dir / "steamapps" / "common"
-    has_game_files = steam_common.exists() and any(p.is_file() for p in steam_common.rglob("*"))
-    if not has_game_files:
+        installdir = str(main_state.get("installdir", "")).strip()
+        if installdir:
+            src_common = steamapps_src / "common" / installdir
+            if src_common.exists():
+                shutil.copytree(
+                    src_common,
+                    steamapps_dest / "common" / installdir,
+                    dirs_exist_ok=True,
+                    symlinks=True,
+                    ignore=_ignore_dangling_symlinks,
+                )
+                volatile_ui_file = steamapps_dest / "common" / installdir / "imgui.ini"
+                volatile_ui_file.unlink(missing_ok=True)
+
+        for shared_appid in sorted(shared_source_appids):
+            shared_acf_src = steamapps_src / f"appmanifest_{shared_appid}.acf"
+            if not shared_acf_src.exists():
+                continue
+            shutil.copy2(shared_acf_src, steamapps_dest / shared_acf_src.name)
+            with shared_acf_src.open(encoding="utf-8", errors="replace") as f:
+                shared_state = vdf.load(f).get("AppState", {})
+            shared_installdir = str(shared_state.get("installdir", "")).strip()
+            if not shared_installdir:
+                continue
+            src_shared = steamapps_src / "common" / shared_installdir
+            if not src_shared.exists():
+                continue
+            install_scripts = shared_state.get("InstallScripts", {}) or {}
+            for depot_id in sorted(shared_depot_ids):
+                script_path = str(install_scripts.get(depot_id, "")).replace("\\", "/").strip("/")
+                if not script_path:
+                    continue
+                rel_dir = Path(script_path).parent
+                src_dir = src_shared / rel_dir
+                dest_dir = steamapps_dest / "common" / shared_installdir / rel_dir
+                if src_dir.exists() and src_dir.is_dir():
+                    shutil.copytree(
+                        src_dir,
+                        dest_dir,
+                        dirs_exist_ok=True,
+                        symlinks=True,
+                        ignore=_ignore_dangling_symlinks,
+                    )
+
+        if depotcache_src.exists():
+            depotcache_dest.mkdir(parents=True, exist_ok=True)
+            for manifest in depotcache_src.glob("*.manifest"):
+                m = _MANIFEST_RE.match(manifest.name)
+                if not m:
+                    continue
+                if m.group(1) not in relevant_ids:
+                    continue
+                shutil.copy2(manifest, depotcache_dest / manifest.name)
+
+        # Guard: game files should exist after download handoff.
+        steam_common = install_dir / "steamapps" / "common"
+        has_game_files = steam_common.exists() and any(p.is_file() for p in steam_common.rglob("*"))
+        if not has_game_files:
+            push(
+                Status.FAIL,
+                detail=_("No files found under {path}").format(path=steam_common),
+            )
+            return
+
+        push(Status.CLEANING, 0.0)
+        selected_manifest_files: set[str] = set()
+        depotcache_dir = install_dir / "depotcache"
+        if depotcache_dir.exists():
+            for f in depotcache_dir.glob("*.manifest"):
+                m = _MANIFEST_RE.match(f.name)
+                if not m:
+                    continue
+                selected_manifest_files.add(f.name)
+
+        # ── 7. Finalize metadata and reorganise layout ─────────────────────
+        push(Status.CLEANING, 1.0)
+        steamapps_dir = install_dir / "steamapps"
+        if steamapps_dir.exists():
+            try:
+                vdf_cleaner.clean_steamapps(steamapps_dir)
+            except Exception as e:
+                log.warning("vdf_cleaner failed: %s", e)
+            try:
+                item.depot_list = _depot_list_from_acfs(steamapps_dir, depot_names)
+            except Exception as e:
+                log.warning("depot list build from acf failed: %s", e)
+        folder_organiser.reorganise(
+            install_dir,
+            item.appid,
+            main_installdir=game_info.get("installdir", item.game_name),
+            selected_manifest_files=selected_manifest_files or None,
+        )
+    except Exception as exc:
+        log.exception("Failed to reorganise downloaded files for %s", item.archive_name)
         push(
             Status.FAIL,
-            detail=_("No files found under {path}").format(path=steam_common),
+            detail=_("Failed to organise downloaded files: {error}").format(error=exc),
         )
         return
-
-    push(Status.CLEANING, 0.0)
-    selected_manifest_files: set[str] = set()
-    depotcache_dir = install_dir / "depotcache"
-    if depotcache_dir.exists():
-        for f in depotcache_dir.glob("*.manifest"):
-            m = _MANIFEST_RE.match(f.name)
-            if not m:
-                continue
-            selected_manifest_files.add(f.name)
-
-    # ── 7. Finalize metadata and reorganise layout ─────────────────────────
-    push(Status.CLEANING, 1.0)
-    steamapps_dir = install_dir / "steamapps"
-    if steamapps_dir.exists():
-        try:
-            vdf_cleaner.clean_steamapps(steamapps_dir)
-        except Exception as e:
-            log.warning("vdf_cleaner failed: %s", e)
-        try:
-            item.depot_list = _depot_list_from_acfs(steamapps_dir, depot_names)
-        except Exception as e:
-            log.warning("depot list build from acf failed: %s", e)
-    folder_organiser.reorganise(
-        install_dir,
-        item.appid,
-        main_installdir=game_info.get("installdir", item.game_name),
-        selected_manifest_files=selected_manifest_files or None,
-    )
 
     # ── 8. Compress ────────────────────────────────────────────────────────
     push(Status.COMPRESSING, 0.0)
