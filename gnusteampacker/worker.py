@@ -3,7 +3,6 @@
 import logging
 import re
 import shutil
-import time
 from collections.abc import Callable
 from pathlib import Path
 
@@ -28,11 +27,6 @@ UpdateCB = Callable[[QueueItem], None]
 _MANIFEST_RE = re.compile(r"^(\d+)_(\d+)\.manifest$")
 
 
-def _write_acf(path: Path, data: dict) -> None:
-    with path.open("w", encoding="utf-8") as f:
-        vdf.dump(data, f, pretty=True)
-
-
 def _depot_list_from_acfs(steamapps_dir: Path, depot_names: dict[str, str]) -> list[str]:
     lines: list[str] = []
     for acf in sorted(steamapps_dir.glob("appmanifest_*.acf")):
@@ -49,258 +43,6 @@ def _depot_list_from_acfs(steamapps_dir: Path, depot_names: dict[str, str]) -> l
             label = f"{depot_id} - {depot_name}" if depot_name else f"{depot_id} - DepotName"
             lines.append(f"{label} [Manifest {manifest}]")
     return lines
-
-
-def _manifest_metrics(depot_data: dict, manifest_id: str) -> tuple[str, str]:
-    manifests = depot_data.get("manifests", {})
-    for branch_data in manifests.values():
-        if isinstance(branch_data, dict) and str(branch_data.get("gid", "")) == str(manifest_id):
-            return str(branch_data.get("size", "")), str(branch_data.get("download", ""))
-    return "", ""
-
-
-def _write_appmanifests(
-    install_dir: Path,
-    item: QueueItem,
-    game_info: dict,
-    manifest_overrides: dict[str, str] | None = None,
-    shared_info: dict | None = None,
-) -> None:
-    steamapps_dir = install_dir / "steamapps"
-    steamapps_dir.mkdir(parents=True, exist_ok=True)
-    appmanifest = steamapps_dir / f"appmanifest_{item.appid}.acf"
-    installed_depots: list[tuple[str, str, str, str, str | None]] = []
-    shared_depots: list[tuple[str, str]] = []
-    depots = game_info.get("depots", {})
-    depot_iter = (
-        [(depot_id, depots.get(depot_id, {})) for depot_id in manifest_overrides]
-        if manifest_overrides
-        else list(depots.items())
-    )
-    for depot_id, depot_data in depot_iter:
-        if not depot_id.isdigit():
-            continue
-        if manifest_overrides and depot_id not in manifest_overrides:
-            continue
-        manifests = depot_data.get("manifests", {})
-        if manifest_overrides:
-            manifest_id = manifest_overrides.get(depot_id, "")
-        else:
-            branch_manifest = manifests.get(item.branch) or manifests.get("public") or {}
-            if isinstance(branch_manifest, dict):
-                manifest_id = str(branch_manifest.get("gid", ""))
-            else:
-                manifest_id = str(branch_manifest)
-        if manifest_id and not depot_data.get("depotfromapp"):
-            size, download = _manifest_metrics(depot_data, manifest_id)
-            size = size or str(depot_data.get("size", ""))
-            download = download or size
-            installed_depots.append(
-                (
-                    depot_id,
-                    manifest_id,
-                    size,
-                    download,
-                    depot_data.get("dlcappid"),
-                )
-            )
-        if depot_data.get("depotfromapp") == "228980" and depot_data.get("sharedinstall") == "1":
-            shared_depots.append((depot_id, manifest_id))
-
-    build_id = item.build_id or game_info.get(f"build_{item.branch}", "")
-    game_size = sum(int(size) for _, _, size, _, _ in installed_depots if str(size).isdigit())
-    game_download = sum(
-        int(download) for _, _, _, download, _ in installed_depots if str(download).isdigit()
-    )
-    has_dlc = any(bool(dlcappid) for *_, dlcappid in installed_depots)
-    download_type = "2" if has_dlc or shared_depots else "1"
-
-    main_data = {
-        "AppState": {
-            "appid": item.appid,
-            "Universe": "1",
-            "LauncherPath": "0",
-            "name": game_info.get("name", item.game_name),
-            "StateFlags": "4",
-            "installdir": game_info.get("installdir", item.game_name),
-            "LastUpdated": str(int(time.time())),
-            "LastPlayed": "0",
-            "SizeOnDisk": str(game_size),
-            "StagingSize": "0",
-            "buildid": build_id,
-            "LastOwner": "0",
-            "DownloadType": download_type,
-            "UpdateResult": "0",
-            "BytesToDownload": str(game_download),
-            "BytesDownloaded": str(game_download),
-            "BytesToStage": str(game_size),
-            "BytesStaged": str(game_size),
-            "TargetBuildID": build_id if download_type == "1" else "0",
-            "AutoUpdateBehavior": "0",
-            "AllowOtherDownloadsWhileRunning": "0",
-            "ScheduledAutoUpdate": "0",
-        }
-    }
-    if installed_depots:
-        main_data["AppState"]["InstalledDepots"] = {
-            depot_id: {
-                "manifest": manifest_id,
-                "size": size,
-                **({"dlcappid": dlcappid} if dlcappid else {}),
-            }
-            for depot_id, manifest_id, size, _, dlcappid in installed_depots
-        }
-    if shared_depots:
-        main_data["AppState"]["SharedDepots"] = {
-            depot_id: "228980" for depot_id, _ in shared_depots
-        }
-    main_data["AppState"]["UserConfig"] = {}
-    main_data["AppState"]["MountedConfig"] = {}
-    _write_acf(appmanifest, main_data)
-
-    has_shared_redist = (install_dir / "_CommonRedist").exists() or (
-        install_dir / "steamapps" / "common" / "Steamworks Shared" / "_CommonRedist"
-    ).exists()
-    if shared_info is not None and has_shared_redist:
-        shared_manifest = steamapps_dir / "appmanifest_228980.acf"
-        shared_depot = None
-        for depot_id, depot_data in shared_info.get("depots", {}).items():
-            if depot_id.isdigit() and (
-                depot_data.get("sharedinstall") == "1" or depot_id == "228989"
-            ):
-                manifests = depot_data.get("manifests", {})
-                public_manifest = manifests.get("public") or {}
-                if isinstance(public_manifest, dict):
-                    manifest_id = str(public_manifest.get("gid", ""))
-                else:
-                    manifest_id = str(public_manifest)
-                if manifest_id:
-                    size, _ = _manifest_metrics(depot_data, manifest_id)
-                    shared_depot = (depot_id, manifest_id, size)
-                    break
-        shared_size = int(shared_depot[2]) if shared_depot and str(shared_depot[2]).isdigit() else 0
-        shared_data = {
-            "AppState": {
-                "appid": "228980",
-                "Universe": "1",
-                "LauncherPath": "0",
-                "name": shared_info.get("name", "Steamworks Common Redistributables"),
-                "StateFlags": "4",
-                "installdir": "Steamworks Shared",
-                "LastUpdated": str(int(time.time()) - 1),
-                "LastPlayed": "0",
-                "SizeOnDisk": str(shared_size),
-                "StagingSize": "0",
-                "buildid": shared_info.get("build_public", ""),
-                "LastOwner": "0",
-                "DownloadType": "0",
-                "AutoUpdateBehavior": "0",
-                "AllowOtherDownloadsWhileRunning": "0",
-                "ScheduledAutoUpdate": "0",
-            }
-        }
-        if shared_depot:
-            shared_data["AppState"]["InstalledDepots"] = {
-                shared_depot[0]: {"manifest": shared_depot[1], "size": shared_depot[2]}
-            }
-        install_script = install_dir / "_CommonRedist" / "vcredist" / "2022" / "installscript.vdf"
-        if not install_script.exists():
-            install_script = (
-                install_dir
-                / "steamapps"
-                / "common"
-                / "Steamworks Shared"
-                / "_CommonRedist"
-                / "vcredist"
-                / "2022"
-                / "installscript.vdf"
-            )
-        if install_script.exists():
-            shared_data["AppState"]["InstallScripts"] = {
-                "228989": "_CommonRedist\\vcredist\\2022\\installscript.vdf"
-            }
-        shared_data["AppState"]["UserConfig"] = {}
-        shared_data["AppState"]["MountedConfig"] = {}
-        _write_acf(shared_manifest, shared_data)
-
-
-def _write_missing_shared_manifest(
-    install_dir: Path,
-    shared_info: dict | None,
-    shared_depot_ids: set[str],
-    manifest_overrides: dict[str, str],
-) -> None:
-    if not shared_info or not shared_depot_ids:
-        return
-    steamapps_dir = install_dir / "steamapps"
-    shared_manifest = steamapps_dir / "appmanifest_228980.acf"
-    if shared_manifest.exists():
-        return
-
-    shared_depot = None
-    depots = shared_info.get("depots", {})
-    for depot_id in sorted(shared_depot_ids):
-        depot_data = depots.get(depot_id, {})
-        if not isinstance(depot_data, dict):
-            continue
-        manifest_id = manifest_overrides.get(depot_id, "")
-        if not manifest_id:
-            manifests = depot_data.get("manifests", {})
-            public_manifest = manifests.get("public") or {}
-            if isinstance(public_manifest, dict):
-                manifest_id = str(public_manifest.get("gid", ""))
-            else:
-                manifest_id = str(public_manifest)
-        if not manifest_id:
-            continue
-        size, _ = _manifest_metrics(depot_data, manifest_id)
-        shared_depot = (depot_id, manifest_id, size)
-        break
-
-    if not shared_depot:
-        return
-
-    shared_size = int(shared_depot[2]) if str(shared_depot[2]).isdigit() else 0
-    shared_data = {
-        "AppState": {
-            "appid": "228980",
-            "Universe": "1",
-            "LauncherPath": "0",
-            "name": shared_info.get("name", "Steamworks Common Redistributables"),
-            "StateFlags": "4",
-            "installdir": "Steamworks Shared",
-            "LastUpdated": str(int(time.time()) - 1),
-            "LastPlayed": "0",
-            "SizeOnDisk": str(shared_size),
-            "StagingSize": "0",
-            "buildid": shared_info.get("build_public", ""),
-            "LastOwner": "0",
-            "DownloadType": "0",
-            "AutoUpdateBehavior": "0",
-            "AllowOtherDownloadsWhileRunning": "0",
-            "ScheduledAutoUpdate": "0",
-        }
-    }
-    shared_data["AppState"]["InstalledDepots"] = {
-        shared_depot[0]: {"manifest": shared_depot[1], "size": shared_depot[2]}
-    }
-    install_script = (
-        install_dir
-        / "steamapps"
-        / "common"
-        / "Steamworks Shared"
-        / "_CommonRedist"
-        / "vcredist"
-        / "2022"
-        / "installscript.vdf"
-    )
-    if install_script.exists():
-        shared_data["AppState"]["InstallScripts"] = {
-            "228989": "_CommonRedist\\vcredist\\2022\\installscript.vdf"
-        }
-    shared_data["AppState"]["UserConfig"] = {}
-    shared_data["AppState"]["MountedConfig"] = {}
-    _write_acf(shared_manifest, shared_data)
 
 
 async def process_item(
@@ -320,7 +62,6 @@ async def process_item(
     remember_login = bool(
         (auth_override or {}).get("remember_login", conf.get("remember_login", True))
     )
-    shared_depot_ids: set[str] = set()
 
     def push(status: Status, progress: float = 0.0, detail: str = "") -> None:
         item.status = status
@@ -345,7 +86,6 @@ async def process_item(
         item.build_id = game_info.get(f"build_{item.branch}") or game_info.get("build_public", "")
         item.build_time = game_info.get(f"time_{item.branch}") or game_info.get("time_public", "")
         item.depot_list = release_text.build_depot_list(game_info, depot_names, item.branch)
-        shared_info = None
     except Exception as e:
         push(Status.FAIL, detail=f"Info fetch failed: {e}")
         return
@@ -475,6 +215,7 @@ async def process_item(
         shared_acf_src = steamapps_src / f"appmanifest_{shared_appid}.acf"
         if not shared_acf_src.exists():
             continue
+        shutil.copy2(shared_acf_src, steamapps_dest / shared_acf_src.name)
         with shared_acf_src.open(encoding="utf-8", errors="replace") as f:
             shared_state = vdf.load(f).get("AppState", {})
         shared_installdir = str(shared_state.get("installdir", "")).strip()
@@ -514,19 +255,7 @@ async def process_item(
         )
         return
 
-    # ── 4. Prepare shared app info (for Steamworks Shared if present) ─────
     push(Status.CLEANING, 0.0)
-    if (install_dir / "_CommonRedist").exists() or (
-        install_dir / "steamapps" / "common" / "Steamworks Shared" / "_CommonRedist"
-    ).exists():
-        try:
-            shared_info = await steam_api.get_game_info("228980")
-        except Exception:
-            shared_info = None
-
-    # ── 5. Rebuild depot list with real manifest GIDs ──────────────────────
-    # Use manifests generated by the SteamCMD primary download pass.
-    manifest_overrides: dict[str, str] = {}
     selected_manifest_files: set[str] = set()
     depotcache_dir = install_dir / "depotcache"
     if depotcache_dir.exists():
@@ -534,15 +263,7 @@ async def process_item(
             m = _MANIFEST_RE.match(f.name)
             if not m:
                 continue
-            manifest_overrides[m.group(1)] = m.group(2)
             selected_manifest_files.add(f.name)
-
-    _write_missing_shared_manifest(
-        install_dir,
-        shared_info,
-        shared_depot_ids,
-        manifest_overrides,
-    )
 
     # ── 7. Finalize metadata and reorganise layout ─────────────────────────
     push(Status.CLEANING, 1.0)

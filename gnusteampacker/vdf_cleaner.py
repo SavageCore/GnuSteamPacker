@@ -1,9 +1,12 @@
 """Clean sensitive data from generated ACF files."""
 
+import logging
 import shutil
 from pathlib import Path
 
 import vdf
+
+log = logging.getLogger(__name__)
 
 KEYS_TO_ZERO = {"LastOwner", "LauncherPath"}
 
@@ -24,6 +27,9 @@ def _zero_keys(obj: object) -> None:
                 obj[k] = "0"
             else:
                 _zero_keys(obj[k])
+        if "AppState" in obj and isinstance(obj["AppState"], dict):
+            for key in KEYS_TO_ZERO:
+                obj["AppState"].setdefault(key, "0")
 
 
 def clean_steamapps(steamapps_dir: Path) -> None:
@@ -31,8 +37,8 @@ def clean_steamapps(steamapps_dir: Path) -> None:
     for acf in steamapps_dir.glob("*.acf"):
         try:
             clean_acf(acf)
-        except Exception:
-            pass
+        except Exception as e:
+            log.warning("failed to clean %s: %s", acf, e)
 
     for subdir in ("workshop", "downloading", "temp"):
         p = steamapps_dir / subdir
