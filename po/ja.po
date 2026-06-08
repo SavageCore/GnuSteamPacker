@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gnusteampacker\n"
 "Report-Msgid-Bugs-To: https://github.com/SavageCore/GnuSteamPacker/issues\n"
-"POT-Creation-Date: 2026-06-08 12:15+0100\n"
-"PO-Revision-Date: 2026-06-08 13:35\n"
+"POT-Creation-Date: 2026-06-08 20:58+0100\n"
+"PO-Revision-Date: 2026-06-08 22:19\n"
 "Last-Translator: \n"
 "Language-Team: Japanese\n"
 "Language: ja_JP\n"
@@ -17,7 +17,7 @@ msgstr ""
 "X-Crowdin-File: /main/po/gnusteampacker.pot\n"
 "X-Crowdin-File-ID: 7\n"
 
-#: gnusteampacker/i18n.py:56 gnusteampacker/ui/preferences_window.py:169
+#: gnusteampacker/i18n.py:73 gnusteampacker/ui/preferences_window.py:169
 msgid "Follow System"
 msgstr "システムをフォロー"
 
@@ -249,6 +249,7 @@ msgid "Display language"
 msgstr "言語を表示"
 
 #: gnusteampacker/ui/preferences_window.py:183
+#: gnusteampacker/ui/preferences_window.py:199
 msgid "Restart GnuSteamPacker to apply a language change"
 msgstr "GnuSteamPackerを再起動して言語の変更を適用します"
 
@@ -321,13 +322,18 @@ msgstr "SteamCMDのインストールに失敗しました: {error}"
 msgid "Info fetch failed: {error}"
 msgstr "情報の取得に失敗しました: {error}"
 
-#: gnusteampacker/worker.py:166
+#: gnusteampacker/worker.py:168
 #, python-brace-format
 msgid "SteamCMD output missing appmanifest for app {appid} in: {paths}"
 msgstr "SteamCMD出力不足アプリマニフェストアプリ {appid} in: {paths}"
 
-#: gnusteampacker/worker.py:254
+#: gnusteampacker/worker.py:260
 #, python-brace-format
 msgid "No files found under {path}"
 msgstr "{path} の下にファイルが見つかりませんでした"
+
+#: gnusteampacker/worker.py:296
+#, python-brace-format
+msgid "Failed to organise downloaded files: {error}"
+msgstr ""
 
