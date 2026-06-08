@@ -1,0 +1,333 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: gnusteampacker\n"
+"Report-Msgid-Bugs-To: https://github.com/SavageCore/GnuSteamPacker/issues\n"
+"POT-Creation-Date: 2026-06-08 12:15+0100\n"
+"PO-Revision-Date: 2026-06-08 12:35\n"
+"Last-Translator: \n"
+"Language-Team: Ukrainian\n"
+"Language: uk_UA\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=4; plural=((n%10==1 && n%100!=11) ? 0 : ((n%10 >= 2 && n%10 <=4 && (n%100 < 12 || n%100 > 14)) ? 1 : ((n%10 == 0 || (n%10 >= 5 && n%10 <=9)) || (n%100 >= 11 && n%100 <= 14)) ? 2 : 3));\n"
+"X-Crowdin-Project: gnusteampacker\n"
+"X-Crowdin-Project-ID: 904253\n"
+"X-Crowdin-Language: uk\n"
+"X-Crowdin-File: /main/po/gnusteampacker.pot\n"
+"X-Crowdin-File-ID: 7\n"
+
+#: gnusteampacker/i18n.py:56 gnusteampacker/ui/preferences_window.py:169
+msgid "Follow System"
+msgstr ""
+
+#: gnusteampacker/main.py:69
+msgid "A Linux-native GUI for downloading, cleaning, and packaging Steam games for archival and sharing. Spiritual port of <a href=\"https://github.com/Masquerade64/SuperSteamPacker\">SuperSteamPacker</a>."
+msgstr ""
+
+#: gnusteampacker/main.py:78
+msgid "Donate"
+msgstr ""
+
+#: gnusteampacker/main.py:80
+msgid "Third-Party Libraries and Special Thanks"
+msgstr ""
+
+#: gnusteampacker/queue_model.py:44
+msgid "Windows 64-bit"
+msgstr ""
+
+#: gnusteampacker/queue_model.py:45
+msgid "Windows 32-bit"
+msgstr ""
+
+#: gnusteampacker/queue_model.py:46
+msgid "Linux 64-bit"
+msgstr ""
+
+#: gnusteampacker/queue_model.py:47
+msgid "Linux 32-bit"
+msgstr ""
+
+#: gnusteampacker/queue_model.py:48
+msgid "macOS"
+msgstr ""
+
+#: gnusteampacker/ui/add_game_dialog.py:21
+msgid "Add Game"
+msgstr ""
+
+#. ── Search section ──────────────────────────────────────────────────
+#: gnusteampacker/ui/add_game_dialog.py:49
+msgid "Search by name"
+msgstr ""
+
+#: gnusteampacker/ui/add_game_dialog.py:50
+msgid "e.g. Half-Life, Portal…"
+msgstr ""
+
+#. ── Manual AppID ────────────────────────────────────────────────────
+#: gnusteampacker/ui/add_game_dialog.py:64
+msgid "Or enter AppID directly"
+msgstr ""
+
+#: gnusteampacker/ui/add_game_dialog.py:67
+msgid "AppID"
+msgstr ""
+
+#. Shown while fetching game info
+#: gnusteampacker/ui/add_game_dialog.py:72
+#: gnusteampacker/ui/add_game_dialog.py:202
+msgid "Looking up game…"
+msgstr ""
+
+#. ── Options (disabled until game info loaded) ──────────────────────
+#: gnusteampacker/ui/add_game_dialog.py:82
+msgid "Options"
+msgstr ""
+
+#: gnusteampacker/ui/add_game_dialog.py:87
+msgid "Platform"
+msgstr ""
+
+#: gnusteampacker/ui/add_game_dialog.py:91
+msgid "Branch"
+msgstr ""
+
+#: gnusteampacker/ui/add_game_dialog.py:96
+msgid "Branch password"
+msgstr ""
+
+#: gnusteampacker/ui/add_game_dialog.py:107 gnusteampacker/ui/window.py:229
+msgid "Cancel"
+msgstr ""
+
+#: gnusteampacker/ui/add_game_dialog.py:111
+msgid "Add to Queue"
+msgstr ""
+
+#: gnusteampacker/ui/add_game_dialog.py:166
+#, python-brace-format
+msgid "AppID: {appid}"
+msgstr ""
+
+#: gnusteampacker/ui/add_game_dialog.py:223
+#, python-brace-format
+msgid "Not found: {error}"
+msgstr ""
+
+#: gnusteampacker/ui/add_game_dialog.py:223
+msgid "unknown error"
+msgstr ""
+
+#: gnusteampacker/ui/preferences_window.py:16
+msgid "Fastest"
+msgstr ""
+
+#: gnusteampacker/ui/preferences_window.py:16
+msgid "Fast"
+msgstr ""
+
+#: gnusteampacker/ui/preferences_window.py:16
+msgid "Normal"
+msgstr ""
+
+#: gnusteampacker/ui/preferences_window.py:16
+msgid "Maximum"
+msgstr ""
+
+#: gnusteampacker/ui/preferences_window.py:16
+msgid "Ultra"
+msgstr ""
+
+#: gnusteampacker/ui/preferences_window.py:21 gnusteampacker/ui/window.py:99
+msgid "Preferences"
+msgstr ""
+
+#: gnusteampacker/ui/preferences_window.py:31
+msgid "Downloaders"
+msgstr ""
+
+#: gnusteampacker/ui/preferences_window.py:34
+msgid "SteamCMD"
+msgstr ""
+
+#: gnusteampacker/ui/preferences_window.py:37
+msgid "Path to SteamCMD"
+msgstr ""
+
+#: gnusteampacker/ui/preferences_window.py:42
+msgid "Auto-download if missing"
+msgstr ""
+
+#: gnusteampacker/ui/preferences_window.py:53
+msgid "Output"
+msgstr ""
+
+#: gnusteampacker/ui/preferences_window.py:56
+msgid "Files"
+msgstr ""
+
+#: gnusteampacker/ui/preferences_window.py:59
+msgid "Output directory"
+msgstr ""
+
+#: gnusteampacker/ui/preferences_window.py:64
+msgid "Browse…"
+msgstr ""
+
+#: gnusteampacker/ui/preferences_window.py:70
+msgid "Compression"
+msgstr ""
+
+#: gnusteampacker/ui/preferences_window.py:73
+msgid "Level"
+msgstr ""
+
+#: gnusteampacker/ui/preferences_window.py:92
+msgid "Threads"
+msgstr ""
+
+#: gnusteampacker/ui/preferences_window.py:100
+msgid "Choose output directory"
+msgstr ""
+
+#: gnusteampacker/ui/preferences_window.py:119
+msgid "Account"
+msgstr ""
+
+#: gnusteampacker/ui/preferences_window.py:122
+msgid "Steam credentials"
+msgstr ""
+
+#: gnusteampacker/ui/preferences_window.py:125
+msgid "Username/password are stored in GNOME Keyring (or a local file if unavailable). SteamCMD keeps its own login session when remembered login is enabled."
+msgstr ""
+
+#: gnusteampacker/ui/preferences_window.py:137
+msgid "Username"
+msgstr ""
+
+#: gnusteampacker/ui/preferences_window.py:142
+msgid "Password"
+msgstr ""
+
+#: gnusteampacker/ui/preferences_window.py:147
+msgid "Remember login session"
+msgstr ""
+
+#: gnusteampacker/ui/preferences_window.py:149
+msgid "Use Steam tool refresh/session tokens so later runs can auto-login."
+msgstr ""
+
+#: gnusteampacker/ui/preferences_window.py:162
+msgid "Appearance"
+msgstr ""
+
+#: gnusteampacker/ui/preferences_window.py:166
+msgid "Theme"
+msgstr ""
+
+#: gnusteampacker/ui/preferences_window.py:169
+msgid "Light"
+msgstr ""
+
+#: gnusteampacker/ui/preferences_window.py:169
+msgid "Dark"
+msgstr ""
+
+#: gnusteampacker/ui/preferences_window.py:170
+msgid "Color scheme"
+msgstr ""
+
+#: gnusteampacker/ui/preferences_window.py:178
+msgid "Language"
+msgstr ""
+
+#: gnusteampacker/ui/preferences_window.py:182
+msgid "Display language"
+msgstr ""
+
+#: gnusteampacker/ui/preferences_window.py:183
+msgid "Restart GnuSteamPacker to apply a language change"
+msgstr ""
+
+#: gnusteampacker/ui/queue_row.py:18 gnusteampacker/ui/queue_row.py:56
+#, python-brace-format
+msgid "AppID {appid}"
+msgstr ""
+
+#: gnusteampacker/ui/queue_row.py:39 gnusteampacker/ui/window.py:230
+msgid "Retry"
+msgstr ""
+
+#: gnusteampacker/ui/queue_row.py:47
+msgid "Remove"
+msgstr ""
+
+#: gnusteampacker/ui/queue_row.py:84
+#, python-brace-format
+msgid "AppID: {appid}  ·  {platform}  ·  Branch: {branch}"
+msgstr ""
+
+#: gnusteampacker/ui/queue_row.py:94
+#, python-brace-format
+msgid "{subtitle}  ·  {detail}"
+msgstr ""
+
+#: gnusteampacker/ui/window.py:54
+msgid "Add game"
+msgstr ""
+
+#: gnusteampacker/ui/window.py:58
+msgid "Start All"
+msgstr ""
+
+#: gnusteampacker/ui/window.py:66
+msgid "Menu"
+msgstr ""
+
+#: gnusteampacker/ui/window.py:78
+msgid "No games in queue"
+msgstr ""
+
+#: gnusteampacker/ui/window.py:79
+msgid "Press + to add a game to download."
+msgstr ""
+
+#: gnusteampacker/ui/window.py:86
+msgid "Queue"
+msgstr ""
+
+#: gnusteampacker/ui/window.py:100
+msgid "About GnuSteamPacker"
+msgstr ""
+
+#: gnusteampacker/ui/window.py:214
+msgid "Steam Guard Required"
+msgstr ""
+
+#: gnusteampacker/ui/window.py:215
+msgid "Enter the code from your email or authenticator app."
+msgstr ""
+
+#: gnusteampacker/worker.py:78
+#, python-brace-format
+msgid "SteamCMD install failed: {error}"
+msgstr ""
+
+#: gnusteampacker/worker.py:91
+#, python-brace-format
+msgid "Info fetch failed: {error}"
+msgstr ""
+
+#: gnusteampacker/worker.py:166
+#, python-brace-format
+msgid "SteamCMD output missing appmanifest for app {appid} in: {paths}"
+msgstr ""
+
+#: gnusteampacker/worker.py:254
+#, python-brace-format
+msgid "No files found under {path}"
+msgstr ""
+
