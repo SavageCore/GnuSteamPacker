@@ -152,18 +152,6 @@ class PreferencesWindow(Adw.PreferencesDialog):
         )
         group.add(self._remember_login)
 
-        self._skip_confirm = Adw.SwitchRow(title="Prefer code entry over app confirmation")
-        self._skip_confirm.set_subtitle(
-            "Use code-based Steam Guard flow when supported instead of waiting on mobile"
-            " app confirmation."
-        )
-        self._skip_confirm.set_active(bool(self._conf.get("login_skip_app_confirmation", False)))
-        self._skip_confirm.connect(
-            "notify::active",
-            lambda r, _: self._save("login_skip_app_confirmation", r.get_active()),
-        )
-        group.add(self._skip_confirm)
-
     # ── Appearance ────────────────────────────────────────────────────────
 
     def _build_appearance_page(self) -> None:

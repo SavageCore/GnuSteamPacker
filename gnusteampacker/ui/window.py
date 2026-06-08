@@ -164,12 +164,6 @@ class MainWindow(Adw.ApplicationWindow):
                     "username": username,
                     "password": "",
                     "remember_login": remember_login,
-                    "login_skip_app_confirmation": bool(
-                        (base_auth or {}).get(
-                            "login_skip_app_confirmation",
-                            conf.get("login_skip_app_confirmation", False),
-                        )
-                    ),
                 }
             await worker.process_item(item, update_cb, auth_override=per_item_auth)
             if item.status in (Status.BADLOGIN, Status.STEAMGUARD):
@@ -259,7 +253,6 @@ class MainWindow(Adw.ApplicationWindow):
 
     def _build_auth_override(self, conf: dict) -> dict | None:
         remember_login = bool(conf.get("remember_login", True))
-        skip_app_confirmation = bool(conf.get("login_skip_app_confirmation", False))
 
         username = credentials.get_username().strip()
         if username.lower() == "qr":
@@ -271,5 +264,4 @@ class MainWindow(Adw.ApplicationWindow):
             "username": username,
             "password": credentials.get_password(),
             "remember_login": remember_login,
-            "login_skip_app_confirmation": skip_app_confirmation,
         }

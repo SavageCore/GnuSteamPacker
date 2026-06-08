@@ -20,7 +20,6 @@ DEFAULTS = {
     "window_height": 520,
     "window_maximized": False,
     "remember_login": True,
-    "login_skip_app_confirmation": False,
 }
 
 

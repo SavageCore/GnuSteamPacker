@@ -183,6 +183,9 @@ def _check_logs(steamcmd_dir: Path, stdout: str = "", return_code: int = 0) -> t
     badlogin_errors = (
         "Invalid Password",
         "invalid password",
+        "No cached credentials",
+        "no cached credentials",
+        "No cached credentials and @NoPromptForPassword is set",
         "invalid refresh token",
         "refresh token expired",
         "refresh token revoked",
@@ -207,13 +210,19 @@ def _check_logs(steamcmd_dir: Path, stdout: str = "", return_code: int = 0) -> t
 
 def clear_cached_login(steamcmd_path: Path) -> None:
     """Clear SteamCMD auth cache to force a fresh login flow."""
-    steamcmd_dir = steamcmd_path.parent
-    cache_paths = (
-        steamcmd_dir / "config" / "config.vdf",
-        steamcmd_dir / "config" / "loginusers.vdf",
-        steamcmd_dir / "config" / "SteamAppData.vdf",
+    steamcmd_dir = steamcmd_path if steamcmd_path.is_dir() else steamcmd_path.parent
+    cache_roots = (
+        steamcmd_dir,
+        steamcmd_dir / ".home",
+        steamcmd_dir / ".home" / "Steam",
+        steamcmd_dir / ".home" / ".steam" / "steam",
     )
-    for p in cache_paths:
-        p.unlink(missing_ok=True)
-    for p in steamcmd_dir.glob("ssfn*"):
-        p.unlink(missing_ok=True)
+    for root in cache_roots:
+        for p in (
+            root / "config" / "config.vdf",
+            root / "config" / "loginusers.vdf",
+            root / "config" / "SteamAppData.vdf",
+        ):
+            p.unlink(missing_ok=True)
+        for p in root.glob("ssfn*"):
+            p.unlink(missing_ok=True)

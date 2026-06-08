@@ -11,3 +11,4 @@ repo/
 .flatpak-builder/
 .claude/
 requirements.txt
+scripts/compare_outputs.py
