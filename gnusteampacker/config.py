@@ -14,6 +14,7 @@ DEFAULTS = {
     "steamcmd_auto_download": True,
     "output_dir": str(Path.home() / "GnuSteamPacker"),
     "color_scheme": "default",  # "default" | "light" | "dark"
+    "language": "system",  # "system" | language code, e.g. "en", "ru"
     "compression_level": 5,
     "compression_threads": max(1, _cpu // 2),
     "window_width": 1000,

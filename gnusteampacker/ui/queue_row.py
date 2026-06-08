@@ -4,6 +4,7 @@ gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 from gi.repository import Adw, Gtk
 
+from gnusteampacker.i18n import _
 from gnusteampacker.queue_model import QueueItem, Status
 
 
@@ -14,12 +15,12 @@ class QueueRow(Adw.ActionRow):
         self._remove_cb = remove_cb
         self._retry_cb = retry_cb
 
-        self.set_title(item.game_name or f"AppID {item.appid}")
+        self.set_title(item.game_name or _("AppID {appid}").format(appid=item.appid))
         self.set_subtitle(self._build_subtitle(item))
 
         box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4, valign=Gtk.Align.CENTER)
 
-        self._status_label = Gtk.Label(label=item.status.value)
+        self._status_label = Gtk.Label(label=item.status.display_name)
         self._status_label.add_css_class("caption")
         self._status_label.set_xalign(1)
         box.append(self._status_label)
@@ -35,16 +36,16 @@ class QueueRow(Adw.ActionRow):
         self._retry_btn = Gtk.Button()
         self._retry_btn.set_icon_name("view-refresh-symbolic")
         self._retry_btn.add_css_class("flat")
-        self._retry_btn.set_tooltip_text("Retry")
+        self._retry_btn.set_tooltip_text(_("Retry"))
         self._retry_btn.set_visible(False)
-        self._retry_btn.connect("clicked", lambda _: retry_cb(item))
+        self._retry_btn.connect("clicked", lambda _btn: retry_cb(item))
         self._btn_box.append(self._retry_btn)
 
         self._remove_btn = Gtk.Button()
         self._remove_btn.set_icon_name("user-trash-symbolic")
         self._remove_btn.add_css_class("flat")
-        self._remove_btn.set_tooltip_text("Remove")
-        self._remove_btn.connect("clicked", lambda _: remove_cb(item))
+        self._remove_btn.set_tooltip_text(_("Remove"))
+        self._remove_btn.connect("clicked", lambda _btn: remove_cb(item))
         self._btn_box.append(self._remove_btn)
 
         box.append(self._btn_box)
@@ -52,9 +53,9 @@ class QueueRow(Adw.ActionRow):
 
     def update(self, item: QueueItem) -> None:
         self._item = item
-        self.set_title(item.game_name or f"AppID {item.appid}")
+        self.set_title(item.game_name or _("AppID {appid}").format(appid=item.appid))
         self.set_subtitle(self._build_subtitle(item))
-        self._status_label.set_text(item.status.value)
+        self._status_label.set_text(item.status.display_name)
         self.set_tooltip_text(item.error_detail or None)
 
         downloading = item.status == Status.DOWNLOADING
@@ -80,7 +81,9 @@ class QueueRow(Adw.ActionRow):
 
     def _build_subtitle(self, item: QueueItem) -> str:
         branch = (item.branch or "public").capitalize()
-        subtitle = f"AppID: {item.appid}  ·  {item.display_platform}  ·  Branch: {branch}"
+        subtitle = _("AppID: {appid}  ·  {platform}  ·  Branch: {branch}").format(
+            appid=item.appid, platform=item.display_platform, branch=branch
+        )
         if item.error_detail and item.status in (
             Status.FAIL,
             Status.BADLOGIN,
@@ -88,5 +91,7 @@ class QueueRow(Adw.ActionRow):
             Status.NOSUB,
             Status.AUTHENTICATING,
         ):
-            subtitle = f"{subtitle}  ·  {item.error_detail}"
+            subtitle = _("{subtitle}  ·  {detail}").format(
+                subtitle=subtitle, detail=item.error_detail
+            )
         return subtitle

@@ -11,6 +11,7 @@ from gi.repository import Adw, Gio, GLib, Gtk
 from gnusteampacker import config as cfg
 from gnusteampacker import credentials, steamcmd, worker
 from gnusteampacker.async_runner import run as async_run
+from gnusteampacker.i18n import _
 from gnusteampacker.queue_model import QueueItem, Status
 from gnusteampacker.ui.add_game_dialog import AddGameDialog
 from gnusteampacker.ui.queue_row import QueueRow
@@ -50,11 +51,11 @@ class MainWindow(Adw.ApplicationWindow):
         header = Adw.HeaderBar()
 
         add_btn = Gtk.Button(icon_name="list-add-symbolic")
-        add_btn.set_tooltip_text("Add game")
+        add_btn.set_tooltip_text(_("Add game"))
         add_btn.connect("clicked", self._on_add_clicked)
         header.pack_start(add_btn)
 
-        self._start_btn = Gtk.Button(label="Start All")
+        self._start_btn = Gtk.Button(label=_("Start All"))
         self._start_btn.add_css_class("suggested-action")
         self._start_btn.set_sensitive(False)
         self._start_btn.connect("clicked", self._on_start_all)
@@ -62,7 +63,7 @@ class MainWindow(Adw.ApplicationWindow):
 
         menu_btn = Gtk.MenuButton()
         menu_btn.set_icon_name("open-menu-symbolic")
-        menu_btn.set_tooltip_text("Menu")
+        menu_btn.set_tooltip_text(_("Menu"))
         menu_btn.set_menu_model(self._build_menu())
         header.pack_end(menu_btn)
 
@@ -74,15 +75,15 @@ class MainWindow(Adw.ApplicationWindow):
         toolbar_view.set_content(self._stack)
 
         status_page = Adw.StatusPage(
-            title="No games in queue",
-            description="Press + to add a game to download.",
+            title=_("No games in queue"),
+            description=_("Press + to add a game to download."),
             icon_name="folder-download-symbolic",
         )
         self._stack.add_named(status_page, "empty")
 
         scroll = Gtk.ScrolledWindow(vexpand=True)
         scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
-        self._queue_group = Adw.PreferencesGroup(title="Queue")
+        self._queue_group = Adw.PreferencesGroup(title=_("Queue"))
         self._queue_group.set_valign(Gtk.Align.START)
         self._queue_group.set_margin_top(12)
         self._queue_group.set_margin_bottom(12)
@@ -95,8 +96,8 @@ class MainWindow(Adw.ApplicationWindow):
 
     def _build_menu(self) -> Gio.Menu:
         menu = Gio.Menu()
-        menu.append("Preferences", "app.preferences")
-        menu.append("About GnuSteamPacker", "app.about")
+        menu.append(_("Preferences"), "app.preferences")
+        menu.append(_("About GnuSteamPacker"), "app.about")
         return menu
 
     # ── Queue management ─────────────────────────────────────────────────
@@ -210,8 +211,8 @@ class MainWindow(Adw.ApplicationWindow):
 
     def _show_steamguard_dialog(self, item: QueueItem) -> None:
         dialog = Adw.AlertDialog(
-            heading="Steam Guard Required",
-            body="Enter the code from your email or authenticator app.",
+            heading=_("Steam Guard Required"),
+            body=_("Enter the code from your email or authenticator app."),
         )
         entry = Gtk.Entry(placeholder_text="XXXXX", activates_default=True)
 
@@ -225,8 +226,8 @@ class MainWindow(Adw.ApplicationWindow):
 
         entry.connect("changed", _on_guard_changed)
         dialog.set_extra_child(entry)
-        dialog.add_response("cancel", "Cancel")
-        dialog.add_response("retry", "Retry")
+        dialog.add_response("cancel", _("Cancel"))
+        dialog.add_response("retry", _("Retry"))
         dialog.set_default_response("retry")
         dialog.set_response_appearance("retry", Adw.ResponseAppearance.SUGGESTED)
 

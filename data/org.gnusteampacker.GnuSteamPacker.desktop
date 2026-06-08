@@ -1,6 +1,8 @@
 [Desktop Entry]
 Name=GnuSteamPacker
+Name[ru]=GnuSteamPacker
 Comment=Download and package Steam games
+Comment[ru]=Загрузка и упаковка игр Steam
 Exec=gnusteampacker
 Icon=org.gnusteampacker.GnuSteamPacker
 Terminal=false

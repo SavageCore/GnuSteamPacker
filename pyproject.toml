@@ -17,6 +17,9 @@ dependencies = [
 [project.scripts]
 gnusteampacker = "gnusteampacker.main:main"
 
+[tool.hatch.build]
+artifacts = ["gnusteampacker/locale/**/*.mo"]
+
 [tool.hatch.build.targets.wheel]
 packages = ["gnusteampacker"]
 

@@ -18,6 +18,7 @@ from gnusteampacker import (
     vdf_cleaner,
 )
 from gnusteampacker import config as cfg
+from gnusteampacker.i18n import _
 from gnusteampacker.queue_model import QueueItem, Status
 
 log = logging.getLogger(__name__)
@@ -74,7 +75,7 @@ async def process_item(
         try:
             await steamcmd.ensure_steamcmd(sc_path, lambda msg: push(Status.GETINFO, 0, msg))
         except Exception as e:
-            push(Status.FAIL, detail=f"SteamCMD install failed: {e}")
+            push(Status.FAIL, detail=_("SteamCMD install failed: {error}").format(error=e))
             return
 
     # ── 2. Fetch game info and initial depot list ──────────────────────────
@@ -87,7 +88,7 @@ async def process_item(
         item.build_time = game_info.get(f"time_{item.branch}") or game_info.get("time_public", "")
         item.depot_list = release_text.build_depot_list(game_info, depot_names, item.branch)
     except Exception as e:
-        push(Status.FAIL, detail=f"Info fetch failed: {e}")
+        push(Status.FAIL, detail=_("Info fetch failed: {error}").format(error=e))
         return
 
     # ── 3. Download via SteamCMD ───────────────────────────────────────────
@@ -162,9 +163,8 @@ async def process_item(
     if steam_root is None:
         push(
             Status.FAIL,
-            detail=(
-                "SteamCMD output missing appmanifest for app "
-                f"{item.appid} in: {', '.join(str(p) for p in steam_roots)}"
+            detail=_("SteamCMD output missing appmanifest for app {appid} in: {paths}").format(
+                appid=item.appid, paths=", ".join(str(p) for p in steam_roots)
             ),
         )
         return
@@ -251,7 +251,7 @@ async def process_item(
     if not has_game_files:
         push(
             Status.FAIL,
-            detail=f"No files found under {steam_common}",
+            detail=_("No files found under {path}").format(path=steam_common),
         )
         return
 

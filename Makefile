@@ -1,10 +1,11 @@
-.PHONY: dev run watch lint format dev-icons flatpak flatpak-bundle flatpak-run rpm deb appimage clear-auth clean
+.PHONY: dev run watch lint format dev-icons pot update-po mo flatpak flatpak-bundle flatpak-run rpm deb appimage clear-auth clean
 
 dev:
 	uv venv --python /usr/bin/python3 --system-site-packages --clear
 	uv sync
+	$(MAKE) mo
 
-run:
+run: mo
 	uv run gnusteampacker
 
 watch:
@@ -24,6 +25,26 @@ dev-icons:
 	gtk-update-icon-cache -f -t $(HOME)/.local/share/icons/hicolor/ 2>/dev/null || true
 	update-desktop-database $(HOME)/.local/share/applications/ 2>/dev/null || true
 	@echo "Icon installed. Restart the shell or re-login if icon is still missing."
+
+pot:
+	find gnusteampacker -name '*.py' | sort > /tmp/gsp-potfiles.txt
+	xgettext --from-code=UTF-8 --language=Python --keyword=_ --add-comments \
+		--package-name=GnuSteamPacker --package-version=0.1.0 \
+		--copyright-holder="SavageCore" \
+		--msgid-bugs-address="https://github.com/SavageCore/GnuSteamPacker/issues" \
+		--output=po/gnusteampacker.pot --files-from=/tmp/gsp-potfiles.txt
+	rm -f /tmp/gsp-potfiles.txt
+
+update-po: pot
+	for po in po/*.po; do \
+		msgmerge --update --backup=off "$$po" po/gnusteampacker.pot; \
+	done
+
+mo:
+	for lang in $$(cat po/LINGUAS); do \
+		install -d "gnusteampacker/locale/$$lang/LC_MESSAGES"; \
+		msgfmt -o "gnusteampacker/locale/$$lang/LC_MESSAGES/gnusteampacker.mo" "po/$$lang.po"; \
+	done
 
 flatpak:
 	flatpak-builder --force-clean --repo=flatpak-repo build-dir org.gnusteampacker.GnuSteamPacker.json
@@ -51,4 +72,4 @@ clear-auth:
 	uv run python scripts/cleaner.py
 
 clean:
-	rm -rf build-dir .flatpak-builder flatpak-repo requirements.txt __pycache__ gnusteampacker/__pycache__ gnusteampacker/ui/__pycache__
+	rm -rf build-dir .flatpak-builder flatpak-repo requirements.txt __pycache__ gnusteampacker/__pycache__ gnusteampacker/ui/__pycache__ gnusteampacker/locale

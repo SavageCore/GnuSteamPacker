@@ -41,9 +41,12 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y python3-gi gir1.2-adw-1 p7zip-full
+          sudo apt-get install -y python3-gi gir1.2-adw-1 p7zip-full gettext
           echo 'deb [trusted=yes] https://repo.goreleaser.com/apt/ /' | sudo tee /etc/apt/sources.list.d/goreleaser.list
           sudo apt-get update && sudo apt-get install -y nfpm
+
+      - name: Compile translations
+        run: make mo
 
       - name: Prepare package directory
         run: |
@@ -79,9 +82,12 @@ jobs:
       - name: Install Flatpak tooling
         run: |
           sudo apt-get update
-          sudo apt-get install -y flatpak flatpak-builder
+          sudo apt-get install -y flatpak flatpak-builder gettext
           flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
           flatpak install --user -y flathub org.gnome.Platform//50 org.gnome.Sdk//50
+
+      - name: Compile translations
+        run: make mo
 
       - name: Import Flatpak GPG key
         run: |

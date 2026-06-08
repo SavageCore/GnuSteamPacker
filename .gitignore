@@ -12,3 +12,4 @@ repo/
 .claude/
 requirements.txt
 scripts/compare_outputs.py
+gnusteampacker/locale/

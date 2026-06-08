@@ -53,23 +53,24 @@ flatpak install --user --bundle gnusteampacker.flatpak
 - `7zip` / `7z`
 - `uv` (for development)
 - `entr` (for `make watch`)
+- `gettext` (for compiling translations — provides `msgfmt`/`xgettext`/`msgmerge`)
 
 On Fedora/Nobara:
 
 ```bash
-sudo dnf install python3-gobject libadwaita 7zip entr
+sudo dnf install python3-gobject libadwaita 7zip entr gettext
 ```
 
 On Arch/CachyOS:
 
 ```bash
-sudo pacman -S python-gobject libadwaita p7zip entr uv
+sudo pacman -S python-gobject libadwaita p7zip entr uv gettext
 ```
 
 On Debian/Ubuntu:
 
 ```bash
-sudo apt install python3-gi gir1.2-adw-1 p7zip-full entr
+sudo apt install python3-gi gir1.2-adw-1 p7zip-full entr gettext
 pip install uv  # uv is not in Debian repos
 ```
 
@@ -111,6 +112,30 @@ Compare generated output against SuperSteamPacker references:
 ```bash
 python scripts/compare_outputs.py
 ```
+
+## Translations
+
+GnuSteamPacker is translated via [Weblate](https://weblate.org/). If you'd like to contribute a translation or improve an existing one, head to the project's Weblate page — no Git knowledge required, just sign in and start translating.
+
+Recommended Weblate component setup for maintainers adding this project:
+- **gettext PO** component — file mask `po/*.po`, template `po/gnusteampacker.pot`
+- **Desktop Entry translations** component — file mask `data/*.desktop`
+
+Local development commands for working with translations directly:
+
+```bash
+make pot        # Regenerate po/gnusteampacker.pot from source strings
+make update-po  # Merge the regenerated template into existing po/*.po files
+make mo         # Compile po/*.po into gnusteampacker/locale/<lang>/LC_MESSAGES/*.mo
+```
+
+`make dev` and `make run` compile translations automatically. To run the app in a specific language:
+
+```bash
+LANGUAGE=ru make run
+```
+
+To add a new language, create `po/<lang>.po` (e.g. via `msginit --input=po/gnusteampacker.pot --locale=<lang> --output=po/<lang>.po`) and add `<lang>` to `po/LINGUAS`.
 
 ## Packaging
 

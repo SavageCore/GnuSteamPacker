@@ -10,6 +10,7 @@ from gi.repository import Adw, Gdk, Gio, Gtk
 
 from gnusteampacker import APP_ID, __version__
 from gnusteampacker import config as cfg
+from gnusteampacker.i18n import _
 from gnusteampacker.ui.preferences_window import PreferencesWindow
 from gnusteampacker.ui.window import MainWindow
 
@@ -37,7 +38,7 @@ class GnuSteamPackerApp(Adw.Application):
 
     def _setup_actions(self) -> None:
         prefs_action = Gio.SimpleAction.new("preferences", None)
-        prefs_action.connect("activate", lambda *_: PreferencesWindow().present(self._window))
+        prefs_action.connect("activate", lambda *_args: PreferencesWindow().present(self._window))
         self.add_action(prefs_action)
 
         about_action = Gio.SimpleAction.new("about", None)
@@ -45,7 +46,7 @@ class GnuSteamPackerApp(Adw.Application):
         self.add_action(about_action)
 
         quit_action = Gio.SimpleAction.new("quit", None)
-        quit_action.connect("activate", lambda *_: self.quit())
+        quit_action.connect("activate", lambda *_args: self.quit())
         self.add_action(quit_action)
         self.set_accels_for_action("app.quit", ["<Primary>q"])
 
@@ -59,20 +60,24 @@ class GnuSteamPackerApp(Adw.Application):
         scheme = scheme_map.get(conf.get("color_scheme", "default"), Adw.ColorScheme.DEFAULT)
         Adw.StyleManager.get_default().set_color_scheme(scheme)
 
-    def _show_about(self, *_) -> None:
+    def _show_about(self, *_args) -> None:
         dialog = Adw.AboutDialog(
             application_name="GnuSteamPacker",
             application_icon=APP_ID,
             version=__version__,
-            comments="Download and package Steam games on Linux.",
+            comments=_(
+                "A Linux-native GUI for downloading, cleaning, and packaging Steam "
+                "games for archival and sharing. Spiritual port of "
+                '<a href="https://github.com/Masquerade64/SuperSteamPacker">SuperSteamPacker</a>.'
+            ),
             website="https://github.com/SavageCore/GnuSteamPacker",
             license_type=Gtk.License.GPL_3_0,
             copyright="© 2026 SavageCore",
             developers=["SavageCore"],
         )
-        dialog.add_link("Donate", "https://ko-fi.com/savagecore")
+        dialog.add_link(_("Donate"), "https://ko-fi.com/savagecore")
         dialog.add_acknowledgement_section(
-            "Third-Party Libraries and Special Thanks",
+            _("Third-Party Libraries and Special Thanks"),
             [
                 "aiohttp https://github.com/aio-libs/aiohttp",
                 "vdf https://github.com/ValvePython/vdf",

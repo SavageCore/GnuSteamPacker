@@ -1,6 +1,8 @@
 from dataclasses import dataclass, field
 from enum import StrEnum
 
+from gnusteampacker.i18n import _
+
 
 class Status(StrEnum):
     READY = "Ready"
@@ -16,6 +18,10 @@ class Status(StrEnum):
     STEAMGUARD = "Steam Guard needed"
     NOSUB = "No subscription"
     SKIPPED = "Skipped"
+
+    @property
+    def display_name(self) -> str:
+        return _(self.value)
 
 
 @dataclass
@@ -35,11 +41,11 @@ class QueueItem:
     @property
     def display_platform(self) -> str:
         labels = {
-            "win64": "Windows 64-bit",
-            "win32": "Windows 32-bit",
-            "lin64": "Linux 64-bit",
-            "lin32": "Linux 32-bit",
-            "macos": "macOS",
+            "win64": _("Windows 64-bit"),
+            "win32": _("Windows 32-bit"),
+            "lin64": _("Linux 64-bit"),
+            "lin32": _("Linux 32-bit"),
+            "macos": _("macOS"),
         }
         return labels.get(self.platform, self.platform)
 

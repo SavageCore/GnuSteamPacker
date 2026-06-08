@@ -9,6 +9,7 @@ gi.require_version("Adw", "1")
 from gi.repository import Adw, GLib, Gtk
 
 from gnusteampacker import steam_api
+from gnusteampacker.i18n import _
 
 log = logging.getLogger(__name__)
 from gnusteampacker.async_runner import run as async_run
@@ -17,7 +18,7 @@ from gnusteampacker.queue_model import QueueItem
 
 class AddGameDialog(Adw.Dialog):
     def __init__(self, on_add):
-        super().__init__(title="Add Game")
+        super().__init__(title=_("Add Game"))
         self._on_add = on_add
         self._search_results: list[dict] = []
         self._appid: str = ""
@@ -45,8 +46,8 @@ class AddGameDialog(Adw.Dialog):
         scroll.set_child(content)
 
         # ── Search section ──────────────────────────────────────────────────
-        search_group = Adw.PreferencesGroup(title="Search by name")
-        self._search_entry = Gtk.SearchEntry(placeholder_text="e.g. Half-Life, Portal…")
+        search_group = Adw.PreferencesGroup(title=_("Search by name"))
+        self._search_entry = Gtk.SearchEntry(placeholder_text=_("e.g. Half-Life, Portal…"))
         self._search_entry.connect("search-changed", self._on_search_changed)
         self._search_entry.connect("activate", self._on_search_activate)
         search_group.add(self._search_entry)
@@ -60,15 +61,15 @@ class AddGameDialog(Adw.Dialog):
         content.append(search_group)
 
         # ── Manual AppID ────────────────────────────────────────────────────
-        manual_group = Adw.PreferencesGroup(title="Or enter AppID directly")
+        manual_group = Adw.PreferencesGroup(title=_("Or enter AppID directly"))
         manual_group.set_margin_top(16)
 
-        self._appid_row = Adw.EntryRow(title="AppID")
+        self._appid_row = Adw.EntryRow(title=_("AppID"))
         self._appid_row.connect("changed", self._on_appid_changed)
         manual_group.add(self._appid_row)
 
         # Shown while fetching game info
-        self._info_row = Adw.ActionRow(title="Looking up game…")
+        self._info_row = Adw.ActionRow(title=_("Looking up game…"))
         self._info_row.set_visible(False)
         spinner = Gtk.Spinner()
         spinner.start()
@@ -78,21 +79,21 @@ class AddGameDialog(Adw.Dialog):
         content.append(manual_group)
 
         # ── Options (disabled until game info loaded) ──────────────────────
-        self._options_group = Adw.PreferencesGroup(title="Options")
+        self._options_group = Adw.PreferencesGroup(title=_("Options"))
         self._options_group.set_margin_top(16)
         self._options_group.set_sensitive(False)
 
         platforms = list(steam_api.PLATFORMS.keys())
-        self._platform_row = Adw.ComboRow(title="Platform")
+        self._platform_row = Adw.ComboRow(title=_("Platform"))
         self._platform_row.set_model(Gtk.StringList.new(platforms))
         self._options_group.add(self._platform_row)
 
-        self._branch_row = Adw.ComboRow(title="Branch")
+        self._branch_row = Adw.ComboRow(title=_("Branch"))
         self._branch_row.set_model(Gtk.StringList.new(["public"]))
         self._branch_row.connect("notify::selected", self._on_branch_changed)
         self._options_group.add(self._branch_row)
 
-        self._password_row = Adw.PasswordEntryRow(title="Branch password")
+        self._password_row = Adw.PasswordEntryRow(title=_("Branch password"))
         self._password_row.set_visible(False)
         self._options_group.add(self._password_row)
 
@@ -103,11 +104,11 @@ class AddGameDialog(Adw.Dialog):
         btn_box.set_margin_top(20)
         btn_box.set_halign(Gtk.Align.END)
 
-        cancel_btn = Gtk.Button(label="Cancel")
-        cancel_btn.connect("clicked", lambda _: self.close())
+        cancel_btn = Gtk.Button(label=_("Cancel"))
+        cancel_btn.connect("clicked", lambda _btn: self.close())
         btn_box.append(cancel_btn)
 
-        self._add_btn = Gtk.Button(label="Add to Queue")
+        self._add_btn = Gtk.Button(label=_("Add to Queue"))
         self._add_btn.add_css_class("suggested-action")
         self._add_btn.set_sensitive(False)
         self._add_btn.connect("clicked", self._on_add_clicked)
@@ -161,7 +162,9 @@ class AddGameDialog(Adw.Dialog):
             return False
 
         for r in self._search_results:
-            row = Adw.ActionRow(title=r["name"], subtitle=f"AppID: {r['appid']}")
+            row = Adw.ActionRow(
+                title=r["name"], subtitle=_("AppID: {appid}").format(appid=r["appid"])
+            )
             row.set_activatable(True)
             self._results_list.append(row)
         self._results_list.set_visible(True)
@@ -196,7 +199,7 @@ class AddGameDialog(Adw.Dialog):
 
     def _do_fetch_info(self, appid: str) -> bool:
         self._appid_timeout_id = 0
-        self._info_row.set_title("Looking up game…")
+        self._info_row.set_title(_("Looking up game…"))
         self._info_row.set_visible(True)
         async_run(self._fetch_info_async(appid))
         return False
@@ -216,7 +219,9 @@ class AddGameDialog(Adw.Dialog):
         self._info_row.set_visible(False)
 
         if error or not info:
-            self._info_row.set_title(f"Not found: {error or 'unknown error'}")
+            self._info_row.set_title(
+                _("Not found: {error}").format(error=error or _("unknown error"))
+            )
             self._info_row.set_visible(True)
             return False
 
