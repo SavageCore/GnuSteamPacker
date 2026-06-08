@@ -82,14 +82,13 @@ class MainWindow(Adw.ApplicationWindow):
 
         scroll = Gtk.ScrolledWindow(vexpand=True)
         scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
-        self._list_box = Gtk.ListBox()
-        self._list_box.set_selection_mode(Gtk.SelectionMode.NONE)
-        self._list_box.add_css_class("boxed-list")
-        self._list_box.set_margin_top(12)
-        self._list_box.set_margin_bottom(12)
-        self._list_box.set_margin_start(16)
-        self._list_box.set_margin_end(16)
-        scroll.set_child(self._list_box)
+        self._queue_group = Adw.PreferencesGroup(title="Queue")
+        self._queue_group.set_valign(Gtk.Align.START)
+        self._queue_group.set_margin_top(12)
+        self._queue_group.set_margin_bottom(12)
+        self._queue_group.set_margin_start(128)
+        self._queue_group.set_margin_end(128)
+        scroll.set_child(self._queue_group)
         self._stack.add_named(scroll, "queue")
 
         self._refresh_stack()
@@ -113,14 +112,14 @@ class MainWindow(Adw.ApplicationWindow):
             retry_cb=self._retry_item,
         )
         self._rows[id(item)] = row
-        self._list_box.append(row)
+        self._queue_group.add(row)
         self._refresh_stack()
         self._update_start_button_state()
 
     def _remove_item(self, item: QueueItem) -> None:
         row = self._rows.pop(id(item), None)
         if row:
-            self._list_box.remove(row)
+            self._queue_group.remove(row)
         if item in self._items:
             self._items.remove(item)
         self._refresh_stack()

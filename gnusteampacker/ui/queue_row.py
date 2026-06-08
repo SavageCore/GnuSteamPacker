@@ -79,7 +79,7 @@ class QueueRow(Adw.ActionRow):
             self._status_label.add_css_class("warning")
 
     def _build_subtitle(self, item: QueueItem) -> str:
-        branch = item.branch or "public"
+        branch = (item.branch or "public").capitalize()
         subtitle = f"AppID: {item.appid}  ·  {item.display_platform}  ·  Branch: {branch}"
         if item.error_detail and item.status in (
             Status.FAIL,
