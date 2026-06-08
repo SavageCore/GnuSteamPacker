@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: gnusteampacker\n"
 "Report-Msgid-Bugs-To: https://github.com/SavageCore/GnuSteamPacker/issues\n"
 "POT-Creation-Date: 2026-06-08 12:15+0100\n"
-"PO-Revision-Date: 2026-06-08 13:35\n"
+"PO-Revision-Date: 2026-06-08 13:51\n"
 "Last-Translator: \n"
 "Language-Team: Chinese Traditional\n"
 "Language: zh_TW\n"
@@ -19,7 +19,7 @@ msgstr ""
 
 #: gnusteampacker/i18n.py:56 gnusteampacker/ui/preferences_window.py:169
 msgid "Follow System"
-msgstr ""
+msgstr "跟随系统"
 
 #: gnusteampacker/main.py:69
 msgid "A Linux-native GUI for downloading, cleaning, and packaging Steam games for archival and sharing. Spiritual port of <a href=\"https://github.com/Masquerade64/SuperSteamPacker\">SuperSteamPacker</a>."
@@ -27,27 +27,27 @@ msgstr ""
 
 #: gnusteampacker/main.py:78
 msgid "Donate"
-msgstr ""
+msgstr "捐助"
 
 #: gnusteampacker/main.py:80
 msgid "Third-Party Libraries and Special Thanks"
-msgstr ""
+msgstr "第三方图书馆和特别致谢"
 
 #: gnusteampacker/queue_model.py:44
 msgid "Windows 64-bit"
-msgstr ""
+msgstr "Windows 64 位"
 
 #: gnusteampacker/queue_model.py:45
 msgid "Windows 32-bit"
-msgstr ""
+msgstr "Windows 32 位"
 
 #: gnusteampacker/queue_model.py:46
 msgid "Linux 64-bit"
-msgstr ""
+msgstr "Linux 64 位"
 
 #: gnusteampacker/queue_model.py:47
 msgid "Linux 32-bit"
-msgstr ""
+msgstr "Linux 32 位"
 
 #: gnusteampacker/queue_model.py:48
 msgid "macOS"
@@ -55,56 +55,56 @@ msgstr ""
 
 #: gnusteampacker/ui/add_game_dialog.py:21
 msgid "Add Game"
-msgstr ""
+msgstr "添加游戏"
 
 #. ── Search section ──────────────────────────────────────────────────
 #: gnusteampacker/ui/add_game_dialog.py:49
 msgid "Search by name"
-msgstr ""
+msgstr "按名称搜索"
 
 #: gnusteampacker/ui/add_game_dialog.py:50
 msgid "e.g. Half-Life, Portal…"
-msgstr ""
+msgstr "例如: 半衰期, Portal…"
 
 #. ── Manual AppID ────────────────────────────────────────────────────
 #: gnusteampacker/ui/add_game_dialog.py:64
 msgid "Or enter AppID directly"
-msgstr ""
+msgstr "或直接输入 AppID"
 
 #: gnusteampacker/ui/add_game_dialog.py:67
 msgid "AppID"
-msgstr ""
+msgstr "应用ID"
 
 #. Shown while fetching game info
 #: gnusteampacker/ui/add_game_dialog.py:72
 #: gnusteampacker/ui/add_game_dialog.py:202
 msgid "Looking up game…"
-msgstr ""
+msgstr "正在查找游戏…"
 
 #. ── Options (disabled until game info loaded) ──────────────────────
 #: gnusteampacker/ui/add_game_dialog.py:82
 msgid "Options"
-msgstr ""
+msgstr "备选方案"
 
 #: gnusteampacker/ui/add_game_dialog.py:87
 msgid "Platform"
-msgstr ""
+msgstr "平台"
 
 #: gnusteampacker/ui/add_game_dialog.py:91
 msgid "Branch"
-msgstr ""
+msgstr "分支"
 
 #: gnusteampacker/ui/add_game_dialog.py:96
 msgid "Branch password"
-msgstr ""
+msgstr "分支密码"
 
 #: gnusteampacker/ui/add_game_dialog.py:107 gnusteampacker/ui/window.py:229
 msgid "Cancel"
-msgstr ""
+msgstr "取消"
 
 #: gnusteampacker/ui/add_game_dialog.py:111
 msgid "Add to Queue"
-msgstr ""
+msgstr "添加到队列"
 
 #: gnusteampacker/ui/add_game_dialog.py:166
 #, python-brace-format
@@ -118,23 +118,23 @@ msgstr ""
 
 #: gnusteampacker/ui/add_game_dialog.py:223
 msgid "unknown error"
-msgstr ""
+msgstr "未知错误"
 
 #: gnusteampacker/ui/preferences_window.py:16
 msgid "Fastest"
-msgstr ""
+msgstr "最快的"
 
 #: gnusteampacker/ui/preferences_window.py:16
 msgid "Fast"
-msgstr ""
+msgstr "快速的"
 
 #: gnusteampacker/ui/preferences_window.py:16
 msgid "Normal"
-msgstr ""
+msgstr "普通的"
 
 #: gnusteampacker/ui/preferences_window.py:16
 msgid "Maximum"
-msgstr ""
+msgstr "最大值"
 
 #: gnusteampacker/ui/preferences_window.py:16
 msgid "Ultra"
@@ -142,11 +142,11 @@ msgstr ""
 
 #: gnusteampacker/ui/preferences_window.py:21 gnusteampacker/ui/window.py:99
 msgid "Preferences"
-msgstr ""
+msgstr "首选项"
 
 #: gnusteampacker/ui/preferences_window.py:31
 msgid "Downloaders"
-msgstr ""
+msgstr "下载器"
 
 #: gnusteampacker/ui/preferences_window.py:34
 msgid "SteamCMD"
@@ -154,103 +154,103 @@ msgstr ""
 
 #: gnusteampacker/ui/preferences_window.py:37
 msgid "Path to SteamCMD"
-msgstr ""
+msgstr "SteamCMD路径"
 
 #: gnusteampacker/ui/preferences_window.py:42
 msgid "Auto-download if missing"
-msgstr ""
+msgstr "缺少自动下载"
 
 #: gnusteampacker/ui/preferences_window.py:53
 msgid "Output"
-msgstr ""
+msgstr "产出"
 
 #: gnusteampacker/ui/preferences_window.py:56
 msgid "Files"
-msgstr ""
+msgstr "文件"
 
 #: gnusteampacker/ui/preferences_window.py:59
 msgid "Output directory"
-msgstr ""
+msgstr "输出目录"
 
 #: gnusteampacker/ui/preferences_window.py:64
 msgid "Browse…"
-msgstr ""
+msgstr "浏览…"
 
 #: gnusteampacker/ui/preferences_window.py:70
 msgid "Compression"
-msgstr ""
+msgstr "压缩"
 
 #: gnusteampacker/ui/preferences_window.py:73
 msgid "Level"
-msgstr ""
+msgstr "关卡"
 
 #: gnusteampacker/ui/preferences_window.py:92
 msgid "Threads"
-msgstr ""
+msgstr "线程"
 
 #: gnusteampacker/ui/preferences_window.py:100
 msgid "Choose output directory"
-msgstr ""
+msgstr "选择输出目录"
 
 #: gnusteampacker/ui/preferences_window.py:119
 msgid "Account"
-msgstr ""
+msgstr "账户"
 
 #: gnusteampacker/ui/preferences_window.py:122
 msgid "Steam credentials"
-msgstr ""
+msgstr "Steam凭据"
 
 #: gnusteampacker/ui/preferences_window.py:125
 msgid "Username/password are stored in GNOME Keyring (or a local file if unavailable). SteamCMD keeps its own login session when remembered login is enabled."
-msgstr ""
+msgstr "用户名/密码存储在 GNOME 密钥环中(如果没有本地文件可用的话)。SteamCMD 在启用记住登录时保持自己的登录会话。"
 
 #: gnusteampacker/ui/preferences_window.py:137
 msgid "Username"
-msgstr ""
+msgstr "用户名"
 
 #: gnusteampacker/ui/preferences_window.py:142
 msgid "Password"
-msgstr ""
+msgstr "密码"
 
 #: gnusteampacker/ui/preferences_window.py:147
 msgid "Remember login session"
-msgstr ""
+msgstr "记住登录会话"
 
 #: gnusteampacker/ui/preferences_window.py:149
 msgid "Use Steam tool refresh/session tokens so later runs can auto-login."
-msgstr ""
+msgstr "使用 Steam 工具刷新/会话令牌，然后运行可以自动登录。"
 
 #: gnusteampacker/ui/preferences_window.py:162
 msgid "Appearance"
-msgstr ""
+msgstr "外观"
 
 #: gnusteampacker/ui/preferences_window.py:166
 msgid "Theme"
-msgstr ""
+msgstr "主题"
 
 #: gnusteampacker/ui/preferences_window.py:169
 msgid "Light"
-msgstr ""
+msgstr "亮色的"
 
 #: gnusteampacker/ui/preferences_window.py:169
 msgid "Dark"
-msgstr ""
+msgstr "深色"
 
 #: gnusteampacker/ui/preferences_window.py:170
 msgid "Color scheme"
-msgstr ""
+msgstr "配色方案"
 
 #: gnusteampacker/ui/preferences_window.py:178
 msgid "Language"
-msgstr ""
+msgstr "语言"
 
 #: gnusteampacker/ui/preferences_window.py:182
 msgid "Display language"
-msgstr ""
+msgstr "显示语言"
 
 #: gnusteampacker/ui/preferences_window.py:183
 msgid "Restart GnuSteamPacker to apply a language change"
-msgstr ""
+msgstr "重新启动GnuSteamPacker 以应用语言更改"
 
 #: gnusteampacker/ui/queue_row.py:18 gnusteampacker/ui/queue_row.py:56
 #, python-brace-format
@@ -259,11 +259,11 @@ msgstr ""
 
 #: gnusteampacker/ui/queue_row.py:39 gnusteampacker/ui/window.py:230
 msgid "Retry"
-msgstr ""
+msgstr "重试"
 
 #: gnusteampacker/ui/queue_row.py:47
 msgid "Remove"
-msgstr ""
+msgstr "删除"
 
 #: gnusteampacker/ui/queue_row.py:84
 #, python-brace-format
@@ -277,39 +277,39 @@ msgstr ""
 
 #: gnusteampacker/ui/window.py:54
 msgid "Add game"
-msgstr ""
+msgstr "添加游戏"
 
 #: gnusteampacker/ui/window.py:58
 msgid "Start All"
-msgstr ""
+msgstr "全部启动"
 
 #: gnusteampacker/ui/window.py:66
 msgid "Menu"
-msgstr ""
+msgstr "菜单"
 
 #: gnusteampacker/ui/window.py:78
 msgid "No games in queue"
-msgstr ""
+msgstr "队列中没有游戏"
 
 #: gnusteampacker/ui/window.py:79
 msgid "Press + to add a game to download."
-msgstr ""
+msgstr "按 + 添加游戏进行下载。"
 
 #: gnusteampacker/ui/window.py:86
 msgid "Queue"
-msgstr ""
+msgstr "队列"
 
 #: gnusteampacker/ui/window.py:100
 msgid "About GnuSteamPacker"
-msgstr ""
+msgstr "关于 GnuSteamPacker"
 
 #: gnusteampacker/ui/window.py:214
 msgid "Steam Guard Required"
-msgstr ""
+msgstr "需要Steam卫士"
 
 #: gnusteampacker/ui/window.py:215
 msgid "Enter the code from your email or authenticator app."
-msgstr ""
+msgstr "从您的电子邮件或身份验证程序中输入代码。"
 
 #: gnusteampacker/worker.py:78
 #, python-brace-format
