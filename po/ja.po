@@ -5,37 +5,37 @@ msgstr ""
 "POT-Creation-Date: 2026-06-08 12:15+0100\n"
 "PO-Revision-Date: 2026-06-08 13:35\n"
 "Last-Translator: \n"
-"Language-Team: Dutch\n"
-"Language: nl_NL\n"
+"Language-Team: Japanese\n"
+"Language: ja_JP\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
 "X-Crowdin-Project: gnusteampacker\n"
 "X-Crowdin-Project-ID: 904253\n"
-"X-Crowdin-Language: nl\n"
+"X-Crowdin-Language: ja\n"
 "X-Crowdin-File: /main/po/gnusteampacker.pot\n"
 "X-Crowdin-File-ID: 7\n"
 
 #: gnusteampacker/i18n.py:56 gnusteampacker/ui/preferences_window.py:169
 msgid "Follow System"
-msgstr "Volg systeem"
+msgstr "システムをフォロー"
 
 #: gnusteampacker/main.py:69
 msgid "A Linux-native GUI for downloading, cleaning, and packaging Steam games for archival and sharing. Spiritual port of <a href=\"https://github.com/Masquerade64/SuperSteamPacker\">SuperSteamPacker</a>."
-msgstr "Een Linux-native GUI voor het downloaden, schoonmaken en verpakking van Steam games voor archiveren en delen. Spirituele poort van <a href=\"https://github.com/Masquerade64/SuperSteamPacker\">SuperSteamPacker</a>."
+msgstr "アーカイブや共有のための蒸気ゲームのダウンロード、クリーニング、パッケージング用の Linux ネイティブの GUI 。 <a href=\"https://github.com/Masquerade64/SuperSteamPacker\">SuperSteamPacker</a> のスピリチュアルポート。"
 
 #: gnusteampacker/main.py:78
 msgid "Donate"
-msgstr "Doneren"
+msgstr "寄付"
 
 #: gnusteampacker/main.py:80
 msgid "Third-Party Libraries and Special Thanks"
-msgstr "Derde-partij Bibliotheken en Speciale Bedankt"
+msgstr "サードパーティのライブラリと特別な感謝"
 
 #: gnusteampacker/queue_model.py:44
 msgid "Windows 64-bit"
-msgstr "Windows 64-bit"
+msgstr "Windows 64 ビット"
 
 #: gnusteampacker/queue_model.py:45
 msgid "Windows 32-bit"
@@ -43,11 +43,11 @@ msgstr "Windows 32-bit"
 
 #: gnusteampacker/queue_model.py:46
 msgid "Linux 64-bit"
-msgstr "Linux 64-bit"
+msgstr "Linux 64 ビット"
 
 #: gnusteampacker/queue_model.py:47
 msgid "Linux 32-bit"
-msgstr "Linux 32-bit"
+msgstr "Linux 32 ビット"
 
 #: gnusteampacker/queue_model.py:48
 msgid "macOS"
@@ -55,56 +55,56 @@ msgstr "macOS"
 
 #: gnusteampacker/ui/add_game_dialog.py:21
 msgid "Add Game"
-msgstr "Spel toevoegen"
+msgstr "ゲームを追加"
 
 #. ── Search section ──────────────────────────────────────────────────
 #: gnusteampacker/ui/add_game_dialog.py:49
 msgid "Search by name"
-msgstr "Zoeken op naam"
+msgstr "名前で検索"
 
 #: gnusteampacker/ui/add_game_dialog.py:50
 msgid "e.g. Half-Life, Portal…"
-msgstr ""
+msgstr "例: Half-Life, Portal…"
 
 #. ── Manual AppID ────────────────────────────────────────────────────
 #: gnusteampacker/ui/add_game_dialog.py:64
 msgid "Or enter AppID directly"
-msgstr "Of voer AppID direct in"
+msgstr "または AppID を直接入力してください"
 
 #: gnusteampacker/ui/add_game_dialog.py:67
 msgid "AppID"
-msgstr "App-ID"
+msgstr "AppID"
 
 #. Shown while fetching game info
 #: gnusteampacker/ui/add_game_dialog.py:72
 #: gnusteampacker/ui/add_game_dialog.py:202
 msgid "Looking up game…"
-msgstr "Spel opzoeken…"
+msgstr ""
 
 #. ── Options (disabled until game info loaded) ──────────────────────
 #: gnusteampacker/ui/add_game_dialog.py:82
 msgid "Options"
-msgstr "Instellingen"
+msgstr "オプション"
 
 #: gnusteampacker/ui/add_game_dialog.py:87
 msgid "Platform"
-msgstr "Platform"
+msgstr "プラットフォーム"
 
 #: gnusteampacker/ui/add_game_dialog.py:91
 msgid "Branch"
-msgstr "Filiaal"
+msgstr "ブランチ"
 
 #: gnusteampacker/ui/add_game_dialog.py:96
 msgid "Branch password"
-msgstr "Branch wachtwoord"
+msgstr "ブランチのパスワード"
 
 #: gnusteampacker/ui/add_game_dialog.py:107 gnusteampacker/ui/window.py:229
 msgid "Cancel"
-msgstr "annuleren"
+msgstr "キャンセル"
 
 #: gnusteampacker/ui/add_game_dialog.py:111
 msgid "Add to Queue"
-msgstr "Toevoegen aan wachtrij"
+msgstr "キューに追加"
 
 #: gnusteampacker/ui/add_game_dialog.py:166
 #, python-brace-format
@@ -114,27 +114,27 @@ msgstr "AppID: {appid}"
 #: gnusteampacker/ui/add_game_dialog.py:223
 #, python-brace-format
 msgid "Not found: {error}"
-msgstr "Niet gevonden: {error}"
+msgstr "見つかりません: {error}"
 
 #: gnusteampacker/ui/add_game_dialog.py:223
 msgid "unknown error"
-msgstr "onbekende fout"
+msgstr "不明なエラー"
 
 #: gnusteampacker/ui/preferences_window.py:16
 msgid "Fastest"
-msgstr "Snelste"
+msgstr "最速です"
 
 #: gnusteampacker/ui/preferences_window.py:16
 msgid "Fast"
-msgstr "Snel"
+msgstr "速い"
 
 #: gnusteampacker/ui/preferences_window.py:16
 msgid "Normal"
-msgstr "normaal"
+msgstr "標準"
 
 #: gnusteampacker/ui/preferences_window.py:16
 msgid "Maximum"
-msgstr "Maximum"
+msgstr "最大値"
 
 #: gnusteampacker/ui/preferences_window.py:16
 msgid "Ultra"
@@ -142,11 +142,11 @@ msgstr "Ultra"
 
 #: gnusteampacker/ui/preferences_window.py:21 gnusteampacker/ui/window.py:99
 msgid "Preferences"
-msgstr "named@@0"
+msgstr "設定"
 
 #: gnusteampacker/ui/preferences_window.py:31
 msgid "Downloaders"
-msgstr "Downloaders"
+msgstr "Downloader"
 
 #: gnusteampacker/ui/preferences_window.py:34
 msgid "SteamCMD"
@@ -154,23 +154,23 @@ msgstr "SteamCMD"
 
 #: gnusteampacker/ui/preferences_window.py:37
 msgid "Path to SteamCMD"
-msgstr "Pad naar SteamCMD"
+msgstr "SteamCMDへのパス"
 
 #: gnusteampacker/ui/preferences_window.py:42
 msgid "Auto-download if missing"
-msgstr "Automatisch downloaden als er geen download is"
+msgstr "不足している場合は自動ダウンロード"
 
 #: gnusteampacker/ui/preferences_window.py:53
 msgid "Output"
-msgstr "Uitvoer"
+msgstr "出力"
 
 #: gnusteampacker/ui/preferences_window.py:56
 msgid "Files"
-msgstr "Bestanden"
+msgstr "ファイル"
 
 #: gnusteampacker/ui/preferences_window.py:59
 msgid "Output directory"
-msgstr "Uitvoer map"
+msgstr "出力ディレクトリ"
 
 #: gnusteampacker/ui/preferences_window.py:64
 msgid "Browse…"
@@ -178,79 +178,79 @@ msgstr ""
 
 #: gnusteampacker/ui/preferences_window.py:70
 msgid "Compression"
-msgstr "Compressie"
+msgstr "圧縮"
 
 #: gnusteampacker/ui/preferences_window.py:73
 msgid "Level"
-msgstr "Niveau"
+msgstr "レベル"
 
 #: gnusteampacker/ui/preferences_window.py:92
 msgid "Threads"
-msgstr "Conversaties"
+msgstr "スレッド"
 
 #: gnusteampacker/ui/preferences_window.py:100
 msgid "Choose output directory"
-msgstr "Kies uitvoer map"
+msgstr "出力ディレクトリを選択"
 
 #: gnusteampacker/ui/preferences_window.py:119
 msgid "Account"
-msgstr "Rekening"
+msgstr "アカウント"
 
 #: gnusteampacker/ui/preferences_window.py:122
 msgid "Steam credentials"
-msgstr "Steam inloggegevens"
+msgstr "Steam 資格情報"
 
 #: gnusteampacker/ui/preferences_window.py:125
 msgid "Username/password are stored in GNOME Keyring (or a local file if unavailable). SteamCMD keeps its own login session when remembered login is enabled."
-msgstr "Gebruikersnaam/wachtwoord worden opgeslagen in GNOME Keyring (of een lokaal bestand als dit niet beschikbaar is). SteamCMD houdt zijn eigen inlogsessie bij het onthouden van login ingeschakeld."
+msgstr "ユーザー名/パスワードは GNOME キーリング(または使用できない場合はローカルファイル)に格納されています。記憶されたログインが有効になっている場合、SteamCMD は独自のログインセッションを維持します。"
 
 #: gnusteampacker/ui/preferences_window.py:137
 msgid "Username"
-msgstr "Gebruikersnaam"
+msgstr "ユーザー名"
 
 #: gnusteampacker/ui/preferences_window.py:142
 msgid "Password"
-msgstr "Wachtwoord"
+msgstr "パスワード"
 
 #: gnusteampacker/ui/preferences_window.py:147
 msgid "Remember login session"
-msgstr "Inlogsessie onthouden"
+msgstr "ログインセッションを保存"
 
 #: gnusteampacker/ui/preferences_window.py:149
 msgid "Use Steam tool refresh/session tokens so later runs can auto-login."
-msgstr "Gebruik Steam tool vernieuwen/sessie tokens zodat later automatisch kan worden ingelogd."
+msgstr "Steamツールの更新/セッショントークンを使用すると、後で自動ログインできます。"
 
 #: gnusteampacker/ui/preferences_window.py:162
 msgid "Appearance"
-msgstr "Uiterlijk"
+msgstr "外観"
 
 #: gnusteampacker/ui/preferences_window.py:166
 msgid "Theme"
-msgstr "Thema"
+msgstr "テーマ"
 
 #: gnusteampacker/ui/preferences_window.py:169
 msgid "Light"
-msgstr "Licht"
+msgstr "ライト"
 
 #: gnusteampacker/ui/preferences_window.py:169
 msgid "Dark"
-msgstr "Donker"
+msgstr "ダーク"
 
 #: gnusteampacker/ui/preferences_window.py:170
 msgid "Color scheme"
-msgstr "Kleuren schema"
+msgstr "配色設定"
 
 #: gnusteampacker/ui/preferences_window.py:178
 msgid "Language"
-msgstr "Taal"
+msgstr "言語"
 
 #: gnusteampacker/ui/preferences_window.py:182
 msgid "Display language"
-msgstr "Taal weergeven"
+msgstr "言語を表示"
 
 #: gnusteampacker/ui/preferences_window.py:183
 msgid "Restart GnuSteamPacker to apply a language change"
-msgstr "Herstart GnuSteamPacker om een taalwijziging toe te passen"
+msgstr "GnuSteamPackerを再起動して言語の変更を適用します"
 
 #: gnusteampacker/ui/queue_row.py:18 gnusteampacker/ui/queue_row.py:56
 #, python-brace-format
@@ -259,16 +259,16 @@ msgstr "AppID {appid}"
 
 #: gnusteampacker/ui/queue_row.py:39 gnusteampacker/ui/window.py:230
 msgid "Retry"
-msgstr "Opnieuw"
+msgstr "再試行する"
 
 #: gnusteampacker/ui/queue_row.py:47
 msgid "Remove"
-msgstr "Verwijderen"
+msgstr "削除"
 
 #: gnusteampacker/ui/queue_row.py:84
 #, python-brace-format
 msgid "AppID: {appid}  ·  {platform}  ·  Branch: {branch}"
-msgstr "AppID: {appid}  ·  {platform}  · Filia: {branch}"
+msgstr "AppID: {appid}  ·  {platform}  · Branch: {branch}"
 
 #: gnusteampacker/ui/queue_row.py:94
 #, python-brace-format
@@ -277,57 +277,57 @@ msgstr "{subtitle}  ·  {detail}"
 
 #: gnusteampacker/ui/window.py:54
 msgid "Add game"
-msgstr "Voeg wedstrijd toe"
+msgstr "ゲームを追加"
 
 #: gnusteampacker/ui/window.py:58
 msgid "Start All"
-msgstr "Alles starten"
+msgstr "すべて開始"
 
 #: gnusteampacker/ui/window.py:66
 msgid "Menu"
-msgstr "Menu"
+msgstr "メニュー"
 
 #: gnusteampacker/ui/window.py:78
 msgid "No games in queue"
-msgstr "Geen spellen in wachtrij"
+msgstr "キューにゲームがありません"
 
 #: gnusteampacker/ui/window.py:79
 msgid "Press + to add a game to download."
-msgstr "Druk op + om een spel toe te voegen om te downloaden."
+msgstr "+ を押してダウンロードするゲームを追加します。"
 
 #: gnusteampacker/ui/window.py:86
 msgid "Queue"
-msgstr "Wachtrij"
+msgstr "キュー"
 
 #: gnusteampacker/ui/window.py:100
 msgid "About GnuSteamPacker"
-msgstr "Over GnuSteamPacker"
+msgstr "GnuSteamPackerについて"
 
 #: gnusteampacker/ui/window.py:214
 msgid "Steam Guard Required"
-msgstr "Steam Guard vereist"
+msgstr "Steamガードが必要"
 
 #: gnusteampacker/ui/window.py:215
 msgid "Enter the code from your email or authenticator app."
-msgstr "Vul de code van uw e-mail of authenticator app in."
+msgstr "Eメールまたは認証アプリからコードを入力してください。"
 
 #: gnusteampacker/worker.py:78
 #, python-brace-format
 msgid "SteamCMD install failed: {error}"
-msgstr "SteamCMD installatie mislukt: {error}"
+msgstr "SteamCMDのインストールに失敗しました: {error}"
 
 #: gnusteampacker/worker.py:91
 #, python-brace-format
 msgid "Info fetch failed: {error}"
-msgstr "Ophalen info mislukt: {error}"
+msgstr "情報の取得に失敗しました: {error}"
 
 #: gnusteampacker/worker.py:166
 #, python-brace-format
 msgid "SteamCMD output missing appmanifest for app {appid} in: {paths}"
-msgstr "Ontbrekende appmanifest voor app {appid} in SteamCMD uitvoer: {paths}"
+msgstr "SteamCMD出力不足アプリマニフェストアプリ {appid} in: {paths}"
 
 #: gnusteampacker/worker.py:254
 #, python-brace-format
 msgid "No files found under {path}"
-msgstr "Geen bestanden gevonden onder {path}"
+msgstr "{path} の下にファイルが見つかりませんでした"
 
