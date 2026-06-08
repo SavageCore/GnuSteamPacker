@@ -1,4 +1,4 @@
-"""Add Game dialog — search by name or enter AppID directly."""
+"""Add Game dialog - search by name or enter AppID directly."""
 
 import logging
 

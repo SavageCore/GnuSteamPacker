@@ -12,6 +12,15 @@ Features:
 - First run prompts for Steam login; later runs can auto-login from remembered Steam session data
 - Supports Steam Guard code entry
 
+<p align="center">
+  <img src="data/icons/hicolor/scalable/apps/org.gnusteampacker.GnuSteamPacker.svg" alt="GnuSteamPacker icon" width="128">
+</p>
+
+
+## Icon
+
+The current app icon is a placeholder AI slop design - if you'd like to design a proper logo for GnuSteamPacker, contributions are very welcome! Open an issue or PR.
+
 ## Download
 
 | Distro | Package |
@@ -53,7 +62,7 @@ flatpak install --user --bundle gnusteampacker.flatpak
 - `7zip` / `7z`
 - `uv` (for development)
 - `entr` (for `make watch`)
-- `gettext` (for compiling translations — provides `msgfmt`/`xgettext`/`msgmerge`)
+- `gettext` (for compiling translations - provides `msgfmt`/`xgettext`/`msgmerge`)
 
 On Fedora/Nobara:
 
@@ -115,7 +124,7 @@ python scripts/compare_outputs.py
 
 ## Translations
 
-GnuSteamPacker is translated via [Crowdin](https://crowdin.com/project/gnusteampacker). If you'd like to contribute a translation or improve an existing one, head to the project's Crowdin page — no Git knowledge required, just sign in and start translating.
+GnuSteamPacker is translated via [Crowdin](https://crowdin.com/project/gnusteampacker). If you'd like to contribute a translation or improve an existing one, head to the project's Crowdin page - no Git knowledge required, just sign in and start translating.
 
 Local development commands for working with translations directly:
 

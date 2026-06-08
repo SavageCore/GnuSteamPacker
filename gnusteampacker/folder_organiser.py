@@ -52,7 +52,7 @@ def reorganise(
             dest.mkdir(parents=True, exist_ok=True)
             shutil.move(str(entry), str(dest / entry.name))
 
-    # Delete manifest .txt files — they are metadata exports,
+    # Delete manifest .txt files - they are metadata exports,
     # not part of the Steam game content.
     for txt in install_dir.glob("manifest_*.txt"):
         txt.unlink(missing_ok=True)

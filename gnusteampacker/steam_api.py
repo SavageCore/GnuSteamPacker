@@ -1,4 +1,4 @@
-"""Steam public API helpers — no API key required."""
+"""Steam public API helpers - no API key required."""
 
 import logging
 import re
@@ -10,7 +10,7 @@ import aiohttp
 
 log = logging.getLogger(__name__)
 
-# Steam autocomplete suggest — returns HTML, no auth required
+# Steam autocomplete suggest - returns HTML, no auth required
 STORE_SUGGEST = (
     "https://store.steampowered.com/search/suggest"
     "?term={term}&f=games&cc=US&l=english"

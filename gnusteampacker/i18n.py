@@ -1,12 +1,12 @@
-"""gettext bootstrap — bind the app's translation domain to its bundled .mo files.
+"""gettext bootstrap - bind the app's translation domain to its bundled .mo files.
 
 The active language follows the desktop locale by default, but can be pinned
 to a specific bundled translation via the "language" config key (applied on
 the next launch, since GTK widgets bake their label text in at construction
 time).
 
-When a language is pinned, we also export it via $LANGUAGE — GNU gettext's
-standard catalog-selection override — *before* touching the locale or any
+When a language is pinned, we also export it via $LANGUAGE - GNU gettext's
+standard catalog-selection override - *before* touching the locale or any
 GTK/libadwaita code. That's what makes the toolkit's own built-in strings
 (About dialog chrome like "Details"/"Credits"/"Website"/"Code by", which come
 from libadwaita's own translation catalog, not ours) follow the same choice,
