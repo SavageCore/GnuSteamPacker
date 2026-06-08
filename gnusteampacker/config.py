@@ -16,8 +16,8 @@ DEFAULTS = {
     "color_scheme": "default",  # "default" | "light" | "dark"
     "compression_level": 5,
     "compression_threads": max(1, _cpu // 2),
-    "window_width": 700,
-    "window_height": 520,
+    "window_width": 1000,
+    "window_height": 800,
     "window_maximized": False,
     "remember_login": True,
 }
