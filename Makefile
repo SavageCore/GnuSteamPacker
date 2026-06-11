@@ -1,4 +1,4 @@
-.PHONY: dev run watch lint format dev-icons pot update-po mo flatpak flatpak-bundle flatpak-run rpm deb appimage clear-auth clean
+.PHONY: dev run run-debug watch lint format dev-icons pot update-po mo flatpak flatpak-bundle flatpak-run rpm deb appimage clear-auth clean
 
 dev:
 	uv venv --python /usr/bin/python3 --system-site-packages --clear
@@ -7,6 +7,9 @@ dev:
 
 run: mo
 	uv run gnusteampacker
+
+run-debug: mo
+	GNUSTEAMPACKER_DEBUG=1 uv run gnusteampacker
 
 watch:
 	uv run watchfiles --filter python "python -m gnusteampacker.main" gnusteampacker
