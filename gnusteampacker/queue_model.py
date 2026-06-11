@@ -18,6 +18,7 @@ class Status(StrEnum):
     STEAMGUARD = "Steam Guard needed"
     NOSUB = "No subscription"
     SKIPPED = "Skipped"
+    UPLOADING = "Uploading"
 
     @property
     def display_name(self) -> str:
@@ -35,6 +36,9 @@ class QueueItem:
     progress: float = 0.0  # 0.0–1.0
     build_id: str = ""
     build_time: str = ""
+    url: str = ""
+    upload_url: str = ""
+    delete_url: str = ""
     depot_list: list[str] = field(default_factory=list)
     error_detail: str = ""
 

@@ -1,0 +1,22 @@
+[url=https://multiup.io/download/xxxxxx/Game.Build.12345678.Win64.Public.7z][color=white][b]Game [Win64] [Branch: Public] (Clean Steam Files)[/b][/color][/url]
+[size=85][color=white][b]Version:[/b] [i]June 10, 2026 - 16:32:07 UTC [Build 12345678][/i][/color][/size]
+
+[spoiler="[color=white]Depots & Manifests[/color]"][code=text]6392332 - DepotName [Manifest 6264245543851609057][/code][/spoiler][color=white][b]Uploaded version:[/b] [i]June 10, 2026 - 16:32:07 UTC [Build 12345678][/i][/color]
+
+[url=https://multiup.io/download/xxxxxx/Game.Build.12345678.Linux64.Public.7z][color=white][b]Game [Linux64] [Branch: Public] (Clean Steam Files)[/b][/color][/url]
+[size=85][color=white][b]Version:[/b] [i]June 10, 2026 - 16:32:07 UTC [Build 12345678][/i][/color][/size]
+
+[spoiler="[color=white]Depots & Manifests[/color]"][code=text]8511326 - DepotName [Manifest 7391891760713678264][/code][/spoiler][color=white][b]Uploaded version:[/b] [i]June 10, 2026 - 16:32:07 UTC [Build 12345678][/i][/color]
+
+[b]Previous Versions:[/b]
+
+[spoiler][url=https://multiup.io/download/xxxxxx/Game.Build.12345678.Win64.Public.7z][color=white][b]Game [Win64] [Branch: Public] (Clean Steam Files)[/b][/color][/url]
+[size=85][color=white][b]Version:[/b] [i]June 10, 2026 - 13:47:52 UTC [Build 12345678][/i][/color][/size]
+
+[spoiler="[color=white]Depots & Manifests[/color]"][code=text]8375356 - DepotName [Manifest 6095068138137292523][/code][/spoiler][color=white][b]Uploaded version:[/b] [i]June 10, 2026 - 13:47:52 UTC [Build 12345678][/i][/color]
+
+[url=https://multiup.io/download/xxxxxx/Game.Build.12345678.Linux64.Public.7z][color=white][b]Game [Linux64] [Branch: Public] (Clean Steam Files)[/b][/color][/url]
+[size=85][color=white][b]Version:[/b] [i]June 10, 2026 - 13:47:52 UTC [Build 12345678][/i][/color][/size]
+
+[spoiler="[color=white]Depots & Manifests[/color]"][code=text]4580801 - DepotName [Manifest 9272844696216109623][/code][/spoiler][color=white][b]Uploaded version:[/b] [i]June 10, 2026 - 13:47:52 UTC [Build 12345678][/i][/color]
+[/spoiler]

@@ -12,6 +12,7 @@ from gnusteampacker import (
     compressor,
     credentials,
     folder_organiser,
+    multiup_api,
     release_text,
     steam_api,
     steamcmd,
@@ -56,6 +57,9 @@ async def process_item(
     update_cb: UpdateCB,
     steam_guard_code: str | None = None,
     auth_override: dict | None = None,
+    upload: bool = False,
+    multiup_user: str | None = None,
+    multiup_pass: str | None = None,
 ) -> None:
     conf = cfg.load()
     sc_path = Path(conf["steamcmd_path"])
@@ -320,7 +324,30 @@ async def process_item(
         push(Status.FAIL, detail=str(e))
         return
 
-    # ── 9. Write BBCode release text ───────────────────────────────────────
+    # ── 9. Upload ───────────────────────────────────────────────────────────
+    if upload:
+        push(Status.UPLOADING, 0.0)
+        try:
+            if multiup_user and multiup_pass:
+                user_id = multiup_api.login(multiup_user, multiup_pass)
+
+            result = multiup_api.upload_file(
+                file_path=output_base / f"{item.archive_name}.7z", user_id=user_id
+            )
+
+            # Check if result is a tuple (url, delete_url)
+            # or a single string based on your API's response structure
+            if isinstance(result, tuple):
+                item.url, item.delete_url = result
+            else:
+                item.url = result
+                item.delete_url = "N/A"
+        except Exception as e:
+            log.error(f"Upload failed for {item.archive_name}: {e}")
+            push(Status.FAIL, detail=str(e))
+            return
+
+    # ── 10. Write BBCode release text ───────────────────────────────────────
     txt_path = output_base / (item.archive_name + ".txt")
     txt_path.write_text(release_text.generate(item), encoding="utf-8")
 

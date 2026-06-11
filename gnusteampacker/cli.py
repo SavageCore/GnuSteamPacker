@@ -42,6 +42,21 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Don't auto-open the SteamDB patch notes page in a browser",
     )
+    parser.add_argument(
+        "--upload",
+        action="store_true",
+        help="Upload the packaged files",
+    )
+    parser.add_argument(
+        "--multiup-user",
+        default="",
+        help="Username for multiup.io (optional)",
+    )
+    parser.add_argument(
+        "--multiup-pass",
+        default="",
+        help="Password for multiup.io (optional)",
+    )
     return parser
 
 
@@ -80,7 +95,7 @@ def _make_update_cb(platform: str) -> worker.UpdateCB:
     return update_cb
 
 
-async def _process_all(items: list[QueueItem]) -> None:
+async def _process_all(items: list[QueueItem], args: argparse.Namespace) -> None:
     conf = cfg.load()
     base_auth = credentials.build_auth_override(conf)
     remember_login = bool((base_auth or {}).get("remember_login", conf.get("remember_login", True)))
@@ -97,29 +112,47 @@ async def _process_all(items: list[QueueItem]) -> None:
             }
 
         update_cb = _make_update_cb(item.platform)
-        await worker.process_item(item, update_cb, auth_override=per_item_auth)
+        await worker.process_item(
+            item,
+            update_cb,
+            auth_override=per_item_auth,
+            upload=args.upload,
+            multiup_user=args.multiup_user,
+            multiup_pass=args.multiup_pass,
+        )
 
         if item.status == Status.STEAMGUARD:
             code = input(f"\n[{item.platform}] Steam Guard code required: ").strip()
             item.status = Status.READY
             item.progress = 0.0
             item.error_detail = ""
-            await worker.process_item(item, update_cb, steam_guard_code=code)
+            await worker.process_item(
+                item,
+                update_cb,
+                steam_guard_code=code,
+                upload=args.upload,
+                multiup_user=args.multiup_user,
+                multiup_pass=args.multiup_pass,
+            )
 
         if item.status == Status.BADLOGIN:
             break
 
 
-def _print_summary(items: list[QueueItem], conf: dict) -> None:
+def _print_summary(items: list[QueueItem], conf: dict, upload: bool) -> None:
     output_dir = Path(conf["output_dir"])
 
     print("\n" + "=" * 60)
-    print("All platforms complete.")
+    if len(items) == 1:
+        print(f"Platform {items[0].platform} complete.")
+    else:
+        print("All platforms complete.")
     print("=" * 60)
 
-    print("\nUpload these .7z files to multiup.io:")
-    for item in items:
-        print(f"  {output_dir / f'{item.archive_name}.7z'}")
+    if not upload:
+        print("\nUpload these .7z files to multiup.io:")
+        for item in items:
+            print(f"  {output_dir / f'{item.archive_name}.7z'}")
 
 
 def _resolve_forum_post_url(appid: str, args: argparse.Namespace, conf: dict) -> str:
@@ -138,10 +171,15 @@ def _resolve_forum_post_url(appid: str, args: argparse.Namespace, conf: dict) ->
     return url
 
 
-def _resolve_version(args: argparse.Namespace) -> str:
+def _resolve_version(args: argparse.Namespace, items: list[QueueItem]) -> str:
     if args.version:
         return args.version
-    return input("New version number, e.g. 1.3.5: ").strip()
+    else:
+        if not args.no_open:
+            print("\nOpening SteamDB patch notes page so you can find the new version number...")
+            webbrowser.open(f"https://steamdb.info/patchnotes/{items[0].build_id}")
+
+        return input("New version number, e.g. 1.3.5: ").strip()
 
 
 def _read_old_forum_post() -> str:
@@ -173,9 +211,7 @@ def _write_forum_post(items: list[QueueItem], conf: dict) -> Path | None:
     return out_path
 
 
-def _print_steamdb_reply(
-    items: list[QueueItem], forum_url: str, version: str, no_open: bool
-) -> None:
+def _print_steamdb_reply(items: list[QueueItem], forum_url: str, version: str) -> None:
     build_id = items[0].build_id
     if not build_id:
         print("\nSteamDB patch notes URL unavailable (no build ID found).")
@@ -187,11 +223,12 @@ def _print_steamdb_reply(
     print(f"  SteamDB patch notes: {patchnotes_url}")
     print(f"  [url={forum_url}]Updated[/url] to [url={patchnotes_url}]{version}[/url]")
 
-    if not no_open:
-        try:
-            webbrowser.open(patchnotes_url)
-        except Exception:
-            pass
+
+def _print_multiup_delete_instructions(items: list[QueueItem]) -> None:
+    print("\nTo delete the uploaded files from multiup.io, use these links:")
+    for item in items:
+        if item.delete_url:
+            print(f"  [{item.platform}] {item.delete_url}")
 
 
 def run_pack(argv: list[str]) -> int:
@@ -220,7 +257,7 @@ def run_pack(argv: list[str]) -> int:
         for p in platforms
     ]
 
-    asyncio.run(_process_all(items))
+    asyncio.run(_process_all(items, args))
 
     failed = [item for item in items if item.status != Status.COMPLETE]
     if failed:
@@ -233,15 +270,17 @@ def run_pack(argv: list[str]) -> int:
         return 1
 
     conf = cfg.load()
-    _print_summary(items, conf)
+    _print_summary(items, conf, args.upload)
 
     forum_url = _resolve_forum_post_url(args.appid, args, conf)
-    version = _resolve_version(args)
+    version = _resolve_version(args, items)
 
     forum_post_path = _write_forum_post(items, conf)
     if forum_post_path:
         print(f"\nNew forum post written to: {forum_post_path}")
         print("Review it, then paste the contents into the release thread.")
 
-    _print_steamdb_reply(items, forum_url, version, args.no_open)
+    _print_steamdb_reply(items, forum_url, version)
+
+    _print_multiup_delete_instructions(items)
     return 0

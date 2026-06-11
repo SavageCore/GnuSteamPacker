@@ -143,20 +143,21 @@ you'll be prompted for the code interactively.
 | `--version` | _(none)_ | Human version string for the forum reply, e.g. `1.3.5` (prompted if omitted) |
 | `--forum-post-url` | _(none)_ | URL of the release post; cached per-appid (prompted on first use for an appid) |
 | `--no-open` | off | Don't auto-open the SteamDB patch notes page in your browser |
+| `--upload` | _(none)_ | Should we upload to multiup.io? You can either upload annoymously or set credentials below
+| `--multiup-user` | _(none)_ | Username at multiup.io (optional)
+| `--multiup-pass` | _(none)_ | Password at multiup.io (optional)
 
 On success, `pack`:
-1. Prints paths to the generated `.7z` archives, ready to upload to multiup.io
+1. Prints paths to the generated `.7z` archives, ready to upload to multiup.io (if `--upload` was omitted)
 2. Prompts for the forum post URL (cached per-appid for next time) and the new
-   version number
+   version number. It'll open your browser to the SteamDB patch notes page for the build so you can easily find it.
 3. Prompts for the *current* release post content (paste it directly, finishing
-   with Ctrl+D, or enter a path to a file containing it) - this should start
-   directly with the current release blocks, with no header content above them
+   with Ctrl+D, or enter a path to a file containing it) - an example is at `examples/topic-bbcode.txt`
 4. Moves those current release blocks into the "Previous Versions" spoiler,
    inserts the new BBCode for each platform at the top, and writes the result
    to `<game>.ForumPost.Build.<id>.txt` in the output directory, ready to paste
-   back into the forum (after filling in the new multiup links)
-5. Prints a SteamDB patch-notes link (opened automatically) and a forum reply
-   template using the resolved forum post URL and version
+   back into the forum (after filling in the new multiup links if `--upload` was omitted)
+5. Prints a forum reply template using the forum post URL and version e.g. (`[url=https://cs.rin.ru/forum/viewtopic.php?p=1234#p1234]Updated[/url] to [url=https://steamdb.info/patchnotes/xxxxxxxx/]1.0.0[/url]`)
 
 ## Translations
 

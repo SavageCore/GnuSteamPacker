@@ -26,7 +26,7 @@ def generate(item: QueueItem) -> str:
     depot_block = "\n".join(item.depot_list) if item.depot_list else "(no depot info)"
 
     return (
-        f"[url=][color=white][b]{item.game_name} [{platform_label}]"
+        f"[url={item.url}][color=white][b]{item.game_name} [{platform_label}]"
         f" [Branch: {branch}] (Clean Steam Files)[/b][/color][/url]\n"
         f"[size=85][color=white][b]Version:[/b]"
         f" [i]{build_time} [Build {build_id}][/i][/color][/size]\n"
