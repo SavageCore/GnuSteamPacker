@@ -82,6 +82,26 @@ def clear_username() -> None:
     set_username("")
 
 
+def build_auth_override(conf: dict) -> dict | None:
+    """Build a SteamCMD auth override from stored credentials and config.
+
+    Returns None if no username is stored (anonymous/cached-login flow).
+    """
+    remember_login = bool(conf.get("remember_login", True))
+
+    username = get_username().strip()
+    if username.lower() == "qr":
+        clear_username()
+        username = ""
+    if not username:
+        return None
+    return {
+        "username": username,
+        "password": get_password(),
+        "remember_login": remember_login,
+    }
+
+
 def _fallback_path(key: str) -> Path:
     return CONFIG_DIR / f".{key}"
 

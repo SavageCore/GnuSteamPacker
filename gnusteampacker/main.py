@@ -91,6 +91,11 @@ class GnuSteamPackerApp(Adw.Application):
 def main() -> int:
     import os
 
+    if len(sys.argv) > 1 and sys.argv[1] == "pack":
+        from gnusteampacker.cli import run_pack
+
+        return run_pack(sys.argv[2:])
+
     conf = cfg.load()
     level = logging.DEBUG if os.getenv("GNUSTEAMPACKER_DEBUG") else logging.WARNING
     log_file = Path(conf["steamcmd_path"]).parent / "gnusteampacker.log"

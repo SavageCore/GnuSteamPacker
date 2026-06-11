@@ -121,6 +121,43 @@ Compare generated output against SuperSteamPacker references:
 python scripts/compare_outputs.py
 ```
 
+## Headless CLI
+
+For automating release runs, GnuSteamPacker has a headless `pack` subcommand that
+downloads, cleans, and compresses a build for one or more platforms without opening
+the GUI:
+
+```bash
+gnusteampacker pack 1902940 --platforms win64,lin64 --branch public
+```
+
+This requires Steam credentials to already be configured via the GUI's Preferences
+(GnuSteamPacker stores them in your system keyring). If Steam Guard is required,
+you'll be prompted for the code interactively.
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--platforms` | `win64,lin64` | Comma-separated platform keys: `win64`, `win32`, `lin64`, `lin32`, `macos` |
+| `--branch` | `public` | Steam branch to download |
+| `--branch-password` | _(none)_ | Password for a private branch |
+| `--version` | _(none)_ | Human version string for the forum reply, e.g. `1.3.5` (prompted if omitted) |
+| `--forum-post-url` | _(none)_ | URL of the release post; cached per-appid (prompted on first use for an appid) |
+| `--no-open` | off | Don't auto-open the SteamDB patch notes page in your browser |
+
+On success, `pack`:
+1. Prints paths to the generated `.7z` archives, ready to upload to multiup.io
+2. Prompts for the forum post URL (cached per-appid for next time) and the new
+   version number
+3. Prompts for the *current* release post content (paste it directly, finishing
+   with Ctrl+D, or enter a path to a file containing it) - this should start
+   directly with the current release blocks, with no header content above them
+4. Moves those current release blocks into the "Previous Versions" spoiler,
+   inserts the new BBCode for each platform at the top, and writes the result
+   to `<game>.ForumPost.Build.<id>.txt` in the output directory, ready to paste
+   back into the forum (after filling in the new multiup links)
+5. Prints a SteamDB patch-notes link (opened automatically) and a forum reply
+   template using the resolved forum post URL and version
+
 ## Translations
 
 GnuSteamPacker is translated via [Crowdin](https://crowdin.com/project/gnusteampacker). If you'd like to contribute a translation or improve an existing one, head to the project's Crowdin page - no Git knowledge required, just sign in and start translating.

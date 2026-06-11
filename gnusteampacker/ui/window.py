@@ -153,7 +153,7 @@ class MainWindow(Adw.ApplicationWindow):
         def update_cb(updated_item: QueueItem) -> None:
             GLib.idle_add(self._on_item_updated, updated_item)
 
-        base_auth = self._build_auth_override(conf)
+        base_auth = credentials.build_auth_override(conf)
 
         remember_login = bool(
             (base_auth or {}).get("remember_login", conf.get("remember_login", True))
@@ -193,7 +193,7 @@ class MainWindow(Adw.ApplicationWindow):
     def _start_item(self, item: QueueItem, auth_override: dict | None = None) -> None:
         conf = cfg.load()
         resolved_auth = (
-            auth_override if auth_override is not None else self._build_auth_override(conf)
+            auth_override if auth_override is not None else credentials.build_auth_override(conf)
         )
 
         def update_cb(updated_item: QueueItem) -> None:
@@ -254,18 +254,3 @@ class MainWindow(Adw.ApplicationWindow):
     def _update_start_button_state(self) -> None:
         has_ready = any(i.status == Status.READY for i in self._items)
         self._start_btn.set_sensitive(has_ready and not self._is_batch_running)
-
-    def _build_auth_override(self, conf: dict) -> dict | None:
-        remember_login = bool(conf.get("remember_login", True))
-
-        username = credentials.get_username().strip()
-        if username.lower() == "qr":
-            credentials.clear_username()
-            username = ""
-        if not username:
-            return None
-        return {
-            "username": username,
-            "password": credentials.get_password(),
-            "remember_login": remember_login,
-        }

@@ -39,6 +39,36 @@ def generate(item: QueueItem) -> str:
     )
 
 
+def insert_new_release(old_post: str, new_blocks: list[str]) -> str:
+    """Move the current release blocks of ``old_post`` into "Previous Versions"
+    and insert ``new_blocks`` (per-platform release text, in display order) at the top.
+
+    ``old_post`` is expected to start directly with the current release blocks
+    (no header content), matching the format produced by this same function.
+    """
+    marker = "[b]Previous Versions:[/b]"
+    idx = old_post.find(marker)
+    if idx == -1:
+        moved = old_post.strip()
+    else:
+        current_section = old_post[:idx].rstrip()
+        rest = old_post[idx + len(marker) :]
+        spoiler_start = rest.find("[spoiler]")
+        if spoiler_start == -1:
+            moved = current_section
+        else:
+            inner_start = spoiler_start + len("[spoiler]")
+            spoiler_end = rest.rfind("[/spoiler]")
+            previous_content = rest[inner_start:spoiler_end].strip()
+            if previous_content:
+                moved = f"{current_section}\n\n{previous_content}"
+            else:
+                moved = current_section
+
+    new_section = "\n\n".join(new_blocks)
+    return f"{new_section}\n\n[b]Previous Versions:[/b]\n\n[spoiler]{moved}[/spoiler]"
+
+
 def build_depot_list(
     game_info: dict,
     depot_names: dict[str, str],
