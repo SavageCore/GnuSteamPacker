@@ -190,6 +190,7 @@ def _check_logs(steamcmd_dir: Path, stdout: str = "", return_code: int = 0) -> t
         "refresh token expired",
         "refresh token revoked",
         "failed to log in",
+        "ERROR (Access Denied)",
     )
     if any(s in combined for s in badlogin_errors):
         return False, "badlogin"

@@ -1,6 +1,7 @@
 """AdwPreferencesWindow for GnuSteamPacker settings."""
 
 import os
+from pathlib import Path
 
 import gi
 
@@ -9,7 +10,7 @@ gi.require_version("Adw", "1")
 from gi.repository import Adw, Gtk
 
 from gnusteampacker import config as cfg
-from gnusteampacker import credentials
+from gnusteampacker import credentials, steamcmd
 from gnusteampacker.i18n import _, available_languages, language_display_name
 
 _LEVEL_VALUES = [1, 3, 5, 7, 9]
@@ -136,12 +137,12 @@ class PreferencesWindow(Adw.PreferencesDialog):
 
         self._username_row = Adw.EntryRow(title=_("Username"))
         self._username_row.set_text(saved_username)
-        self._username_row.connect("changed", lambda r: credentials.set_username(r.get_text()))
+        self._username_row.connect("changed", self._on_username_changed)
         group.add(self._username_row)
 
         self._password_row = Adw.PasswordEntryRow(title=_("Password"))
         self._password_row.set_text(credentials.get_password())
-        self._password_row.connect("changed", lambda r: credentials.set_password(r.get_text()))
+        self._password_row.connect("changed", self._on_password_changed)
         group.add(self._password_row)
 
         self._remember_login = Adw.SwitchRow(title=_("Remember login session"))
@@ -154,6 +155,19 @@ class PreferencesWindow(Adw.PreferencesDialog):
             lambda r, _param: self._save("remember_login", r.get_active()),
         )
         group.add(self._remember_login)
+
+    def _on_username_changed(self, row: Adw.EntryRow) -> None:
+        credentials.set_username(row.get_text())
+        self._clear_cached_login()
+
+    def _on_password_changed(self, row: Adw.PasswordEntryRow) -> None:
+        credentials.set_password(row.get_text())
+        self._clear_cached_login()
+
+    def _clear_cached_login(self) -> None:
+        # Credentials changed: SteamCMD's saved session is now stale, so drop it
+        # to force a fresh login with the new username/password on the next run.
+        steamcmd.clear_cached_login(Path(self._conf["steamcmd_path"]))
 
     # ── Appearance ────────────────────────────────────────────────────────
 
