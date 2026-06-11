@@ -13,3 +13,4 @@ repo/
 requirements.txt
 scripts/compare_outputs.py
 gnusteampacker/locale/
+bbcode.txt

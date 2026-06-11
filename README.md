@@ -61,25 +61,24 @@ flatpak install --user --bundle gnusteampacker.flatpak
 - GTK4 + libadwaita (`python3-gobject`, `libadwaita`)
 - `7zip` / `7z`
 - `uv` (for development)
-- `entr` (for `make watch`)
 - `gettext` (for compiling translations - provides `msgfmt`/`xgettext`/`msgmerge`)
 
 On Fedora/Nobara:
 
 ```bash
-sudo dnf install python3-gobject libadwaita 7zip entr gettext
+sudo dnf install python3-gobject libadwaita 7zip gettext
 ```
 
 On Arch/CachyOS:
 
 ```bash
-sudo pacman -S python-gobject libadwaita p7zip entr uv gettext
+sudo pacman -S python-gobject libadwaita p7zip uv gettext
 ```
 
 On Debian/Ubuntu:
 
 ```bash
-sudo apt install python3-gi gir1.2-adw-1 p7zip-full entr gettext
+sudo apt install python3-gi gir1.2-adw-1 p7zip-full gettext
 pip install uv  # uv is not in Debian repos
 ```
 

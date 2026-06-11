@@ -9,7 +9,7 @@ run: mo
 	uv run gnusteampacker
 
 watch:
-	find gnusteampacker -name '*.py' | entr -r uv run gnusteampacker
+	uv run watchfiles --filter python "python -m gnusteampacker.main" gnusteampacker
 
 lint:
 	uv run ruff check gnusteampacker/

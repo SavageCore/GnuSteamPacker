@@ -1,4 +1,5 @@
 import logging
+import signal
 import sys
 from pathlib import Path
 
@@ -6,7 +7,7 @@ import gi
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
-from gi.repository import Adw, Gdk, Gio, Gtk
+from gi.repository import Adw, Gdk, Gio, GLib, Gtk
 
 from gnusteampacker import APP_ID, __version__
 from gnusteampacker import config as cfg
@@ -105,6 +106,8 @@ def main() -> int:
         handlers=handlers,
     )
     app = GnuSteamPackerApp()
+    GLib.unix_signal_add(GLib.PRIORITY_DEFAULT, signal.SIGINT, app.quit)
+    GLib.unix_signal_add(GLib.PRIORITY_DEFAULT, signal.SIGTERM, app.quit)
     return app.run(sys.argv)
 
 

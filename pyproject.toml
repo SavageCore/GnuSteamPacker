@@ -37,4 +37,5 @@ ignore = [
 dev = [
     "pre-commit>=4",
     "ruff>=0.15.16",
+    "watchfiles>=1.2.0",
 ]
