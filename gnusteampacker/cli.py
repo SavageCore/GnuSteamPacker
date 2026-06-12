@@ -131,6 +131,11 @@ def _setup_cli_logging() -> None:
     )
 
 
+def _platform_label(platform: str) -> Text:
+    color = _PLATFORM_COLORS.get(platform, "cyan")
+    return Text(f"[{platform}] ", style=color)
+
+
 class _PlatformProgress:
     """Renders a live spinner/progress bar for one platform's pipeline run.
 
@@ -174,11 +179,8 @@ class _PlatformProgress:
                 self._display_progress += diff * _ANIM_EASE
             self._live.update(self._render(self._item, self._display_progress))
 
-    def _label(self) -> Text:
-        return Text(f"[{self._platform}] ", style=self._color)
-
     def _finalize(self, icon: str, color: str, text: str) -> None:
-        line = self._label()
+        line = _platform_label(self._platform)
         line.append(icon, style=color)
         line.append(f" {text}", style="white")
         self._live.console.print(line)
@@ -193,7 +195,7 @@ class _PlatformProgress:
             grid.add_column(justify="right", width=4)
             grid.add_column()
             grid.add_row(
-                self._label(),
+                _platform_label(self._platform),
                 Text(item.status.display_name, style="white"),
                 ProgressBar(total=100, completed=pct, width=30, complete_style=self._color),
                 Text(f"{pct:3d}%", style="white"),
@@ -208,7 +210,11 @@ class _PlatformProgress:
         grid.add_column()
         grid.add_column()
         grid.add_column()
-        grid.add_row(self._label(), Spinner("dots", style=self._color), Text(text, style="white"))
+        grid.add_row(
+            _platform_label(self._platform),
+            Spinner("dots", style=self._color),
+            Text(text, style="white"),
+        )
         return grid
 
     def update(self, item: QueueItem) -> None:
@@ -283,7 +289,7 @@ async def _process_all(items: list[QueueItem], args: argparse.Namespace) -> None
                 )
 
         if item.status == Status.STEAMGUARD:
-            code = input(f"\n[{item.platform}] Steam Guard code required: ").strip()
+            code = input(f"\n{_platform_label(item.platform)}Steam Guard code required: ").strip()
             item.status = Status.READY
             item.progress = 0.0
             item.error_detail = ""
@@ -402,15 +408,16 @@ def _print_steamdb_reply(items: list[QueueItem], forum_url: str, version: str) -
 
     console.print("\n[bold white]Forum reply:[/bold white]")
     reply = f"  [url={forum_url}]Updated[/url] to [url={patchnotes_url}]{version}[/url]"
-    console.print(Text(reply, style="cyan"))
+    console.print(Text(reply, style="white"))
 
 
 def _print_multiup_delete_instructions(items: list[QueueItem]) -> None:
     console.print("\nTo delete the uploaded files from multiup.io, use these links:")
     for item in items:
         if item.delete_url:
-            label = escape(f"[{item.platform}]")
-            console.print(f"  {label} [cyan]{escape(item.delete_url)}[/cyan]")
+            line = _platform_label(item.platform)
+            line.append(f" {escape(item.delete_url)}", style="white")
+            console.print(line)
 
 
 def run_pack(argv: list[str]) -> int:
@@ -445,7 +452,7 @@ def run_pack(argv: list[str]) -> int:
     if failed:
         console.print("\n[bold red]FAILED:[/bold red]")
         for item in failed:
-            label = escape(f"[{item.platform}]")
+            label = _platform_label(item.platform)
             if item.status == Status.READY:
                 console.print(f"  {label} not attempted (earlier platform failed)")
             else:
@@ -463,7 +470,7 @@ def run_pack(argv: list[str]) -> int:
     if forum_post_path:
         console.print(
             "\n[bold white]New forum post written to:[/bold white] "
-            f"[cyan]{escape(str(forum_post_path))}[/cyan]"
+            f"{escape(str(forum_post_path))}"
         )
 
     _print_steamdb_reply(items, forum_url, version)
