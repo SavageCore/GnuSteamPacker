@@ -73,10 +73,11 @@ async def process_item(
         (auth_override or {}).get("remember_login", conf.get("remember_login", True))
     )
 
-    def push(status: Status, progress: float = 0.0, detail: str = "") -> None:
+    def push(status: Status, progress: float = 0.0, detail: str = "", speed: float = 0.0) -> None:
         item.status = status
         item.progress = progress
         item.error_detail = detail
+        item.speed = speed
         update_cb(item)
 
     # ── 1. Ensure tools are available ─────────────────────────────────────
@@ -107,12 +108,12 @@ async def process_item(
     (output_base / f"{item.archive_name}.7z").unlink(missing_ok=True)
     (output_base / f"{item.archive_name}.txt").unlink(missing_ok=True)
 
-    def sc_progress(pct: float, line: str) -> None:
+    def sc_progress(pct: float, speed: float, line: str) -> None:
         low = line.lower()
         if "logging in" in low or "steam guard" in low:
             push(Status.AUTHENTICATING)
             return
-        push(Status.DOWNLOADING, pct)
+        push(Status.DOWNLOADING, pct, speed=speed)
 
     prefer_cached_login = steam_guard_code is None and bool(username)
     steamcmd_password = "" if prefer_cached_login else password
@@ -316,7 +317,7 @@ async def process_item(
             source_dir=install_dir,
             archive_name=item.archive_name,
             output_dir=output_base,
-            progress_cb=lambda line: push(Status.COMPRESSING, item.progress),
+            progress_cb=lambda pct, speed: push(Status.COMPRESSING, pct, speed=speed),
             level=compression_level,
             threads=compression_threads,
         )

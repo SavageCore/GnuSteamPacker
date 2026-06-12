@@ -7,6 +7,7 @@ import re
 import shutil
 import tarfile
 import tempfile
+import time
 from collections.abc import Callable
 from pathlib import Path
 
@@ -21,7 +22,14 @@ STEAMCMD_DEFAULT = DATA_DIR / "steamcmd" / "steamcmd.sh"
 
 log = logging.getLogger(__name__)
 
-_PROGRESS_RE = re.compile(r"progress:\s+([\d.]+)", re.IGNORECASE)
+_PROGRESS_RE = re.compile(
+    r"Update state \(0x[0-9a-fA-F]+\)\s+([\w ]+?),\s*progress:\s+([\d.]+)"
+    r"(?:\s*\((\d+)\s*/\s*(\d+)\))?",
+    re.IGNORECASE,
+)
+
+# Smoothing factor for the download-speed exponential moving average.
+_SPEED_EMA_ALPHA = 0.3
 
 
 async def ensure_steamcmd(path: Path, progress_cb: Callable[[str], None] | None = None) -> None:
@@ -93,7 +101,7 @@ async def run_download(
     username: str,
     password: str,
     output_dir: Path,
-    progress_cb: Callable[[float, str], None] | None = None,
+    progress_cb: Callable[[float, float, str], None] | None = None,
     remember_login: bool = True,
     steam_guard_code: str | None = None,
 ) -> tuple[bool, str]:
@@ -141,6 +149,10 @@ async def run_download(
             },
         )
         assert proc.stdout is not None
+        prev_bytes: int | None = None
+        prev_time: float | None = None
+        speed = 0.0
+        start_time = time.monotonic()
         async for raw in proc.stdout:
             line = raw.decode(errors="replace").rstrip()
             stdout_lines.append(line)
@@ -148,9 +160,33 @@ async def run_download(
             if progress_cb:
                 m = _PROGRESS_RE.search(line)
                 if m:
-                    progress_cb(float(m.group(1)) / 100.0, line)
+                    # Other update states (preallocating, committing, reconfiguring,
+                    # the trailing "unknown" state, ...) report their own 0-100%
+                    # progress and would otherwise make the download progress jump
+                    # around or reset to 0% just before completion.
+                    if "download" in m.group(1).lower():
+                        if m.group(3) and m.group(4):
+                            downloaded = int(m.group(3))
+                            now = time.monotonic()
+                            if prev_bytes is None or prev_time is None:
+                                # First sample: report the average rate since the
+                                # process started rather than waiting for a second
+                                # sample, so fast/small downloads still show a speed.
+                                elapsed = now - start_time
+                                if elapsed > 0:
+                                    speed = downloaded / elapsed
+                            else:
+                                elapsed = now - prev_time
+                                if elapsed > 0:
+                                    instant = (downloaded - prev_bytes) / elapsed
+                                    speed = (
+                                        _SPEED_EMA_ALPHA * instant + (1 - _SPEED_EMA_ALPHA) * speed
+                                    )
+                            prev_bytes = downloaded
+                            prev_time = now
+                        progress_cb(float(m.group(2)) / 100.0, speed, line)
                 elif "Logging in" in line:
-                    progress_cb(0.0, line)
+                    progress_cb(0.0, 0.0, line)
         await proc.wait()
         return_code = int(proc.returncode or 0)
         log.debug("SteamCMD exited with code %s", proc.returncode)

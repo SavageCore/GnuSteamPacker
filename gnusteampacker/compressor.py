@@ -1,9 +1,16 @@
 """7z compression wrapper."""
 
 import asyncio
+import re
 import shutil
+import time
 from collections.abc import Callable
 from pathlib import Path
+
+# Smoothing factor for the compression-speed exponential moving average.
+_SPEED_EMA_ALPHA = 0.3
+
+_PERCENT_RE = re.compile(r"(\d{1,3})%")
 
 
 def find_7z() -> str | None:
@@ -17,7 +24,7 @@ async def compress(
     source_dir: Path,
     archive_name: str,
     output_dir: Path,
-    progress_cb: Callable[[str], None] | None = None,
+    progress_cb: Callable[[float, float], None] | None = None,
     level: int = 5,
     threads: int = 1,
 ) -> Path:
@@ -32,11 +39,14 @@ async def compress(
     output_dir.mkdir(parents=True, exist_ok=True)
     out_path = output_dir / (archive_name + ".7z")
 
+    total_size = sum(f.stat().st_size for f in source_dir.rglob("*") if f.is_file())
+
     cmd = [
         sevenz,
         "a",
         f"-mx{level}",
         f"-mmt={threads}",
+        "-bsp1",
         "-pcs.rin.ru",
         "-mhe=on",
         str(out_path),
@@ -50,10 +60,39 @@ async def compress(
         stderr=asyncio.subprocess.STDOUT,
     )
     assert proc.stdout is not None
-    async for raw in proc.stdout:
-        line = raw.decode(errors="replace").rstrip()
-        if progress_cb and line.strip():
-            progress_cb(line)
+
+    prev_bytes: int | None = None
+    prev_time: float | None = None
+    speed = 0.0
+    start_time = time.monotonic()
+    while True:
+        chunk = await proc.stdout.read(4096)
+        if not chunk:
+            break
+        if not progress_cb:
+            continue
+        text = chunk.decode(errors="replace")
+        matches = _PERCENT_RE.findall(text)
+        if not matches:
+            continue
+        pct = int(matches[-1])
+        downloaded = int(total_size * pct / 100)
+        now = time.monotonic()
+        if prev_bytes is None or prev_time is None:
+            # First sample: report the average rate since the process started
+            # rather than waiting for a second sample, so fast/small archives
+            # still show a speed.
+            elapsed = now - start_time
+            if elapsed > 0:
+                speed = downloaded / elapsed
+        else:
+            elapsed = now - prev_time
+            if elapsed > 0:
+                instant = (downloaded - prev_bytes) / elapsed
+                speed = _SPEED_EMA_ALPHA * instant + (1 - _SPEED_EMA_ALPHA) * speed
+        prev_bytes = downloaded
+        prev_time = now
+        progress_cb(pct / 100, speed)
     await proc.wait()
 
     if proc.returncode not in (0, 1):

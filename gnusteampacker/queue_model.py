@@ -7,7 +7,7 @@ from gnusteampacker.i18n import _
 class Status(StrEnum):
     READY = "Ready"
     GETINFO = "Fetching info…"
-    AUTHENTICATING = "Waiting for Steam Guard…"
+    AUTHENTICATING = "Authenticating…"
     DOWNLOADING = "Downloading"
     CLEANING = "Cleaning"
     COMPRESSING = "Compressing"
@@ -41,6 +41,17 @@ class QueueItem:
     delete_url: str = ""
     depot_list: list[str] = field(default_factory=list)
     error_detail: str = ""
+    speed: float = 0.0  # bytes/sec, 0.0 = unknown/idle
+
+    @property
+    def display_speed(self) -> str:
+        if self.speed >= 1_000_000:
+            return f"{self.speed / 1_000_000:.1f} MB/s"
+        if self.speed >= 1_000:
+            return f"{self.speed / 1_000:.0f} KB/s"
+        if self.speed <= 0:
+            return ""
+        return f"{self.speed:.0f} B/s"
 
     @property
     def display_platform(self) -> str:
