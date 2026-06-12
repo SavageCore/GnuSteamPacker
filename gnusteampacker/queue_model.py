@@ -11,7 +11,7 @@ class Status(StrEnum):
     DOWNLOADING = "Downloading"
     CLEANING = "Cleaning"
     COMPRESSING = "Compressing"
-    HASHING = "Computing hash…"
+    HASHING = "Computing hash"
     COMPLETE = "Complete"
     FAIL = "Failed"
     BADLOGIN = "Bad login"

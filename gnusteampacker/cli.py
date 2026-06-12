@@ -24,7 +24,7 @@ from gnusteampacker.steam_api import PLATFORM_STEAMCMD
 
 console = Console()
 
-_PROGRESS_STATUSES = (Status.DOWNLOADING, Status.COMPRESSING, Status.UPLOADING)
+_PROGRESS_STATUSES = (Status.DOWNLOADING, Status.COMPRESSING, Status.UPLOADING, Status.HASHING)
 
 # (icon, colour) used to finalize a status line when it transitions to a terminal state.
 _TERMINAL_STYLES: dict[Status, tuple[str, str]] = {

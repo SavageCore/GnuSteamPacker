@@ -332,8 +332,13 @@ async def process_item(
     # ── 8a. Compute BLAKE3 hash ─────────────────────────────────────────────
     if compute_hash:
         push(Status.HASHING, 0.0)
+        loop = asyncio.get_running_loop()
+
+        def hash_progress(pct: float, speed: float) -> None:
+            loop.call_soon_threadsafe(push, Status.HASHING, pct, "", speed)
+
         item.file_hash = await asyncio.to_thread(
-            hashing.blake3_hex, output_base / f"{item.archive_name}.7z"
+            hashing.blake3_hex, output_base / f"{item.archive_name}.7z", hash_progress
         )
 
     # ── 9. Upload ───────────────────────────────────────────────────────────
