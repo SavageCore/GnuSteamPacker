@@ -2,6 +2,8 @@
 
 from gnusteampacker.queue_model import QueueItem
 
+PREVIOUS_VERSION_SEPARATOR = "[color=gray]" + "▬" * 60 + "[/color]"
+
 
 def _manifest_gid(manifests: dict, branch: str) -> str:
     entry = manifests.get(branch) or manifests.get("public")
@@ -25,14 +27,17 @@ def generate(item: QueueItem) -> str:
 
     depot_block = "\n".join(item.depot_list) if item.depot_list else "(no depot info)"
     file_hash = item.file_hash or "unknown"
+    game_version = item.game_version or "unknown"
     launch_options_url = f"https://steamdb.info/app/{item.appid}/config/"
+    changelog_url = f"https://steamdb.info/patchnotes/{build_id}/"
 
     return (
         f"[url={item.url}][color=white][b]{item.game_name} [{platform_label}]"
         f" [Branch: {branch}] (Clean Steam Files)[/b][/color][/url]\n"
         f"[size=100][color=white][b]Version:[/b]"
-        f" [i]{build_time} [Build {build_id}][/i][/color][/size]"
-        f"[color=#FFFFFF] | [/color][url={launch_options_url}]Launch Options[/url]\n"
+        f" [i]{game_version} ({build_time} - Build {build_id})[/i][/color][/size]"
+        f"[color=#FFFFFF] | [/color][url={launch_options_url}]Launch Options[/url]"
+        f"[color=#FFFFFF] | [/color][url={changelog_url}]Changelog[/url]\n"
         f"\n"
         f'[spoiler="[color=white]Depots, Manifests, & BLAKE3 Hashes[/color]"][code=text]'
         f"{depot_block}\n"
@@ -67,7 +72,7 @@ def insert_new_release(old_post: str, new_blocks: list[str]) -> str:
             spoiler_end = rest.rfind("[/spoiler]")
             previous_content = rest[inner_start:spoiler_end].strip()
             if previous_content:
-                moved = f"{current_section}\n\n{previous_content}"
+                moved = f"{current_section}\n\n{PREVIOUS_VERSION_SEPARATOR}\n\n{previous_content}"
             else:
                 moved = current_section
 

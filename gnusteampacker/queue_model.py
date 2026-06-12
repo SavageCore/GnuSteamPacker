@@ -37,6 +37,7 @@ class QueueItem:
     progress: float = 0.0  # 0.0–1.0
     build_id: str = ""
     build_time: str = ""
+    game_version: str = ""
     url: str = ""
     upload_url: str = ""
     delete_url: str = ""

@@ -468,6 +468,12 @@ def run_pack(argv: list[str]) -> int:
     forum_url = _resolve_forum_post_url(args.appid, args, conf)
     version = _resolve_version(args, items)
 
+    output_dir = Path(conf["output_dir"])
+    for item in items:
+        item.game_version = version
+        txt_path = output_dir / f"{item.archive_name}.txt"
+        txt_path.write_text(release_text.generate(item), encoding="utf-8")
+
     forum_post_path = _write_forum_post(items, conf, args)
     if forum_post_path:
         console.print(
