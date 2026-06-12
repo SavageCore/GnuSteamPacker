@@ -142,6 +142,7 @@ you'll be prompted for the code interactively.
 | `--branch-password` | _(none)_ | Password for a private branch |
 | `--version` | _(none)_ | Human version string for the forum reply, e.g. `1.3.5` (prompted if omitted) |
 | `--forum-post-url` | _(none)_ | URL of the release post; cached per-appid (prompted on first use for an appid) |
+| `--forum-post-content` | _(none)_ | Content of the current release post, or a path to a file containing it (prompted if omitted) |
 | `--no-open` | off | Don't auto-open the SteamDB patch notes page in your browser |
 | `--upload` | _(none)_ | Should we upload to multiup.io? You can either upload annoymously or set credentials below
 | `--multiup-user` | _(none)_ | Username at multiup.io (optional)
@@ -152,7 +153,8 @@ On success, `pack`:
 2. Prompts for the forum post URL (cached per-appid for next time) and the new
    version number. It'll open your browser to the SteamDB patch notes page for the build so you can easily find it.
 3. Prompts for the *current* release post content (paste it directly, finishing
-   with Ctrl+D, or enter a path to a file containing it) - an example is at `examples/topic-bbcode.txt`
+   with Ctrl+D, or enter a path to a file containing it) - an example is at `examples/topic-bbcode.txt`.
+   Skipped if `--forum-post-content` was supplied.
 4. Moves those current release blocks into the "Previous Versions" spoiler,
    inserts the new BBCode for each platform at the top, and writes the result
    to `<game>.ForumPost.Build.<id>.txt` in the output directory, ready to paste

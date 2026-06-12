@@ -38,6 +38,14 @@ def build_parser() -> argparse.ArgumentParser:
         help="URL of the release post; cached per-appid (prompted on first use for an appid)",
     )
     parser.add_argument(
+        "--forum-post-content",
+        default="",
+        help=(
+            "Content of the release post (prompted if omitted; "
+            "can be a path to a text file or pasted content)"
+        ),
+    )
+    parser.add_argument(
         "--no-open",
         action="store_true",
         help="Don't auto-open the SteamDB patch notes page in a browser",
@@ -171,6 +179,16 @@ def _resolve_forum_post_url(appid: str, args: argparse.Namespace, conf: dict) ->
     return url
 
 
+def _resolve_forum_post_content(args: argparse.Namespace) -> str:
+    if not args.forum_post_content:
+        return ""
+
+    candidate = Path(args.forum_post_content).expanduser()
+    if candidate.is_file():
+        return candidate.read_text(encoding="utf-8")
+    return args.forum_post_content
+
+
 def _resolve_version(args: argparse.Namespace, items: list[QueueItem]) -> str:
     if args.version:
         return args.version
@@ -182,7 +200,11 @@ def _resolve_version(args: argparse.Namespace, items: list[QueueItem]) -> str:
         return input("New version number, e.g. 1.3.5: ").strip()
 
 
-def _read_old_forum_post() -> str:
+def _read_old_forum_post(args: argparse.Namespace) -> str:
+    forum_post = _resolve_forum_post_content(args)
+    if forum_post:
+        return forum_post
+
     print("\nPaste the current forum post content, or enter a path to a file containing it.")
     print("For pasted content, finish with Ctrl+D.")
     first_line = input("> ")
@@ -192,7 +214,7 @@ def _read_old_forum_post() -> str:
     return (first_line + "\n" + sys.stdin.read()).strip()
 
 
-def _write_forum_post(items: list[QueueItem], conf: dict) -> Path | None:
+def _write_forum_post(items: list[QueueItem], conf: dict, args: argparse.Namespace) -> Path | None:
     output_dir = Path(conf["output_dir"])
     new_blocks = []
     for item in items:
@@ -202,7 +224,7 @@ def _write_forum_post(items: list[QueueItem], conf: dict) -> Path | None:
             return None
         new_blocks.append(txt_path.read_text(encoding="utf-8"))
 
-    old_post = _read_old_forum_post()
+    old_post = _read_old_forum_post(args)
     new_post = release_text.insert_new_release(old_post, new_blocks)
 
     safe_name = items[0].game_name.replace(" ", ".").replace(":", "").replace("/", "_")
@@ -275,12 +297,14 @@ def run_pack(argv: list[str]) -> int:
     forum_url = _resolve_forum_post_url(args.appid, args, conf)
     version = _resolve_version(args, items)
 
-    forum_post_path = _write_forum_post(items, conf)
+    forum_post_path = _write_forum_post(items, conf, args)
     if forum_post_path:
         print(f"\nNew forum post written to: {forum_post_path}")
         print("Review it, then paste the contents into the release thread.")
 
     _print_steamdb_reply(items, forum_url, version)
 
-    _print_multiup_delete_instructions(items)
+    if args.upload:
+        _print_multiup_delete_instructions(items)
+
     return 0
