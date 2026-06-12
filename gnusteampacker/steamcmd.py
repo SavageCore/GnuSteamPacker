@@ -7,7 +7,6 @@ import re
 import shutil
 import tarfile
 import tempfile
-import time
 from collections.abc import Callable
 from pathlib import Path
 
@@ -15,6 +14,7 @@ import aiohttp
 
 from gnusteampacker.config import DATA_DIR
 from gnusteampacker.queue_model import QueueItem
+from gnusteampacker.speed import SpeedTracker
 from gnusteampacker.steam_api import PLATFORM_STEAMCMD
 
 STEAMCMD_URL = "https://media.steampowered.com/client/installer/steamcmd_linux.tar.gz"
@@ -27,9 +27,6 @@ _PROGRESS_RE = re.compile(
     r"(?:\s*\((\d+)\s*/\s*(\d+)\))?",
     re.IGNORECASE,
 )
-
-# Smoothing factor for the download-speed exponential moving average.
-_SPEED_EMA_ALPHA = 0.3
 
 
 async def ensure_steamcmd(path: Path, progress_cb: Callable[[str], None] | None = None) -> None:
@@ -149,10 +146,7 @@ async def run_download(
             },
         )
         assert proc.stdout is not None
-        prev_bytes: int | None = None
-        prev_time: float | None = None
-        speed = 0.0
-        start_time = time.monotonic()
+        speed_tracker = SpeedTracker()
         async for raw in proc.stdout:
             line = raw.decode(errors="replace").rstrip()
             stdout_lines.append(line)
@@ -165,25 +159,9 @@ async def run_download(
                     # progress and would otherwise make the download progress jump
                     # around or reset to 0% just before completion.
                     if "download" in m.group(1).lower():
+                        speed = speed_tracker.speed
                         if m.group(3) and m.group(4):
-                            downloaded = int(m.group(3))
-                            now = time.monotonic()
-                            if prev_bytes is None or prev_time is None:
-                                # First sample: report the average rate since the
-                                # process started rather than waiting for a second
-                                # sample, so fast/small downloads still show a speed.
-                                elapsed = now - start_time
-                                if elapsed > 0:
-                                    speed = downloaded / elapsed
-                            else:
-                                elapsed = now - prev_time
-                                if elapsed > 0:
-                                    instant = (downloaded - prev_bytes) / elapsed
-                                    speed = (
-                                        _SPEED_EMA_ALPHA * instant + (1 - _SPEED_EMA_ALPHA) * speed
-                                    )
-                            prev_bytes = downloaded
-                            prev_time = now
+                            speed = speed_tracker.update(int(m.group(3)))
                         progress_cb(float(m.group(2)) / 100.0, speed, line)
                 elif "Logging in" in line:
                     progress_cb(0.0, 0.0, line)

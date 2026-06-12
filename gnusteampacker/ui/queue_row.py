@@ -87,9 +87,7 @@ class QueueRow(Adw.ActionRow):
         self.set_subtitle(self._build_subtitle(item))
         self.set_tooltip_text(item.error_detail or None)
 
-        downloading = item.status == Status.DOWNLOADING
-        compressing = item.status == Status.COMPRESSING
-        in_progress = downloading or compressing
+        in_progress = item.status in (Status.DOWNLOADING, Status.COMPRESSING, Status.UPLOADING)
         if in_progress and item.display_speed:
             self._status_label.set_text(f"{item.status.display_name} · {item.display_speed}")
         else:

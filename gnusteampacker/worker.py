@@ -1,5 +1,6 @@
 """Async download pipeline: info fetch → download → vdf_clean → manifests → compress."""
 
+import asyncio
 import logging
 import re
 import shutil
@@ -21,6 +22,7 @@ from gnusteampacker import (
 from gnusteampacker import config as cfg
 from gnusteampacker.i18n import _
 from gnusteampacker.queue_model import QueueItem, Status
+from gnusteampacker.speed import SpeedTracker
 
 log = logging.getLogger(__name__)
 
@@ -329,11 +331,23 @@ async def process_item(
     if upload:
         push(Status.UPLOADING, 0.0)
         try:
+            user_id = None
             if multiup_user and multiup_pass:
-                user_id = multiup_api.login(multiup_user, multiup_pass)
+                user_id = await asyncio.to_thread(multiup_api.login, multiup_user, multiup_pass)
 
-            result = multiup_api.upload_file(
-                file_path=output_base / f"{item.archive_name}.7z", user_id=user_id
+            loop = asyncio.get_running_loop()
+            speed_tracker = SpeedTracker()
+
+            def upload_progress(bytes_sent: int, total: int) -> None:
+                pct = bytes_sent / total if total else 0.0
+                speed = speed_tracker.update(bytes_sent)
+                loop.call_soon_threadsafe(push, Status.UPLOADING, pct, "", speed)
+
+            result = await asyncio.to_thread(
+                multiup_api.upload_file,
+                file_path=output_base / f"{item.archive_name}.7z",
+                user_id=user_id,
+                progress_cb=upload_progress,
             )
 
             # Check if result is a tuple (url, delete_url)

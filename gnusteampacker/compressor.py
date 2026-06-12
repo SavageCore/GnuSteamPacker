@@ -3,12 +3,10 @@
 import asyncio
 import re
 import shutil
-import time
 from collections.abc import Callable
 from pathlib import Path
 
-# Smoothing factor for the compression-speed exponential moving average.
-_SPEED_EMA_ALPHA = 0.3
+from gnusteampacker.speed import SpeedTracker
 
 _PERCENT_RE = re.compile(r"(\d{1,3})%")
 
@@ -61,10 +59,7 @@ async def compress(
     )
     assert proc.stdout is not None
 
-    prev_bytes: int | None = None
-    prev_time: float | None = None
-    speed = 0.0
-    start_time = time.monotonic()
+    speed_tracker = SpeedTracker()
     while True:
         chunk = await proc.stdout.read(4096)
         if not chunk:
@@ -77,21 +72,7 @@ async def compress(
             continue
         pct = int(matches[-1])
         downloaded = int(total_size * pct / 100)
-        now = time.monotonic()
-        if prev_bytes is None or prev_time is None:
-            # First sample: report the average rate since the process started
-            # rather than waiting for a second sample, so fast/small archives
-            # still show a speed.
-            elapsed = now - start_time
-            if elapsed > 0:
-                speed = downloaded / elapsed
-        else:
-            elapsed = now - prev_time
-            if elapsed > 0:
-                instant = (downloaded - prev_bytes) / elapsed
-                speed = _SPEED_EMA_ALPHA * instant + (1 - _SPEED_EMA_ALPHA) * speed
-        prev_bytes = downloaded
-        prev_time = now
+        speed = speed_tracker.update(downloaded)
         progress_cb(pct / 100, speed)
     await proc.wait()
 

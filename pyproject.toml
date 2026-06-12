@@ -13,6 +13,7 @@ dependencies = [
     "rich>=13",
     "vdf>=3.4",
     "secretstorage>=3.3",
+    "requests-toolbelt>=1.0.0",
 ]
 
 [project.scripts]

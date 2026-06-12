@@ -24,7 +24,7 @@ from gnusteampacker.steam_api import PLATFORM_STEAMCMD
 
 console = Console()
 
-_PROGRESS_STATUSES = (Status.DOWNLOADING, Status.COMPRESSING)
+_PROGRESS_STATUSES = (Status.DOWNLOADING, Status.COMPRESSING, Status.UPLOADING)
 
 # (icon, colour) used to finalize a status line when it transitions to a terminal state.
 _TERMINAL_STYLES: dict[Status, tuple[str, str]] = {
@@ -469,8 +469,7 @@ def run_pack(argv: list[str]) -> int:
     forum_post_path = _write_forum_post(items, conf, args)
     if forum_post_path:
         console.print(
-            "\n[bold white]New forum post written to:[/bold white] "
-            f"{escape(str(forum_post_path))}"
+            f"\n[bold white]New forum post written to:[/bold white] {escape(str(forum_post_path))}"
         )
 
     _print_steamdb_reply(items, forum_url, version)
