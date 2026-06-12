@@ -1,9 +1,14 @@
 """7z compression wrapper."""
 
 import asyncio
+import re
 import shutil
 from collections.abc import Callable
 from pathlib import Path
+
+from gnusteampacker.speed import SpeedTracker
+
+_PERCENT_RE = re.compile(r"(\d{1,3})%")
 
 
 def find_7z() -> str | None:
@@ -17,7 +22,7 @@ async def compress(
     source_dir: Path,
     archive_name: str,
     output_dir: Path,
-    progress_cb: Callable[[str], None] | None = None,
+    progress_cb: Callable[[float, float], None] | None = None,
     level: int = 5,
     threads: int = 1,
 ) -> Path:
@@ -32,11 +37,14 @@ async def compress(
     output_dir.mkdir(parents=True, exist_ok=True)
     out_path = output_dir / (archive_name + ".7z")
 
+    total_size = sum(f.stat().st_size for f in source_dir.rglob("*") if f.is_file())
+
     cmd = [
         sevenz,
         "a",
         f"-mx{level}",
         f"-mmt={threads}",
+        "-bsp1",
         "-pcs.rin.ru",
         "-mhe=on",
         str(out_path),
@@ -50,10 +58,22 @@ async def compress(
         stderr=asyncio.subprocess.STDOUT,
     )
     assert proc.stdout is not None
-    async for raw in proc.stdout:
-        line = raw.decode(errors="replace").rstrip()
-        if progress_cb and line.strip():
-            progress_cb(line)
+
+    speed_tracker = SpeedTracker()
+    while True:
+        chunk = await proc.stdout.read(4096)
+        if not chunk:
+            break
+        if not progress_cb:
+            continue
+        text = chunk.decode(errors="replace")
+        matches = _PERCENT_RE.findall(text)
+        if not matches:
+            continue
+        pct = int(matches[-1])
+        downloaded = int(total_size * pct / 100)
+        speed = speed_tracker.update(downloaded)
+        progress_cb(pct / 100, speed)
     await proc.wait()
 
     if proc.returncode not in (0, 1):

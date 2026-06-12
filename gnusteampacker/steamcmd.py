@@ -14,6 +14,7 @@ import aiohttp
 
 from gnusteampacker.config import DATA_DIR
 from gnusteampacker.queue_model import QueueItem
+from gnusteampacker.speed import SpeedTracker
 from gnusteampacker.steam_api import PLATFORM_STEAMCMD
 
 STEAMCMD_URL = "https://media.steampowered.com/client/installer/steamcmd_linux.tar.gz"
@@ -21,7 +22,11 @@ STEAMCMD_DEFAULT = DATA_DIR / "steamcmd" / "steamcmd.sh"
 
 log = logging.getLogger(__name__)
 
-_PROGRESS_RE = re.compile(r"progress:\s+([\d.]+)", re.IGNORECASE)
+_PROGRESS_RE = re.compile(
+    r"Update state \(0x[0-9a-fA-F]+\)\s+([\w ]+?),\s*progress:\s+([\d.]+)"
+    r"(?:\s*\((\d+)\s*/\s*(\d+)\))?",
+    re.IGNORECASE,
+)
 
 
 async def ensure_steamcmd(path: Path, progress_cb: Callable[[str], None] | None = None) -> None:
@@ -93,7 +98,7 @@ async def run_download(
     username: str,
     password: str,
     output_dir: Path,
-    progress_cb: Callable[[float, str], None] | None = None,
+    progress_cb: Callable[[float, float, str], None] | None = None,
     remember_login: bool = True,
     steam_guard_code: str | None = None,
 ) -> tuple[bool, str]:
@@ -141,6 +146,7 @@ async def run_download(
             },
         )
         assert proc.stdout is not None
+        speed_tracker = SpeedTracker()
         async for raw in proc.stdout:
             line = raw.decode(errors="replace").rstrip()
             stdout_lines.append(line)
@@ -148,9 +154,17 @@ async def run_download(
             if progress_cb:
                 m = _PROGRESS_RE.search(line)
                 if m:
-                    progress_cb(float(m.group(1)) / 100.0, line)
+                    # Other update states (preallocating, committing, reconfiguring,
+                    # the trailing "unknown" state, ...) report their own 0-100%
+                    # progress and would otherwise make the download progress jump
+                    # around or reset to 0% just before completion.
+                    if "download" in m.group(1).lower():
+                        speed = speed_tracker.speed
+                        if m.group(3) and m.group(4):
+                            speed = speed_tracker.update(int(m.group(3)))
+                        progress_cb(float(m.group(2)) / 100.0, speed, line)
                 elif "Logging in" in line:
-                    progress_cb(0.0, line)
+                    progress_cb(0.0, 0.0, line)
         await proc.wait()
         return_code = int(proc.returncode or 0)
         log.debug("SteamCMD exited with code %s", proc.returncode)

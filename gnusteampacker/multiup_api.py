@@ -1,8 +1,10 @@
 import json
 import logging
 import os
+from collections.abc import Callable
 
 import requests
+from requests_toolbelt.multipart.encoder import MultipartEncoder, MultipartEncoderMonitor
 
 log = logging.getLogger(__name__)
 
@@ -222,7 +224,13 @@ def select_priority_hosts(hosts_dict, file_size, max_hosts=10, priority_list=Non
     return [host[0] for host in selected_hosts]
 
 
-def upload_file(file_path, user_id=None, hosts_dict=None, max_hosts=10):
+def upload_file(
+    file_path,
+    user_id=None,
+    hosts_dict=None,
+    max_hosts=10,
+    progress_cb: Callable[[int, int], None] | None = None,
+):
     """Uploads the file to the specified server."""
     if not os.path.exists(file_path):
         log.error(f"File not found at {file_path}")
@@ -250,18 +258,25 @@ def upload_file(file_path, user_id=None, hosts_dict=None, max_hosts=10):
 
     try:
         with open(file_path, "rb") as f:
-            files = {"files[]": (os.path.basename(file_path), f)}
-            payload = {}
+            fields = {}
             if user_id:
-                payload["user"] = user_id
+                fields["user"] = str(user_id)
                 log.debug(f"Uploading as user ID: {user_id}")
 
-            # Add selected hosts to the payload
+            # Add selected hosts to the fields
             for host in selected_hosts:
-                payload[host] = "true"  # API expects boolean as string 'true'
+                fields[host] = "true"  # API expects boolean as string 'true'
             log.debug(f"Attempting upload to {len(selected_hosts)} hosts...")
 
-            response = requests.post(upload_url, files=files, data=payload)
+            fields["files[]"] = (os.path.basename(file_path), f, "application/octet-stream")
+            encoder = MultipartEncoder(fields=fields)
+            monitor = MultipartEncoderMonitor(
+                encoder,
+                lambda m: progress_cb(m.bytes_read, m.len) if progress_cb else None,
+            )
+            response = requests.post(
+                upload_url, data=monitor, headers={"Content-Type": monitor.content_type}
+            )
             response.raise_for_status()
 
             # --- Handle potential non-JSON success response ---
