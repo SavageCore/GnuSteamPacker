@@ -24,15 +24,21 @@ def generate(item: QueueItem) -> str:
     build_time = item.build_time or "unknown"
 
     depot_block = "\n".join(item.depot_list) if item.depot_list else "(no depot info)"
+    file_hash = item.file_hash or "unknown"
+    launch_options_url = f"https://steamdb.info/app/{item.appid}/config/"
 
     return (
         f"[url={item.url}][color=white][b]{item.game_name} [{platform_label}]"
         f" [Branch: {branch}] (Clean Steam Files)[/b][/color][/url]\n"
-        f"[size=85][color=white][b]Version:[/b]"
-        f" [i]{build_time} [Build {build_id}][/i][/color][/size]\n"
+        f"[size=100][color=white][b]Version:[/b]"
+        f" [i]{build_time} [Build {build_id}][/i][/color][/size]"
+        f"[color=#FFFFFF] | [/color][url={launch_options_url}]Launch Options[/url]\n"
         f"\n"
-        f'[spoiler="[color=white]Depots & Manifests[/color]"][code=text]'
-        f"{depot_block}"
+        f'[spoiler="[color=white]Depots, Manifests, & BLAKE3 Hashes[/color]"][code=text]'
+        f"{depot_block}\n"
+        f"\n"
+        f"Hash:\n"
+        f"{file_hash}  {item.archive_name}.7z"
         f"[/code][/spoiler]"
         f"[color=white][b]Uploaded version:[/b]"
         f" [i]{build_time} [Build {build_id}][/i][/color]"

@@ -13,6 +13,7 @@ from gnusteampacker import (
     compressor,
     credentials,
     folder_organiser,
+    hashing,
     multiup_api,
     release_text,
     steam_api,
@@ -62,6 +63,7 @@ async def process_item(
     upload: bool = False,
     multiup_user: str | None = None,
     multiup_pass: str | None = None,
+    compute_hash: bool = False,
 ) -> None:
     conf = cfg.load()
     sc_path = Path(conf["steamcmd_path"])
@@ -326,6 +328,13 @@ async def process_item(
     except Exception as e:
         push(Status.FAIL, detail=str(e))
         return
+
+    # ── 8a. Compute BLAKE3 hash ─────────────────────────────────────────────
+    if compute_hash:
+        push(Status.HASHING, 0.0)
+        item.file_hash = await asyncio.to_thread(
+            hashing.blake3_hex, output_base / f"{item.archive_name}.7z"
+        )
 
     # ── 9. Upload ───────────────────────────────────────────────────────────
     if upload:

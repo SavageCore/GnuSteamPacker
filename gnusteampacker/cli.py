@@ -286,6 +286,7 @@ async def _process_all(items: list[QueueItem], args: argparse.Namespace) -> None
                     upload=args.upload,
                     multiup_user=args.multiup_user,
                     multiup_pass=args.multiup_pass,
+                    compute_hash=True,
                 )
 
         if item.status == Status.STEAMGUARD:
@@ -302,6 +303,7 @@ async def _process_all(items: list[QueueItem], args: argparse.Namespace) -> None
                         upload=args.upload,
                         multiup_user=args.multiup_user,
                         multiup_pass=args.multiup_pass,
+                        compute_hash=True,
                     )
 
         if item.status == Status.BADLOGIN:
