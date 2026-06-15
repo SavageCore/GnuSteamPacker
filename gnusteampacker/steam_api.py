@@ -44,6 +44,29 @@ PLATFORM_STEAMCMD = {
     "macos": ("macos", None),
 }
 
+# Maps our platform key → Store API "platforms" object key (note: "mac" not "macos")
+PLATFORM_OS = {
+    "win64": "windows",
+    "win32": "windows",
+    "lin64": "linux",
+    "lin32": "linux",
+    "macos": "mac",
+}
+
+# Human-readable label for each Store API OS key
+OS_DISPLAY = {
+    "windows": "Windows",
+    "mac": "macOS",
+    "linux": "Linux",
+}
+
+# Primary (64-bit) platform key for each Store API OS key, used when expanding "all"
+OS_PRIMARY_PLATFORM = {
+    "windows": "win64",
+    "mac": "macos",
+    "linux": "lin64",
+}
+
 
 async def search_games(term: str) -> list[dict[str, str]]:
     """Return list of {name, appid} matching term."""
@@ -143,6 +166,7 @@ async def get_store_details(appid: str) -> dict[str, Any]:
     return {
         "short_description": d.get("short_description", ""),
         "website": d.get("website") or f"https://store.steampowered.com/app/{appid}/",
+        "platforms": d.get("platforms", {}),
     }
 
 

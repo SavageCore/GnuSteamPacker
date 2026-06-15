@@ -19,8 +19,9 @@ from rich.text import Text
 
 from gnusteampacker import config as cfg
 from gnusteampacker import credentials, release_text, worker
+from gnusteampacker import steam_api as _steam_api
 from gnusteampacker.queue_model import QueueItem, Status
-from gnusteampacker.steam_api import PLATFORM_STEAMCMD
+from gnusteampacker.steam_api import OS_PRIMARY_PLATFORM, PLATFORM_STEAMCMD
 
 console = Console()
 
@@ -67,7 +68,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--platforms",
         default="win64,lin64",
-        help="Comma-separated platform keys, e.g. win64,lin64 (default: win64,lin64)",
+        help="Comma-separated platform keys, e.g. win64,lin64, or 'all' for all available"
+        " (default: win64,lin64)",
     )
     parser.add_argument("--branch", default="public", help="Steam branch (default: public)")
     parser.add_argument("--branch-password", default="", help="Password for a private branch")
@@ -185,9 +187,12 @@ class _PlatformProgress:
         line.append(f" {text}", style="white")
         self._live.console.print(line)
 
-    def _print_build_id(self, build_id: str) -> None:
+    def _print_build_id(self, build_id: str, available_platforms: list[str]) -> None:
         line = _platform_label(self._platform)
-        line.append(f"  Build {build_id}", style="white")
+        suffix = f"  Build {build_id}"
+        if available_platforms:
+            suffix += "  ·  " + " · ".join(available_platforms)
+        line.append(suffix, style="white")
         self._live.console.print(line)
 
     def _render(self, item: QueueItem, display_progress: float) -> RenderableType:
@@ -242,7 +247,7 @@ class _PlatformProgress:
                         text = f"{self._last_status.display_name} 100%"
                     self._finalize(icon, color, text)
                     if self._last_status == Status.GETINFO and item.build_id:
-                        self._print_build_id(item.build_id)
+                        self._print_build_id(item.build_id, item.available_platforms)
             self._last_status = item.status
             if item.status in _PROGRESS_STATUSES:
                 # New phase: snap back to 0% rather than animating down from
@@ -434,13 +439,19 @@ def run_pack(argv: list[str]) -> int:
     args = parser.parse_args(argv)
 
     platforms = [p.strip() for p in args.platforms.split(",") if p.strip()]
-    invalid = [p for p in platforms if p not in PLATFORM_STEAMCMD]
-    if invalid:
-        parser.error(
-            f"invalid platform(s): {', '.join(invalid)} (valid: {', '.join(PLATFORM_STEAMCMD)})"
-        )
     if not platforms:
         parser.error("--platforms must list at least one platform")
+    if platforms == ["all"]:
+        store = asyncio.run(_steam_api.get_store_details(args.appid))
+        avail_oses = store.get("platforms", {}) if store else {}
+        platforms = [
+            OS_PRIMARY_PLATFORM[os_key] for os_key in OS_PRIMARY_PLATFORM if avail_oses.get(os_key)
+        ] or list(PLATFORM_STEAMCMD.keys())
+    else:
+        invalid = [p for p in platforms if p not in PLATFORM_STEAMCMD]
+        if invalid:
+            valid = ", ".join(PLATFORM_STEAMCMD)
+            parser.error(f"invalid platform(s): {', '.join(invalid)} (valid: {valid}, all)")
 
     _setup_cli_logging()
 

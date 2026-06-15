@@ -95,12 +95,27 @@ async def process_item(
     # ── 2. Fetch game info and initial depot list ──────────────────────────
     push(Status.GETINFO)
     try:
-        depot_names = await steam_api.fetch_depot_names()
-        game_info = await steam_api.get_game_info(item.appid)
+        results = await asyncio.gather(
+            steam_api.fetch_depot_names(),
+            steam_api.get_game_info(item.appid),
+            steam_api.get_store_details(item.appid),
+            return_exceptions=True,
+        )
+        depot_names = results[0] if not isinstance(results[0], Exception) else {}
+        if isinstance(results[1], Exception):
+            raise results[1]
+        game_info = results[1]
+        store_details = results[2] if not isinstance(results[2], Exception) else {}
+
         item.game_name = game_info["name"]
         item.build_id = game_info.get(f"build_{item.branch}") or game_info.get("build_public", "")
         item.build_time = game_info.get(f"time_{item.branch}") or game_info.get("time_public", "")
         item.depot_list = release_text.build_depot_list(game_info, depot_names, item.branch)
+        item.available_platforms = [
+            label
+            for os_key, label in steam_api.OS_DISPLAY.items()
+            if store_details.get("platforms", {}).get(os_key)
+        ]
     except Exception as e:
         push(Status.FAIL, detail=_("Info fetch failed: {error}").format(error=e))
         return

@@ -42,6 +42,7 @@ class QueueItem:
     upload_url: str = ""
     delete_url: str = ""
     depot_list: list[str] = field(default_factory=list)
+    available_platforms: list[str] = field(default_factory=list)  # e.g. ["Windows", "Linux"]
     file_hash: str = ""
     error_detail: str = ""
     speed: float = 0.0  # bytes/sec, 0.0 = unknown/idle

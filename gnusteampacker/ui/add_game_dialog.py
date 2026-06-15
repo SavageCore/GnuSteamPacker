@@ -1,5 +1,6 @@
 """Add Game dialog - search by name or enter AppID directly."""
 
+import asyncio
 import logging
 
 import gi
@@ -26,6 +27,8 @@ class AddGameDialog(Adw.Dialog):
         self._branches: list[str] = ["public"]
         self._search_timeout_id: int = 0
         self._appid_timeout_id: int = 0
+        self._available_platforms: list[str] = list(steam_api.PLATFORMS.values())
+        self._has_all_option: bool = False
 
         self.set_content_width(480)
         self.set_content_height(580)
@@ -206,12 +209,23 @@ class AddGameDialog(Adw.Dialog):
 
     async def _fetch_info_async(self, appid: str) -> None:
         try:
-            info = await steam_api.get_game_info(appid)
-            GLib.idle_add(self._on_info_loaded, appid, info, None)
+            info, store = await asyncio.gather(
+                steam_api.get_game_info(appid),
+                steam_api.get_store_details(appid),
+                return_exceptions=True,
+            )
+            if isinstance(info, Exception):
+                GLib.idle_add(self._on_info_loaded, appid, None, {}, str(info))
+                return
+            if isinstance(store, Exception):
+                store = {}
+            GLib.idle_add(self._on_info_loaded, appid, info, store, None)
         except Exception as e:
-            GLib.idle_add(self._on_info_loaded, appid, None, str(e))
+            GLib.idle_add(self._on_info_loaded, appid, None, {}, str(e))
 
-    def _on_info_loaded(self, appid: str, info: dict | None, error: str | None) -> bool:
+    def _on_info_loaded(
+        self, appid: str, info: dict | None, store: dict, error: str | None
+    ) -> bool:
         # Ignore stale callbacks if user already changed the AppID
         if self._appid_row.get_text().strip() != appid:
             return False
@@ -235,7 +249,29 @@ class AddGameDialog(Adw.Dialog):
         # Populate branch dropdown
         self._branch_row.set_model(Gtk.StringList.new(self._branches))
         self._branch_row.set_selected(0)
-        self._platform_row.set_selected(0)
+
+        # Filter platform dropdown to only platforms this game supports
+        avail_oses = store.get("platforms", {}) if store else {}
+        if avail_oses:
+            filtered = {
+                label: key
+                for label, key in steam_api.PLATFORMS.items()
+                if avail_oses.get(steam_api.PLATFORM_OS[key], False)
+            }
+        else:
+            filtered = steam_api.PLATFORMS
+        self._available_platforms = list(filtered.values())
+        labels = list(filtered.keys())
+        self._has_all_option = len(labels) > 1
+        if self._has_all_option:
+            labels = [_("All available platforms")] + labels
+        self._platform_row.set_model(Gtk.StringList.new(labels))
+        try:
+            win64_idx = self._available_platforms.index("win64")
+            offset = 1 if self._has_all_option else 0
+            self._platform_row.set_selected(win64_idx + offset)
+        except ValueError:
+            self._platform_row.set_selected(0)
 
         self._options_group.set_sensitive(True)
         self._add_btn.set_sensitive(True)
@@ -255,16 +291,25 @@ class AddGameDialog(Adw.Dialog):
     def _on_add_clicked(self, _btn) -> None:
         if not self._appid:
             return
-        platforms = list(steam_api.PLATFORMS.values())
-        platform = platforms[self._platform_row.get_selected()]
+        selected = self._platform_row.get_selected()
         idx = self._branch_row.get_selected()
         branch = self._branches[idx] if idx < len(self._branches) else "public"
-        item = QueueItem(
-            appid=self._appid,
-            game_name=self._game_name,
-            platform=platform,
-            branch=branch,
-            branch_password=self._password_row.get_text().strip(),
-        )
-        self._on_add(item)
+        password = self._password_row.get_text().strip()
+
+        if self._has_all_option and selected == 0:
+            platforms_to_add = self._available_platforms
+        else:
+            offset = 1 if self._has_all_option else 0
+            platforms_to_add = [self._available_platforms[selected - offset]]
+
+        for platform in platforms_to_add:
+            self._on_add(
+                QueueItem(
+                    appid=self._appid,
+                    game_name=self._game_name,
+                    platform=platform,
+                    branch=branch,
+                    branch_password=password,
+                )
+            )
         self.close()
