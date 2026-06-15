@@ -185,6 +185,11 @@ class _PlatformProgress:
         line.append(f" {text}", style="white")
         self._live.console.print(line)
 
+    def _print_build_id(self, build_id: str) -> None:
+        line = _platform_label(self._platform)
+        line.append(f"  Build {build_id}", style="white")
+        self._live.console.print(line)
+
     def _render(self, item: QueueItem, display_progress: float) -> RenderableType:
         if item.status in _PROGRESS_STATUSES:
             pct = int(display_progress * 100)
@@ -236,6 +241,8 @@ class _PlatformProgress:
                     if self._last_status in _PROGRESS_STATUSES:
                         text = f"{self._last_status.display_name} 100%"
                     self._finalize(icon, color, text)
+                    if self._last_status == Status.GETINFO and item.build_id:
+                        self._print_build_id(item.build_id)
             self._last_status = item.status
             if item.status in _PROGRESS_STATUSES:
                 # New phase: snap back to 0% rather than animating down from
