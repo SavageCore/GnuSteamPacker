@@ -64,6 +64,7 @@ async def process_item(
     multiup_user: str | None = None,
     multiup_pass: str | None = None,
     compute_hash: bool = False,
+    info_cache: dict | None = None,
 ) -> None:
     conf = cfg.load()
     sc_path = Path(conf["steamcmd_path"])
@@ -93,20 +94,30 @@ async def process_item(
             return
 
     # ── 2. Fetch game info and initial depot list ──────────────────────────
-    push(Status.GETINFO)
-    try:
-        results = await asyncio.gather(
-            steam_api.fetch_depot_names(),
-            steam_api.get_game_info(item.appid),
-            steam_api.get_store_details(item.appid),
-            return_exceptions=True,
-        )
-        depot_names = results[0] if not isinstance(results[0], Exception) else {}
-        if isinstance(results[1], Exception):
-            raise results[1]
-        game_info = results[1]
-        store_details = results[2] if not isinstance(results[2], Exception) else {}
+    cache_key = item.appid
+    if info_cache is not None and cache_key in info_cache:
+        depot_names, game_info, store_details = info_cache[cache_key]
+    else:
+        push(Status.GETINFO)
+        try:
+            results = await asyncio.gather(
+                steam_api.fetch_depot_names(),
+                steam_api.get_game_info(item.appid),
+                steam_api.get_store_details(item.appid),
+                return_exceptions=True,
+            )
+            depot_names = results[0] if not isinstance(results[0], Exception) else {}
+            if isinstance(results[1], Exception):
+                raise results[1]
+            game_info = results[1]
+            store_details = results[2] if not isinstance(results[2], Exception) else {}
+        except Exception as e:
+            push(Status.FAIL, detail=_("Info fetch failed: {error}").format(error=e))
+            return
+        if info_cache is not None:
+            info_cache[cache_key] = (depot_names, game_info, store_details)
 
+    try:
         item.game_name = game_info["name"]
         item.build_id = game_info.get(f"build_{item.branch}") or game_info.get("build_public", "")
         item.build_time = game_info.get(f"time_{item.branch}") or game_info.get("time_public", "")

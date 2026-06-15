@@ -160,6 +160,16 @@ class MainWindow(Adw.ApplicationWindow):
         )
         username = (base_auth or {}).get("username", credentials.get_username()).strip()
 
+        # Group same-AppID items together so info_cache hits are maximised,
+        # preserving first-seen AppID order (and stable within each group).
+        appid_order: dict[str, int] = {}
+        for item in ready_items:
+            if item.appid not in appid_order:
+                appid_order[item.appid] = len(appid_order)
+        ready_items = sorted(ready_items, key=lambda x: appid_order[x.appid])
+
+        info_cache: dict = {}
+
         for idx, item in enumerate(ready_items):
             per_item_auth = base_auth
             # Match SSP queue behavior: password is only passed for the first queued job.
@@ -169,7 +179,9 @@ class MainWindow(Adw.ApplicationWindow):
                     "password": "",
                     "remember_login": remember_login,
                 }
-            await worker.process_item(item, update_cb, auth_override=per_item_auth)
+            await worker.process_item(
+                item, update_cb, auth_override=per_item_auth, info_cache=info_cache
+            )
             if item.status in (Status.BADLOGIN, Status.STEAMGUARD):
                 break
 

@@ -279,6 +279,9 @@ async def _process_all(items: list[QueueItem], args: argparse.Namespace) -> None
     remember_login = bool((base_auth or {}).get("remember_login", conf.get("remember_login", True)))
     username = (base_auth or {}).get("username", credentials.get_username()).strip()
 
+    info_cache: dict = {}
+    seen_appids: set[str] = set()
+
     for idx, item in enumerate(items):
         per_item_auth = base_auth
         # Match SSP queue behavior: password is only passed for the first queued job.
@@ -289,16 +292,28 @@ async def _process_all(items: list[QueueItem], args: argparse.Namespace) -> None
                 "remember_login": remember_login,
             }
 
+        is_first_for_appid = item.appid not in seen_appids
+        seen_appids.add(item.appid)
+
         with Live(console=console, transient=True, refresh_per_second=10) as live:
             async with _PlatformProgress(item.platform, live) as progress:
+                cb = progress.update
+                if not is_first_for_appid:
+
+                    def _cb(qi: QueueItem, _inner=progress.update) -> None:
+                        if qi.status != Status.AUTHENTICATING:
+                            _inner(qi)
+
+                    cb = _cb
                 await worker.process_item(
                     item,
-                    progress.update,
+                    cb,
                     auth_override=per_item_auth,
                     upload=args.upload,
                     multiup_user=args.multiup_user,
                     multiup_pass=args.multiup_pass,
                     compute_hash=True,
+                    info_cache=info_cache,
                 )
 
         if item.status == Status.STEAMGUARD:
@@ -316,6 +331,7 @@ async def _process_all(items: list[QueueItem], args: argparse.Namespace) -> None
                         multiup_user=args.multiup_user,
                         multiup_pass=args.multiup_pass,
                         compute_hash=True,
+                        info_cache=info_cache,
                     )
 
         if item.status == Status.BADLOGIN:
