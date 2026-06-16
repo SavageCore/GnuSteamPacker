@@ -28,7 +28,7 @@ class AddGameDialog(Adw.Dialog):
         self._search_timeout_id: int = 0
         self._appid_timeout_id: int = 0
         self._available_platforms: list[str] = list(steam_api.PLATFORMS.values())
-        self._has_all_option: bool = False
+        self._platform_items: list = []  # (label, Gtk.CheckButton, Adw.ActionRow)
 
         self.set_content_width(480)
         self.set_content_height(580)
@@ -86,10 +86,9 @@ class AddGameDialog(Adw.Dialog):
         self._options_group.set_margin_top(16)
         self._options_group.set_sensitive(False)
 
-        platforms = list(steam_api.PLATFORMS.keys())
-        self._platform_row = Adw.ComboRow(title=_("Platform"))
-        self._platform_row.set_model(Gtk.StringList.new(platforms))
-        self._options_group.add(self._platform_row)
+        self._platform_expander = Adw.ExpanderRow(title=_("Platform"))
+        self._options_group.add(self._platform_expander)
+        self._populate_platform_rows(list(steam_api.PLATFORMS.items()))
 
         self._branch_row = Adw.ComboRow(title=_("Branch"))
         self._branch_row.set_model(Gtk.StringList.new(["public"]))
@@ -261,21 +260,52 @@ class AddGameDialog(Adw.Dialog):
         else:
             filtered = steam_api.PLATFORMS
         self._available_platforms = list(filtered.values())
-        labels = list(filtered.keys())
-        self._has_all_option = len(labels) > 1
-        if self._has_all_option:
-            labels = [_("All available platforms")] + labels
-        self._platform_row.set_model(Gtk.StringList.new(labels))
-        try:
-            win64_idx = self._available_platforms.index("win64")
-            offset = 1 if self._has_all_option else 0
-            self._platform_row.set_selected(win64_idx + offset)
-        except ValueError:
-            self._platform_row.set_selected(0)
+        self._populate_platform_rows(list(filtered.items()))
 
         self._options_group.set_sensitive(True)
-        self._add_btn.set_sensitive(True)
+        self._update_add_button_sensitivity()
         return False
+
+    # ── Platform checkboxes ──────────────────────────────────────────────────
+
+    def _populate_platform_rows(
+        self,
+        label_key_pairs: list[tuple[str, str]],
+        default_key: str = "win64",
+    ) -> None:
+        for _label, _check, row in self._platform_items:
+            self._platform_expander.remove(row)
+        self._platform_items.clear()
+
+        keys = [key for _, key in label_key_pairs]
+        effective_default = default_key if default_key in keys else (keys[0] if keys else None)
+
+        for label, key in label_key_pairs:
+            check = Gtk.CheckButton()
+            check.set_active(key == effective_default)
+            check.connect("toggled", self._on_platform_toggled)
+            action_row = Adw.ActionRow(title=label)
+            action_row.add_prefix(check)
+            action_row.set_activatable_widget(check)
+            self._platform_expander.add_row(action_row)
+            self._platform_items.append((label, check, action_row))
+
+        self._update_platform_subtitle()
+
+    def _update_platform_subtitle(self) -> None:
+        selected = [label for label, check, _ in self._platform_items if check.get_active()]
+        self._platform_expander.set_title(_("Platforms") if len(selected) > 1 else _("Platform"))
+        self._platform_expander.set_subtitle(
+            ", ".join(selected) if selected else _("None selected")
+        )
+
+    def _on_platform_toggled(self, _check) -> None:
+        self._update_platform_subtitle()
+        self._update_add_button_sensitivity()
+
+    def _update_add_button_sensitivity(self) -> None:
+        has_platform = any(check.get_active() for _, check, _ in self._platform_items)
+        self._add_btn.set_sensitive(bool(self._appid) and has_platform)
 
     # ── Branch / password ────────────────────────────────────────────────────
 
@@ -291,16 +321,17 @@ class AddGameDialog(Adw.Dialog):
     def _on_add_clicked(self, _btn) -> None:
         if not self._appid:
             return
-        selected = self._platform_row.get_selected()
         idx = self._branch_row.get_selected()
         branch = self._branches[idx] if idx < len(self._branches) else "public"
         password = self._password_row.get_text().strip()
 
-        if self._has_all_option and selected == 0:
-            platforms_to_add = self._available_platforms
-        else:
-            offset = 1 if self._has_all_option else 0
-            platforms_to_add = [self._available_platforms[selected - offset]]
+        platforms_to_add = [
+            self._available_platforms[i]
+            for i, (_, check, _) in enumerate(self._platform_items)
+            if check.get_active()
+        ]
+        if not platforms_to_add:
+            return
 
         for platform in platforms_to_add:
             self._on_add(
