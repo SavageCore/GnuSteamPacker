@@ -58,6 +58,16 @@ _PLATFORM_COLORS: dict[str, str] = {
     "macos": "yellow",
 }
 
+_PLATFORM_ORDER: list[str] = ["Windows", "Linux", "macOS"]
+
+_PLATFORM_MAP: dict[str, str] = {
+    "win64": "Windows",
+    "win32": "Windows",
+    "lin64": "Linux",
+    "lin32": "Linux",
+    "macos": "macOS",
+}
+
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
@@ -187,12 +197,31 @@ class _PlatformProgress:
         line.append(f" {text}", style="white")
         self._live.console.print(line)
 
+    def _get_selected_platforms(self) -> list[str]:
+        parser = build_parser()
+        args = parser.parse_args(sys.argv[2:])
+
+        # Use the _PLATFORM_MAP to convert the platform keys to their display names.
+        return [
+            _PLATFORM_MAP.get(p.strip(), p.strip()) for p in args.platforms.split(",") if p.strip()
+        ]
+
     def _print_build_id(self, build_id: str, available_platforms: list[str]) -> None:
         line = _platform_label(self._platform)
-        suffix = f"  Build {build_id}"
+        line.append(f"  Build {build_id}", style="white")
         if available_platforms:
-            suffix += "  ·  " + " · ".join(available_platforms)
-        line.append(suffix, style="white")
+            selected_platforms = self._get_selected_platforms()
+            order = {p: i for i, p in enumerate(_PLATFORM_ORDER)}
+            available_platforms = sorted(
+                available_platforms,
+                key=lambda p: order.get(p, len(_PLATFORM_ORDER)),
+            )
+            line.append("  ·  ", style="white")
+            for i, p in enumerate(available_platforms):
+                if i > 0:
+                    line.append(" · ", style="white")
+                style = "bold white" if p in selected_platforms else "white"
+                line.append(p, style=style)
         self._live.console.print(line)
 
     def _render(self, item: QueueItem, display_progress: float) -> RenderableType:
