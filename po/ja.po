@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gnusteampacker\n"
 "Report-Msgid-Bugs-To: https://github.com/SavageCore/GnuSteamPacker/issues\n"
-"POT-Creation-Date: 2026-06-08 20:58+0100\n"
+"POT-Creation-Date: 2026-06-16 11:19+0100\n"
 "PO-Revision-Date: 2026-06-08 13:35\n"
 "Last-Translator: \n"
 "Language-Team: Japanese\n"
@@ -17,261 +17,284 @@ msgstr ""
 "X-Crowdin-File: /main/po/gnusteampacker.pot\n"
 "X-Crowdin-File-ID: 7\n"
 
-#: gnusteampacker/i18n.py:73 gnusteampacker/ui/preferences_window.py:169
+#: gnusteampacker/i18n.py:73 gnusteampacker/ui/preferences_window.py:183
 msgid "Follow System"
 msgstr "システムをフォロー"
 
-#: gnusteampacker/main.py:69
-msgid "A Linux-native GUI for downloading, cleaning, and packaging Steam games for archival and sharing. Spiritual port of <a href=\"https://github.com/Masquerade64/SuperSteamPacker\">SuperSteamPacker</a>."
-msgstr "アーカイブや共有のための蒸気ゲームのダウンロード、クリーニング、パッケージング用の Linux ネイティブの GUI 。 <a href=\"https://github.com/Masquerade64/SuperSteamPacker\">SuperSteamPacker</a> のスピリチュアルポート。"
+#: gnusteampacker/main.py:70
+msgid ""
+"A Linux-native GUI for downloading, cleaning, and packaging Steam games for "
+"archival and sharing. Spiritual port of <a href=\"https://github.com/"
+"Masquerade64/SuperSteamPacker\">SuperSteamPacker</a>."
+msgstr ""
+"アーカイブや共有のための蒸気ゲームのダウンロード、クリーニング、パッケージン"
+"グ用の Linux ネイティブの GUI 。 <a href=\"https://github.com/Masquerade64/"
+"SuperSteamPacker\">SuperSteamPacker</a> のスピリチュアルポート。"
 
-#: gnusteampacker/main.py:78
+#: gnusteampacker/main.py:79
 msgid "Donate"
 msgstr "寄付"
 
-#: gnusteampacker/main.py:80
+#: gnusteampacker/main.py:81
 msgid "Third-Party Libraries and Special Thanks"
 msgstr "サードパーティのライブラリと特別な感謝"
 
-#: gnusteampacker/queue_model.py:44
+#: gnusteampacker/queue_model.py:63
 msgid "Windows 64-bit"
 msgstr "Windows 64 ビット"
 
-#: gnusteampacker/queue_model.py:45
+#: gnusteampacker/queue_model.py:64
 msgid "Windows 32-bit"
 msgstr "Windows 32-bit"
 
-#: gnusteampacker/queue_model.py:46
+#: gnusteampacker/queue_model.py:65
 msgid "Linux 64-bit"
 msgstr "Linux 64 ビット"
 
-#: gnusteampacker/queue_model.py:47
+#: gnusteampacker/queue_model.py:66
 msgid "Linux 32-bit"
 msgstr "Linux 32 ビット"
 
-#: gnusteampacker/queue_model.py:48
+#: gnusteampacker/queue_model.py:67
 msgid "macOS"
 msgstr "macOS"
 
-#: gnusteampacker/ui/add_game_dialog.py:21
+#: gnusteampacker/ui/add_game_dialog.py:22
 msgid "Add Game"
 msgstr "ゲームを追加"
 
 #. ── Search section ──────────────────────────────────────────────────
-#: gnusteampacker/ui/add_game_dialog.py:49
+#: gnusteampacker/ui/add_game_dialog.py:52
 msgid "Search by name"
 msgstr "名前で検索"
 
-#: gnusteampacker/ui/add_game_dialog.py:50
+#: gnusteampacker/ui/add_game_dialog.py:53
 msgid "e.g. Half-Life, Portal…"
 msgstr "例: Half-Life, Portal…"
 
 #. ── Manual AppID ────────────────────────────────────────────────────
-#: gnusteampacker/ui/add_game_dialog.py:64
+#: gnusteampacker/ui/add_game_dialog.py:67
 msgid "Or enter AppID directly"
 msgstr "または AppID を直接入力してください"
 
-#: gnusteampacker/ui/add_game_dialog.py:67
+#: gnusteampacker/ui/add_game_dialog.py:70
 msgid "AppID"
 msgstr "AppID"
 
 #. Shown while fetching game info
-#: gnusteampacker/ui/add_game_dialog.py:72
-#: gnusteampacker/ui/add_game_dialog.py:202
+#: gnusteampacker/ui/add_game_dialog.py:75
+#: gnusteampacker/ui/add_game_dialog.py:204
 msgid "Looking up game…"
 msgstr ""
 
 #. ── Options (disabled until game info loaded) ──────────────────────
-#: gnusteampacker/ui/add_game_dialog.py:82
+#: gnusteampacker/ui/add_game_dialog.py:85
 msgid "Options"
 msgstr "オプション"
 
-#: gnusteampacker/ui/add_game_dialog.py:87
+#: gnusteampacker/ui/add_game_dialog.py:89
+#: gnusteampacker/ui/add_game_dialog.py:297
 msgid "Platform"
 msgstr "プラットフォーム"
 
-#: gnusteampacker/ui/add_game_dialog.py:91
+#: gnusteampacker/ui/add_game_dialog.py:93
 msgid "Branch"
 msgstr "ブランチ"
 
-#: gnusteampacker/ui/add_game_dialog.py:96
+#: gnusteampacker/ui/add_game_dialog.py:98
 msgid "Branch password"
 msgstr "ブランチのパスワード"
 
-#: gnusteampacker/ui/add_game_dialog.py:107 gnusteampacker/ui/window.py:229
+#: gnusteampacker/ui/add_game_dialog.py:109 gnusteampacker/ui/window.py:241
 msgid "Cancel"
 msgstr "キャンセル"
 
-#: gnusteampacker/ui/add_game_dialog.py:111
+#: gnusteampacker/ui/add_game_dialog.py:113
 msgid "Add to Queue"
 msgstr "キューに追加"
 
-#: gnusteampacker/ui/add_game_dialog.py:166
+#: gnusteampacker/ui/add_game_dialog.py:168
 #, python-brace-format
 msgid "AppID: {appid}"
 msgstr "AppID: {appid}"
 
-#: gnusteampacker/ui/add_game_dialog.py:223
+#: gnusteampacker/ui/add_game_dialog.py:236
 #, python-brace-format
 msgid "Not found: {error}"
 msgstr "見つかりません: {error}"
 
-#: gnusteampacker/ui/add_game_dialog.py:223
+#: gnusteampacker/ui/add_game_dialog.py:236
 msgid "unknown error"
 msgstr "不明なエラー"
 
-#: gnusteampacker/ui/preferences_window.py:16
+#: gnusteampacker/ui/add_game_dialog.py:297
+#, fuzzy
+msgid "Platforms"
+msgstr "プラットフォーム"
+
+#: gnusteampacker/ui/add_game_dialog.py:299
+msgid "None selected"
+msgstr ""
+
+#: gnusteampacker/ui/preferences_window.py:17
 msgid "Fastest"
 msgstr "最速です"
 
-#: gnusteampacker/ui/preferences_window.py:16
+#: gnusteampacker/ui/preferences_window.py:17
 msgid "Fast"
 msgstr "速い"
 
-#: gnusteampacker/ui/preferences_window.py:16
+#: gnusteampacker/ui/preferences_window.py:17
 msgid "Normal"
 msgstr "標準"
 
-#: gnusteampacker/ui/preferences_window.py:16
+#: gnusteampacker/ui/preferences_window.py:17
 msgid "Maximum"
 msgstr "最大値"
 
-#: gnusteampacker/ui/preferences_window.py:16
+#: gnusteampacker/ui/preferences_window.py:17
 msgid "Ultra"
 msgstr "Ultra"
 
-#: gnusteampacker/ui/preferences_window.py:21 gnusteampacker/ui/window.py:99
+#: gnusteampacker/ui/preferences_window.py:22 gnusteampacker/ui/window.py:99
 msgid "Preferences"
 msgstr "設定"
 
-#: gnusteampacker/ui/preferences_window.py:31
+#: gnusteampacker/ui/preferences_window.py:32
 msgid "Downloaders"
 msgstr "Downloader"
 
-#: gnusteampacker/ui/preferences_window.py:34
+#: gnusteampacker/ui/preferences_window.py:35
 msgid "SteamCMD"
 msgstr "SteamCMD"
 
-#: gnusteampacker/ui/preferences_window.py:37
+#: gnusteampacker/ui/preferences_window.py:38
 msgid "Path to SteamCMD"
 msgstr "SteamCMDへのパス"
 
-#: gnusteampacker/ui/preferences_window.py:42
+#: gnusteampacker/ui/preferences_window.py:43
 msgid "Auto-download if missing"
 msgstr "不足している場合は自動ダウンロード"
 
-#: gnusteampacker/ui/preferences_window.py:53
+#: gnusteampacker/ui/preferences_window.py:54
 msgid "Output"
 msgstr "出力"
 
-#: gnusteampacker/ui/preferences_window.py:56
+#: gnusteampacker/ui/preferences_window.py:57
 msgid "Files"
 msgstr "ファイル"
 
-#: gnusteampacker/ui/preferences_window.py:59
+#: gnusteampacker/ui/preferences_window.py:60
 msgid "Output directory"
 msgstr "出力ディレクトリ"
 
-#: gnusteampacker/ui/preferences_window.py:64
+#: gnusteampacker/ui/preferences_window.py:65
 msgid "Browse…"
 msgstr ""
 
-#: gnusteampacker/ui/preferences_window.py:70
+#: gnusteampacker/ui/preferences_window.py:71
 msgid "Compression"
 msgstr "圧縮"
 
-#: gnusteampacker/ui/preferences_window.py:73
+#: gnusteampacker/ui/preferences_window.py:74
 msgid "Level"
 msgstr "レベル"
 
-#: gnusteampacker/ui/preferences_window.py:92
+#: gnusteampacker/ui/preferences_window.py:93
 msgid "Threads"
 msgstr "スレッド"
 
-#: gnusteampacker/ui/preferences_window.py:100
+#: gnusteampacker/ui/preferences_window.py:101
 msgid "Choose output directory"
 msgstr "出力ディレクトリを選択"
 
-#: gnusteampacker/ui/preferences_window.py:119
+#: gnusteampacker/ui/preferences_window.py:120
 msgid "Account"
 msgstr "アカウント"
 
-#: gnusteampacker/ui/preferences_window.py:122
+#: gnusteampacker/ui/preferences_window.py:123
 msgid "Steam credentials"
 msgstr "Steam 資格情報"
 
-#: gnusteampacker/ui/preferences_window.py:125
-msgid "Username/password are stored in GNOME Keyring (or a local file if unavailable). SteamCMD keeps its own login session when remembered login is enabled."
-msgstr "ユーザー名/パスワードは GNOME キーリング(または使用できない場合はローカルファイル)に格納されています。記憶されたログインが有効になっている場合、SteamCMD は独自のログインセッションを維持します。"
+#: gnusteampacker/ui/preferences_window.py:126
+msgid ""
+"Username/password are stored in GNOME Keyring (or a local file if "
+"unavailable). SteamCMD keeps its own login session when remembered login is "
+"enabled."
+msgstr ""
+"ユーザー名/パスワードは GNOME キーリング(または使用できない場合はローカルファ"
+"イル)に格納されています。記憶されたログインが有効になっている場合、SteamCMD "
+"は独自のログインセッションを維持します。"
 
-#: gnusteampacker/ui/preferences_window.py:137
+#: gnusteampacker/ui/preferences_window.py:138
 msgid "Username"
 msgstr "ユーザー名"
 
-#: gnusteampacker/ui/preferences_window.py:142
+#: gnusteampacker/ui/preferences_window.py:143
 msgid "Password"
 msgstr "パスワード"
 
-#: gnusteampacker/ui/preferences_window.py:147
+#: gnusteampacker/ui/preferences_window.py:148
 msgid "Remember login session"
 msgstr "ログインセッションを保存"
 
-#: gnusteampacker/ui/preferences_window.py:149
+#: gnusteampacker/ui/preferences_window.py:150
 msgid "Use Steam tool refresh/session tokens so later runs can auto-login."
-msgstr "Steamツールの更新/セッショントークンを使用すると、後で自動ログインできます。"
+msgstr ""
+"Steamツールの更新/セッショントークンを使用すると、後で自動ログインできます。"
 
-#: gnusteampacker/ui/preferences_window.py:162
+#: gnusteampacker/ui/preferences_window.py:176
 msgid "Appearance"
 msgstr "外観"
 
-#: gnusteampacker/ui/preferences_window.py:166
+#: gnusteampacker/ui/preferences_window.py:180
 msgid "Theme"
 msgstr "テーマ"
 
-#: gnusteampacker/ui/preferences_window.py:169
+#: gnusteampacker/ui/preferences_window.py:183
 msgid "Light"
 msgstr "ライト"
 
-#: gnusteampacker/ui/preferences_window.py:169
+#: gnusteampacker/ui/preferences_window.py:183
 msgid "Dark"
 msgstr "ダーク"
 
-#: gnusteampacker/ui/preferences_window.py:170
+#: gnusteampacker/ui/preferences_window.py:184
 msgid "Color scheme"
 msgstr "配色設定"
 
-#: gnusteampacker/ui/preferences_window.py:178
+#: gnusteampacker/ui/preferences_window.py:192
 msgid "Language"
 msgstr "言語"
 
-#: gnusteampacker/ui/preferences_window.py:182
+#: gnusteampacker/ui/preferences_window.py:196
 msgid "Display language"
 msgstr "言語を表示"
 
-#: gnusteampacker/ui/preferences_window.py:183
-#: gnusteampacker/ui/preferences_window.py:199
+#: gnusteampacker/ui/preferences_window.py:197
+#: gnusteampacker/ui/preferences_window.py:213
 msgid "Restart GnuSteamPacker to apply a language change"
 msgstr "GnuSteamPackerを再起動して言語の変更を適用します"
 
-#: gnusteampacker/ui/queue_row.py:18 gnusteampacker/ui/queue_row.py:56
+#: gnusteampacker/ui/queue_row.py:25 gnusteampacker/ui/queue_row.py:86
 #, python-brace-format
 msgid "AppID {appid}"
 msgstr "AppID {appid}"
 
-#: gnusteampacker/ui/queue_row.py:39 gnusteampacker/ui/window.py:230
+#: gnusteampacker/ui/queue_row.py:46 gnusteampacker/ui/window.py:242
 msgid "Retry"
 msgstr "再試行する"
 
-#: gnusteampacker/ui/queue_row.py:47
+#: gnusteampacker/ui/queue_row.py:54
 msgid "Remove"
 msgstr "削除"
 
-#: gnusteampacker/ui/queue_row.py:84
+#: gnusteampacker/ui/queue_row.py:126
 #, python-brace-format
 msgid "AppID: {appid}  ·  {platform}  ·  Branch: {branch}"
 msgstr "AppID: {appid}  ·  {platform}  · Branch: {branch}"
 
-#: gnusteampacker/ui/queue_row.py:94
+#: gnusteampacker/ui/queue_row.py:136
 #, python-brace-format
 msgid "{subtitle}  ·  {detail}"
 msgstr "{subtitle}  ·  {detail}"
@@ -304,35 +327,35 @@ msgstr "キュー"
 msgid "About GnuSteamPacker"
 msgstr "GnuSteamPackerについて"
 
-#: gnusteampacker/ui/window.py:214
+#: gnusteampacker/ui/window.py:226
 msgid "Steam Guard Required"
 msgstr "Steamガードが必要"
 
-#: gnusteampacker/ui/window.py:215
+#: gnusteampacker/ui/window.py:227
 msgid "Enter the code from your email or authenticator app."
 msgstr "Eメールまたは認証アプリからコードを入力してください。"
 
-#: gnusteampacker/worker.py:78
+#: gnusteampacker/worker.py:93
 #, python-brace-format
 msgid "SteamCMD install failed: {error}"
 msgstr "SteamCMDのインストールに失敗しました: {error}"
 
-#: gnusteampacker/worker.py:91
+#: gnusteampacker/worker.py:115 gnusteampacker/worker.py:131
 #, python-brace-format
 msgid "Info fetch failed: {error}"
 msgstr "情報の取得に失敗しました: {error}"
 
-#: gnusteampacker/worker.py:168
+#: gnusteampacker/worker.py:207
 #, python-brace-format
 msgid "SteamCMD output missing appmanifest for app {appid} in: {paths}"
 msgstr "SteamCMD出力不足アプリマニフェストアプリ {appid} in: {paths}"
 
-#: gnusteampacker/worker.py:260
+#: gnusteampacker/worker.py:303
 #, python-brace-format
 msgid "No files found under {path}"
 msgstr "{path} の下にファイルが見つかりませんでした"
 
-#: gnusteampacker/worker.py:296
+#: gnusteampacker/worker.py:339
 #, python-brace-format
 msgid "Failed to organise downloaded files: {error}"
 msgstr ""

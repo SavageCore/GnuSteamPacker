@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gnusteampacker\n"
 "Report-Msgid-Bugs-To: https://github.com/SavageCore/GnuSteamPacker/issues\n"
-"POT-Creation-Date: 2026-06-08 20:58+0100\n"
+"POT-Creation-Date: 2026-06-16 11:19+0100\n"
 "PO-Revision-Date: 2026-06-08 13:35\n"
 "Last-Translator: \n"
 "Language-Team: Ukrainian\n"
@@ -10,268 +10,293 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=4; plural=((n%10==1 && n%100!=11) ? 0 : ((n%10 >= 2 && n%10 <=4 && (n%100 < 12 || n%100 > 14)) ? 1 : ((n%10 == 0 || (n%10 >= 5 && n%10 <=9)) || (n%100 >= 11 && n%100 <= 14)) ? 2 : 3));\n"
+"Plural-Forms: nplurals=4; plural=((n%10==1 && n%100!=11) ? 0 : ((n%10 >= 2 "
+"&& n%10 <=4 && (n%100 < 12 || n%100 > 14)) ? 1 : ((n%10 == 0 || (n%10 >= 5 "
+"&& n%10 <=9)) || (n%100 >= 11 && n%100 <= 14)) ? 2 : 3));\n"
 "X-Crowdin-Project: gnusteampacker\n"
 "X-Crowdin-Project-ID: 904253\n"
 "X-Crowdin-Language: uk\n"
 "X-Crowdin-File: /main/po/gnusteampacker.pot\n"
 "X-Crowdin-File-ID: 7\n"
 
-#: gnusteampacker/i18n.py:73 gnusteampacker/ui/preferences_window.py:169
+#: gnusteampacker/i18n.py:73 gnusteampacker/ui/preferences_window.py:183
 msgid "Follow System"
 msgstr "Слідувати за системою"
 
-#: gnusteampacker/main.py:69
-msgid "A Linux-native GUI for downloading, cleaning, and packaging Steam games for archival and sharing. Spiritual port of <a href=\"https://github.com/Masquerade64/SuperSteamPacker\">SuperSteamPacker</a>."
-msgstr "Лінукс-рідний інтерфейс для завантаження, очищення та упаковки пар ігор для архіву та обміну. Духовний порт <a href=\"https://github.com/Masquerade64/SuperSteamPacker\">SuperSteamPacker</a>."
+#: gnusteampacker/main.py:70
+msgid ""
+"A Linux-native GUI for downloading, cleaning, and packaging Steam games for "
+"archival and sharing. Spiritual port of <a href=\"https://github.com/"
+"Masquerade64/SuperSteamPacker\">SuperSteamPacker</a>."
+msgstr ""
+"Лінукс-рідний інтерфейс для завантаження, очищення та упаковки пар ігор для "
+"архіву та обміну. Духовний порт <a href=\"https://github.com/Masquerade64/"
+"SuperSteamPacker\">SuperSteamPacker</a>."
 
-#: gnusteampacker/main.py:78
+#: gnusteampacker/main.py:79
 msgid "Donate"
 msgstr "Пожертвувати"
 
-#: gnusteampacker/main.py:80
+#: gnusteampacker/main.py:81
 msgid "Third-Party Libraries and Special Thanks"
 msgstr "Сторонні бібліотеки та спеціальних подяки"
 
-#: gnusteampacker/queue_model.py:44
+#: gnusteampacker/queue_model.py:63
 msgid "Windows 64-bit"
 msgstr "Windows 64-bit"
 
-#: gnusteampacker/queue_model.py:45
+#: gnusteampacker/queue_model.py:64
 msgid "Windows 32-bit"
 msgstr "Windows 32-bit"
 
-#: gnusteampacker/queue_model.py:46
+#: gnusteampacker/queue_model.py:65
 msgid "Linux 64-bit"
 msgstr "Linux 64-біт"
 
-#: gnusteampacker/queue_model.py:47
+#: gnusteampacker/queue_model.py:66
 msgid "Linux 32-bit"
 msgstr "Linux 32-біт"
 
-#: gnusteampacker/queue_model.py:48
+#: gnusteampacker/queue_model.py:67
 msgid "macOS"
 msgstr "macOS"
 
-#: gnusteampacker/ui/add_game_dialog.py:21
+#: gnusteampacker/ui/add_game_dialog.py:22
 msgid "Add Game"
 msgstr "Додати Гру"
 
 #. ── Search section ──────────────────────────────────────────────────
-#: gnusteampacker/ui/add_game_dialog.py:49
+#: gnusteampacker/ui/add_game_dialog.py:52
 msgid "Search by name"
 msgstr "Пошук за іменем"
 
-#: gnusteampacker/ui/add_game_dialog.py:50
+#: gnusteampacker/ui/add_game_dialog.py:53
 msgid "e.g. Half-Life, Portal…"
 msgstr "напр. Half-Life, портал…"
 
 #. ── Manual AppID ────────────────────────────────────────────────────
-#: gnusteampacker/ui/add_game_dialog.py:64
+#: gnusteampacker/ui/add_game_dialog.py:67
 msgid "Or enter AppID directly"
 msgstr "Або введіть безпосередньо AppID"
 
-#: gnusteampacker/ui/add_game_dialog.py:67
+#: gnusteampacker/ui/add_game_dialog.py:70
 msgid "AppID"
 msgstr "ID застосунка"
 
 #. Shown while fetching game info
-#: gnusteampacker/ui/add_game_dialog.py:72
-#: gnusteampacker/ui/add_game_dialog.py:202
+#: gnusteampacker/ui/add_game_dialog.py:75
+#: gnusteampacker/ui/add_game_dialog.py:204
 msgid "Looking up game…"
 msgstr ""
 
 #. ── Options (disabled until game info loaded) ──────────────────────
-#: gnusteampacker/ui/add_game_dialog.py:82
+#: gnusteampacker/ui/add_game_dialog.py:85
 msgid "Options"
 msgstr "Опції"
 
-#: gnusteampacker/ui/add_game_dialog.py:87
+#: gnusteampacker/ui/add_game_dialog.py:89
+#: gnusteampacker/ui/add_game_dialog.py:297
 msgid "Platform"
 msgstr "Платформа"
 
-#: gnusteampacker/ui/add_game_dialog.py:91
+#: gnusteampacker/ui/add_game_dialog.py:93
 msgid "Branch"
 msgstr "Відділення"
 
-#: gnusteampacker/ui/add_game_dialog.py:96
+#: gnusteampacker/ui/add_game_dialog.py:98
 msgid "Branch password"
 msgstr "Пароль гілки"
 
-#: gnusteampacker/ui/add_game_dialog.py:107 gnusteampacker/ui/window.py:229
+#: gnusteampacker/ui/add_game_dialog.py:109 gnusteampacker/ui/window.py:241
 msgid "Cancel"
 msgstr "Скасувати"
 
-#: gnusteampacker/ui/add_game_dialog.py:111
+#: gnusteampacker/ui/add_game_dialog.py:113
 msgid "Add to Queue"
 msgstr "Додати до черги"
 
-#: gnusteampacker/ui/add_game_dialog.py:166
+#: gnusteampacker/ui/add_game_dialog.py:168
 #, python-brace-format
 msgid "AppID: {appid}"
 msgstr "Додаток ID: {appid}"
 
-#: gnusteampacker/ui/add_game_dialog.py:223
+#: gnusteampacker/ui/add_game_dialog.py:236
 #, python-brace-format
 msgid "Not found: {error}"
 msgstr "Не знайдено: {error}"
 
-#: gnusteampacker/ui/add_game_dialog.py:223
+#: gnusteampacker/ui/add_game_dialog.py:236
 msgid "unknown error"
 msgstr "невідома помилка"
 
-#: gnusteampacker/ui/preferences_window.py:16
+#: gnusteampacker/ui/add_game_dialog.py:297
+#, fuzzy
+msgid "Platforms"
+msgstr "Платформа"
+
+#: gnusteampacker/ui/add_game_dialog.py:299
+msgid "None selected"
+msgstr ""
+
+#: gnusteampacker/ui/preferences_window.py:17
 msgid "Fastest"
 msgstr "Найшвидше"
 
-#: gnusteampacker/ui/preferences_window.py:16
+#: gnusteampacker/ui/preferences_window.py:17
 msgid "Fast"
 msgstr "Швидко"
 
-#: gnusteampacker/ui/preferences_window.py:16
+#: gnusteampacker/ui/preferences_window.py:17
 msgid "Normal"
 msgstr "Нормальний"
 
-#: gnusteampacker/ui/preferences_window.py:16
+#: gnusteampacker/ui/preferences_window.py:17
 msgid "Maximum"
 msgstr "Максимум"
 
-#: gnusteampacker/ui/preferences_window.py:16
+#: gnusteampacker/ui/preferences_window.py:17
 msgid "Ultra"
 msgstr "Ultra"
 
-#: gnusteampacker/ui/preferences_window.py:21 gnusteampacker/ui/window.py:99
+#: gnusteampacker/ui/preferences_window.py:22 gnusteampacker/ui/window.py:99
 msgid "Preferences"
 msgstr "Властивості"
 
-#: gnusteampacker/ui/preferences_window.py:31
+#: gnusteampacker/ui/preferences_window.py:32
 msgid "Downloaders"
 msgstr "Завантажувачі"
 
-#: gnusteampacker/ui/preferences_window.py:34
+#: gnusteampacker/ui/preferences_window.py:35
 msgid "SteamCMD"
 msgstr "SteamCMD"
 
-#: gnusteampacker/ui/preferences_window.py:37
+#: gnusteampacker/ui/preferences_window.py:38
 msgid "Path to SteamCMD"
 msgstr "Шлях до SteamCMD"
 
-#: gnusteampacker/ui/preferences_window.py:42
+#: gnusteampacker/ui/preferences_window.py:43
 msgid "Auto-download if missing"
 msgstr "Автозавантаження, якщо відсутнє"
 
-#: gnusteampacker/ui/preferences_window.py:53
+#: gnusteampacker/ui/preferences_window.py:54
 msgid "Output"
 msgstr "Вихід"
 
-#: gnusteampacker/ui/preferences_window.py:56
+#: gnusteampacker/ui/preferences_window.py:57
 msgid "Files"
 msgstr "Файли"
 
-#: gnusteampacker/ui/preferences_window.py:59
+#: gnusteampacker/ui/preferences_window.py:60
 msgid "Output directory"
 msgstr "Вихідний каталог"
 
-#: gnusteampacker/ui/preferences_window.py:64
+#: gnusteampacker/ui/preferences_window.py:65
 msgid "Browse…"
 msgstr "Переглядати…"
 
-#: gnusteampacker/ui/preferences_window.py:70
+#: gnusteampacker/ui/preferences_window.py:71
 msgid "Compression"
 msgstr "Стиснення"
 
-#: gnusteampacker/ui/preferences_window.py:73
+#: gnusteampacker/ui/preferences_window.py:74
 msgid "Level"
 msgstr "Рівень"
 
-#: gnusteampacker/ui/preferences_window.py:92
+#: gnusteampacker/ui/preferences_window.py:93
 msgid "Threads"
 msgstr "Потоків"
 
-#: gnusteampacker/ui/preferences_window.py:100
+#: gnusteampacker/ui/preferences_window.py:101
 msgid "Choose output directory"
 msgstr "Виберіть вихідний каталог"
 
-#: gnusteampacker/ui/preferences_window.py:119
+#: gnusteampacker/ui/preferences_window.py:120
 msgid "Account"
 msgstr "Обліковий запис"
 
-#: gnusteampacker/ui/preferences_window.py:122
+#: gnusteampacker/ui/preferences_window.py:123
 msgid "Steam credentials"
 msgstr "Облікові дані Steam"
 
-#: gnusteampacker/ui/preferences_window.py:125
-msgid "Username/password are stored in GNOME Keyring (or a local file if unavailable). SteamCMD keeps its own login session when remembered login is enabled."
-msgstr "Ім'я користувача/пароль зберігаються в Ключарі GNOME (або локальний файл). SteamCMD зберігає свою сесію при запам'ятовуванні авторизації."
+#: gnusteampacker/ui/preferences_window.py:126
+msgid ""
+"Username/password are stored in GNOME Keyring (or a local file if "
+"unavailable). SteamCMD keeps its own login session when remembered login is "
+"enabled."
+msgstr ""
+"Ім'я користувача/пароль зберігаються в Ключарі GNOME (або локальний файл). "
+"SteamCMD зберігає свою сесію при запам'ятовуванні авторизації."
 
-#: gnusteampacker/ui/preferences_window.py:137
+#: gnusteampacker/ui/preferences_window.py:138
 msgid "Username"
 msgstr "Ім'я користувача"
 
-#: gnusteampacker/ui/preferences_window.py:142
+#: gnusteampacker/ui/preferences_window.py:143
 msgid "Password"
 msgstr "Пароль"
 
-#: gnusteampacker/ui/preferences_window.py:147
+#: gnusteampacker/ui/preferences_window.py:148
 msgid "Remember login session"
 msgstr "Пам'ятати сеанс входу"
 
-#: gnusteampacker/ui/preferences_window.py:149
+#: gnusteampacker/ui/preferences_window.py:150
 msgid "Use Steam tool refresh/session tokens so later runs can auto-login."
-msgstr "Використовувати Steam для оновлення / сеансів токени й автоматичного входу може використовуватись використовуватись використовуватись автоматичний вхід."
+msgstr ""
+"Використовувати Steam для оновлення / сеансів токени й автоматичного входу "
+"може використовуватись використовуватись використовуватись автоматичний вхід."
 
-#: gnusteampacker/ui/preferences_window.py:162
+#: gnusteampacker/ui/preferences_window.py:176
 msgid "Appearance"
 msgstr "Зовнішній вигляд"
 
-#: gnusteampacker/ui/preferences_window.py:166
+#: gnusteampacker/ui/preferences_window.py:180
 msgid "Theme"
 msgstr "Тема"
 
-#: gnusteampacker/ui/preferences_window.py:169
+#: gnusteampacker/ui/preferences_window.py:183
 msgid "Light"
 msgstr "Світла"
 
-#: gnusteampacker/ui/preferences_window.py:169
+#: gnusteampacker/ui/preferences_window.py:183
 msgid "Dark"
 msgstr "Темна"
 
-#: gnusteampacker/ui/preferences_window.py:170
+#: gnusteampacker/ui/preferences_window.py:184
 msgid "Color scheme"
 msgstr "Кольорова схема"
 
-#: gnusteampacker/ui/preferences_window.py:178
+#: gnusteampacker/ui/preferences_window.py:192
 msgid "Language"
 msgstr "Мова:"
 
-#: gnusteampacker/ui/preferences_window.py:182
+#: gnusteampacker/ui/preferences_window.py:196
 msgid "Display language"
 msgstr "Мова інтерфейсу"
 
-#: gnusteampacker/ui/preferences_window.py:183
-#: gnusteampacker/ui/preferences_window.py:199
+#: gnusteampacker/ui/preferences_window.py:197
+#: gnusteampacker/ui/preferences_window.py:213
 msgid "Restart GnuSteamPacker to apply a language change"
 msgstr "Перезапустіть GnuSteamPacker для застосування зміни мови"
 
-#: gnusteampacker/ui/queue_row.py:18 gnusteampacker/ui/queue_row.py:56
+#: gnusteampacker/ui/queue_row.py:25 gnusteampacker/ui/queue_row.py:86
 #, python-brace-format
 msgid "AppID {appid}"
 msgstr "Ідентифікатор застосунка {appid}"
 
-#: gnusteampacker/ui/queue_row.py:39 gnusteampacker/ui/window.py:230
+#: gnusteampacker/ui/queue_row.py:46 gnusteampacker/ui/window.py:242
 msgid "Retry"
 msgstr "Повторити спробу"
 
-#: gnusteampacker/ui/queue_row.py:47
+#: gnusteampacker/ui/queue_row.py:54
 msgid "Remove"
 msgstr "Видалити"
 
-#: gnusteampacker/ui/queue_row.py:84
+#: gnusteampacker/ui/queue_row.py:126
 #, python-brace-format
 msgid "AppID: {appid}  ·  {platform}  ·  Branch: {branch}"
 msgstr ""
 
-#: gnusteampacker/ui/queue_row.py:94
+#: gnusteampacker/ui/queue_row.py:136
 #, python-brace-format
 msgid "{subtitle}  ·  {detail}"
 msgstr "{subtitle}  ·  {detail}"
@@ -304,35 +329,35 @@ msgstr "Черга"
 msgid "About GnuSteamPacker"
 msgstr "Про GnuSteamPacker"
 
-#: gnusteampacker/ui/window.py:214
+#: gnusteampacker/ui/window.py:226
 msgid "Steam Guard Required"
 msgstr "Потрібен вартовий Steam"
 
-#: gnusteampacker/ui/window.py:215
+#: gnusteampacker/ui/window.py:227
 msgid "Enter the code from your email or authenticator app."
 msgstr "Введіть код з додатка для автентифікації по електронній пошті."
 
-#: gnusteampacker/worker.py:78
+#: gnusteampacker/worker.py:93
 #, python-brace-format
 msgid "SteamCMD install failed: {error}"
 msgstr "Помилка встановлення SteamCMD: {error}"
 
-#: gnusteampacker/worker.py:91
+#: gnusteampacker/worker.py:115 gnusteampacker/worker.py:131
 #, python-brace-format
 msgid "Info fetch failed: {error}"
 msgstr ""
 
-#: gnusteampacker/worker.py:168
+#: gnusteampacker/worker.py:207
 #, python-brace-format
 msgid "SteamCMD output missing appmanifest for app {appid} in: {paths}"
 msgstr "Програму SteamCMD відсутній appmanifest у програмі {appid} у: {paths}"
 
-#: gnusteampacker/worker.py:260
+#: gnusteampacker/worker.py:303
 #, python-brace-format
 msgid "No files found under {path}"
 msgstr ""
 
-#: gnusteampacker/worker.py:296
+#: gnusteampacker/worker.py:339
 #, python-brace-format
 msgid "Failed to organise downloaded files: {error}"
 msgstr ""
