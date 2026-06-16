@@ -6,31 +6,22 @@ section: utils
 priority: optional
 maintainer: SavageCore <talk@savagecore.uk>
 description: |
-  GnuSteamPacker - Linux-native Steam game downloader and packager.
+  GnuSteamPacker - Linux-native Steam game downloader and packager (CLI).
   Downloads Steam games via SteamCMD, strips sensitive data from ACF files,
   and produces compressed archives with release text for distribution.
+  Install gnusteampacker-gui for the GTK4 graphical interface.
 vendor: GnuSteamPacker Project
 homepage: https://github.com/SavageCore/GnuSteamPacker
 license: GPL-3.0-or-later
 
 depends:
   - python3 (>= 3.11)
-  - python3-gi
-  - python3-gi-cairo
-  - gir1.2-gtk-4.0
-  - gir1.2-adw-1
   - p7zip-full
 
 contents:
-  - src: ./dist/gnusteampacker
+  - src: ./dist-cli/gnusteampacker
     dst: /usr/lib/python3/dist-packages/gnusteampacker
     type: dir
-
-  - src: ./data/org.gnusteampacker.GnuSteamPacker.desktop
-    dst: /usr/share/applications/org.gnusteampacker.GnuSteamPacker.desktop
-
-  - src: ./data/icons/hicolor/scalable/apps/org.gnusteampacker.GnuSteamPacker.svg
-    dst: /usr/share/icons/hicolor/scalable/apps/org.gnusteampacker.GnuSteamPacker.svg
 
   - src: ./scripts/gnusteampacker-launcher.sh
     dst: /usr/bin/gnusteampacker
@@ -41,7 +32,4 @@ overrides:
   rpm:
     depends:
       - python3 >= 3.11
-      - python3-gobject
-      - gtk4
-      - libadwaita
       - p7zip

@@ -1,0 +1,5 @@
+option('gui',
+  type: 'boolean',
+  value: true,
+  description: 'Install GTK4/libadwaita GUI components (ui/, async_runner.py, desktop file, icon)',
+)

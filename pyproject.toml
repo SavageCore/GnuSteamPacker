@@ -20,6 +20,11 @@ dependencies = [
 [project.scripts]
 gnusteampacker = "gnusteampacker.main:main"
 
+[project.optional-dependencies]
+gui = [
+    "PyGObject>=3.46",
+]
+
 [tool.hatch.build]
 artifacts = ["gnusteampacker/locale/**/*.mo"]
 

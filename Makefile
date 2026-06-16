@@ -1,4 +1,4 @@
-.PHONY: dev run run-debug watch lint format dev-icons pot update-po mo flatpak flatpak-bundle flatpak-run rpm deb appimage clear-auth clean
+.PHONY: dev run run-debug watch lint format dev-icons pot update-po mo flatpak flatpak-bundle flatpak-run dist-cli dist-gui rpm deb appimage clear-auth clean
 
 dev:
 	uv venv --python /usr/bin/python3 --system-site-packages --clear
@@ -58,13 +58,21 @@ flatpak-bundle: flatpak
 flatpak-run:
 	flatpak-builder --run build-dir org.gnusteampacker.GnuSteamPacker.json gnusteampacker
 
-rpm:
-	uv export --no-dev -o /tmp/gsp-requirements.txt
-	nfpm package --packager rpm --config nfpm.yml
+dist-cli: mo
+	meson setup build-cli -Dgui=false --wipe
+	meson install -C build-cli --destdir $(CURDIR)/dist-cli
 
-deb:
-	uv export --no-dev -o /tmp/gsp-requirements.txt
+dist-gui: mo
+	meson setup build-gui -Dgui=true --wipe
+	meson install -C build-gui --destdir $(CURDIR)/dist-gui
+
+rpm: dist-cli dist-gui
+	nfpm package --packager rpm --config nfpm.yml
+	nfpm package --packager rpm --config nfpm-gui.yml
+
+deb: dist-cli dist-gui
 	nfpm package --packager deb --config nfpm.yml
+	nfpm package --packager deb --config nfpm-gui.yml
 
 appimage:
 	uv export --no-dev --no-hashes --no-annotate -o requirements.txt

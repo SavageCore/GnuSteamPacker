@@ -6,20 +6,28 @@ project('gnusteampacker',
 py = import('python').find_installation('python3')
 gnome = import('gnome')
 
-install_subdir('gnusteampacker', install_dir: py.get_install_dir())
+if get_option('gui')
+  install_subdir('gnusteampacker', install_dir: py.get_install_dir())
 
-install_data(
-  'data/org.gnusteampacker.GnuSteamPacker.desktop',
-  install_dir: get_option('datadir') / 'applications',
-)
+  install_data(
+    'data/org.gnusteampacker.GnuSteamPacker.desktop',
+    install_dir: get_option('datadir') / 'applications',
+  )
 
-install_data(
-  'data/icons/hicolor/scalable/apps/org.gnusteampacker.GnuSteamPacker.svg',
-  install_dir: get_option('datadir') / 'icons/hicolor/scalable/apps',
-)
+  install_data(
+    'data/icons/hicolor/scalable/apps/org.gnusteampacker.GnuSteamPacker.svg',
+    install_dir: get_option('datadir') / 'icons/hicolor/scalable/apps',
+  )
 
-gnome.post_install(
-  glib_compile_schemas: true,
-  gtk_update_icon_cache: true,
-  update_desktop_database: true,
-)
+  gnome.post_install(
+    glib_compile_schemas: true,
+    gtk_update_icon_cache: true,
+    update_desktop_database: true,
+  )
+else
+  install_subdir('gnusteampacker',
+    install_dir: py.get_install_dir(),
+    exclude_files: ['async_runner.py'],
+    exclude_directories: ['ui'],
+  )
+endif
