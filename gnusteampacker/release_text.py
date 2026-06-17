@@ -32,8 +32,9 @@ def generate(item: QueueItem) -> str:
     changelog_url = f"https://steamdb.info/patchnotes/{build_id}/"
 
     return (
-        f"[url={item.url}][color=white][b]{item.game_name} [{platform_label}]"
-        f" [Branch: {branch}] (Clean Steam Files)[/b][/color][/url]\n"
+        f"[color=white][b]{item.game_name} [{platform_label}]"
+        f" [Branch: {branch}] (Clean Steam Files)[/b][/color]\n"
+        f" [url={item.url}]{item.archive_name}.7z[/url]\n"
         f"[size=100][color=white][b]Version:[/b]"
         f" [i]{game_version} ({build_time} - Build {build_id})[/i][/color][/size]"
         f"[color=#FFFFFF] | [/color][url={launch_options_url}]Launch Options[/url]"
