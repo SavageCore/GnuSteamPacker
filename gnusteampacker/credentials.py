@@ -7,8 +7,8 @@ from gnusteampacker.config import CONFIG_DIR
 _COLLECTION = "gnusteampacker"
 _USER_ATTR = {"service": _COLLECTION, "key": "username"}
 _PASS_ATTR = {"service": _COLLECTION, "key": "password"}
-
-_FALLBACK_FILE = CONFIG_DIR / ".credentials"
+_MULTIUP_USER_ATTR = {"service": _COLLECTION, "key": "multiup_username"}
+_MULTIUP_PASS_ATTR = {"service": _COLLECTION, "key": "multiup_password"}
 
 
 def _keyring():
@@ -80,6 +80,56 @@ def clear_password() -> None:
 
 def clear_username() -> None:
     set_username("")
+
+
+def get_multiup_username() -> str:
+    col = _keyring()
+    if col:
+        try:
+            items = list(col.search_items(_MULTIUP_USER_ATTR))
+            if items:
+                return items[0].get_secret().decode()
+        except Exception:
+            pass
+    return _fallback_read("multiup_username")
+
+
+def get_multiup_password() -> str:
+    col = _keyring()
+    if col:
+        try:
+            items = list(col.search_items(_MULTIUP_PASS_ATTR))
+            if items:
+                return items[0].get_secret().decode()
+        except Exception:
+            pass
+    return _fallback_read("multiup_password")
+
+
+def set_multiup_username(value: str) -> None:
+    col = _keyring()
+    if col:
+        try:
+            for item in col.search_items(_MULTIUP_USER_ATTR):
+                item.delete()
+            col.create_item("GnuSteamPacker multiup username", _MULTIUP_USER_ATTR, value.encode())
+            return
+        except Exception:
+            pass
+    _fallback_write("multiup_username", value)
+
+
+def set_multiup_password(value: str) -> None:
+    col = _keyring()
+    if col:
+        try:
+            for item in col.search_items(_MULTIUP_PASS_ATTR):
+                item.delete()
+            col.create_item("GnuSteamPacker multiup password", _MULTIUP_PASS_ATTR, value.encode())
+            return
+        except Exception:
+            pass
+    _fallback_write("multiup_password", value)
 
 
 def build_auth_override(conf: dict) -> dict | None:

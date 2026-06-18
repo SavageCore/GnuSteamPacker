@@ -141,25 +141,36 @@ you'll be prompted for the code interactively.
 | `--branch` | `public` | Steam branch to download |
 | `--branch-password` | _(none)_ | Password for a private branch |
 | `--version` | _(none)_ | Human version string for the forum reply, e.g. `1.3.5` (prompted if omitted) |
-| `--forum-post-url` | _(none)_ | URL of the release post; cached per-appid (prompted on first use for an appid) |
-| `--forum-post-content` | _(none)_ | Content of the current release post, or a path to a file containing it (prompted if omitted) |
+| `--forum-post-url` | _(none)_ | URL of the release post; cached per-appid (prompted on first use after the first pack) |
 | `--no-open` | off | Don't auto-open the SteamDB patch notes page in your browser |
-| `--upload` | _(none)_ | Should we upload to multiup.io? You can either upload annoymously or set credentials below
-| `--multiup-user` | _(none)_ | Username at multiup.io (optional)
-| `--multiup-pass` | _(none)_ | Password at multiup.io (optional)
+| `--upload` | off | Upload the packaged files to multiup.io |
+| `--anonymous` | off | Upload anonymously, bypassing stored multiup.io credentials |
 
 On success, `pack`:
 1. Prints paths to the generated `.7z` archives, ready to upload to multiup.io (if `--upload` was omitted)
-2. Prompts for the forum post URL (cached per-appid for next time) and the new
-   version number. It'll open your browser to the SteamDB patch notes page for the build so you can easily find it.
-3. Prompts for the *current* release post content (paste it directly, finishing
-   with Ctrl+D, or enter a path to a file containing it) - an example is at `examples/topic-bbcode.txt`.
-   Skipped if `--forum-post-content` was supplied.
-4. Moves those current release blocks into the "Previous Versions" spoiler,
-   inserts the new BBCode for each platform at the top, and writes the result
-   to `<game>.ForumPost.Build.<id>.txt` in the output directory, ready to paste
-   back into the forum (after filling in the new multiup links if `--upload` was omitted)
-5. Prints a forum reply template using the forum post URL and version e.g. (`[url=https://cs.rin.ru/forum/viewtopic.php?p=1234#p1234]Updated[/url] to [url=https://steamdb.info/patchnotes/xxxxxxxx/]1.0.0[/url]`)
+2. Prompts for the new version number (opens your browser to the SteamDB patch notes page so you can find it).
+   On the first pack for a game, the forum post URL prompt is skipped since there's no existing post to reply to.
+3. Merges the new per-platform BBCode blocks into the cached forum post for this game (stored in
+   `~/.local/share/gnusteampacker/forum_posts/<appid>.txt`), shifting the previous release into
+   a "Previous Versions" spoiler. Writes the result to `<game>.ForumPost.Build.<id>.txt` in the
+   output directory and updates the cache for next time.
+4. Prints a forum reply template e.g. `[url=...]Updated[/url] to [url=...]1.0.0[/url]`
+   (skipped on first pack).
+
+### multiup.io credentials
+
+To upload as a logged-in multiup.io user, save your credentials once:
+
+```bash
+gnusteampacker pack login
+```
+
+This prompts for your username and password, verifies them against the multiup.io API,
+and stores them in your system keyring (or a fallback file if no keyring is available).
+Credentials are then used automatically whenever you run with `--upload`.
+
+If no credentials are saved when you run `--upload`, you'll be prompted inline and given
+the option to upload anonymously instead.
 
 ## Translations
 

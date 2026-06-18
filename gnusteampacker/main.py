@@ -12,6 +12,10 @@ def main() -> int:
     import os
 
     if len(sys.argv) > 1 and sys.argv[1] == "pack":
+        if len(sys.argv) > 2 and sys.argv[2] == "login":
+            from gnusteampacker.cli import run_pack_login
+
+            return run_pack_login()
         from gnusteampacker.cli import run_pack
 
         return run_pack(sys.argv[2:])

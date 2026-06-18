@@ -3,6 +3,7 @@
 import argparse
 import asyncio
 import contextlib
+import getpass
 import logging
 import os
 import sys
@@ -18,7 +19,7 @@ from rich.table import Table
 from rich.text import Text
 
 from gnusteampacker import config as cfg
-from gnusteampacker import credentials, release_text, worker
+from gnusteampacker import credentials, multiup_api, release_text, worker
 from gnusteampacker import steam_api as _steam_api
 from gnusteampacker.queue_model import QueueItem, Status
 from gnusteampacker.steam_api import OS_PRIMARY_PLATFORM, PLATFORM_STEAMCMD
@@ -104,14 +105,9 @@ def build_parser() -> argparse.ArgumentParser:
         help="Upload the packaged files",
     )
     parser.add_argument(
-        "--multiup-user",
-        default="",
-        help="Username for multiup.io (optional)",
-    )
-    parser.add_argument(
-        "--multiup-pass",
-        default="",
-        help="Password for multiup.io (optional)",
+        "--anonymous",
+        action="store_true",
+        help="Upload anonymously without using stored multiup.io credentials",
     )
     return parser
 
@@ -294,7 +290,12 @@ class _PlatformProgress:
             self._live.update(self._render(item, self._display_progress))
 
 
-async def _process_all(items: list[QueueItem], args: argparse.Namespace) -> None:
+async def _process_all(
+    items: list[QueueItem],
+    args: argparse.Namespace,
+    multiup_user: str = "",
+    multiup_pass: str = "",
+) -> None:
     conf = cfg.load()
     base_auth = credentials.build_auth_override(conf)
     remember_login = bool((base_auth or {}).get("remember_login", conf.get("remember_login", True)))
@@ -331,8 +332,8 @@ async def _process_all(items: list[QueueItem], args: argparse.Namespace) -> None
                     cb,
                     auth_override=per_item_auth,
                     upload=args.upload,
-                    multiup_user=args.multiup_user,
-                    multiup_pass=args.multiup_pass,
+                    multiup_user=multiup_user,
+                    multiup_pass=multiup_pass,
                     compute_hash=True,
                     info_cache=info_cache,
                 )
@@ -349,8 +350,8 @@ async def _process_all(items: list[QueueItem], args: argparse.Namespace) -> None
                         progress.update,
                         steam_guard_code=code,
                         upload=args.upload,
-                        multiup_user=args.multiup_user,
-                        multiup_pass=args.multiup_pass,
+                        multiup_user=multiup_user,
+                        multiup_pass=multiup_pass,
                         compute_hash=True,
                         info_cache=info_cache,
                     )
@@ -390,6 +391,50 @@ def _resolve_forum_post_url(appid: str, args: argparse.Namespace, conf: dict) ->
     conf["forum_post_urls"] = cache
     cfg.save(conf)
     return url
+
+
+def _resolve_multiup_credentials() -> tuple[str, str] | None:
+    username = credentials.get_multiup_username()
+    password = credentials.get_multiup_password()
+    if username:
+        console.print(f"\nUsing cached multiup.io credentials for [cyan]{escape(username)}[/cyan].")
+        return username, password
+    console.print(
+        "\nNo multiup.io credentials cached. "
+        "Run [bold]gnusteampacker pack login[/bold] to set them up, or enter them now:"
+    )
+    username = input("multiup.io username (leave blank to upload anonymously): ").strip()
+    if not username:
+        return None
+    password = getpass.getpass("multiup.io password: ")
+    user_id = multiup_api.login(username, password)
+    if user_id is None:
+        console.print("[bold red]Login failed.[/bold red] Uploading anonymously.")
+        return None
+    credentials.set_multiup_username(username)
+    credentials.set_multiup_password(password)
+    console.print(f"Credentials saved for [cyan]{escape(username)}[/cyan].")
+    return username, password
+
+
+def run_pack_login() -> int:
+    username = input("multiup.io username: ").strip()
+    if not username:
+        console.print("[red]Username cannot be empty.[/red]")
+        return 1
+    password = getpass.getpass("multiup.io password: ")
+    console.print("Verifying credentials…")
+    user_id = multiup_api.login(username, password)
+    if user_id is None:
+        console.print("[bold red]Login failed.[/bold red] Check your username and password.")
+        return 1
+    credentials.set_multiup_username(username)
+    credentials.set_multiup_password(password)
+    console.print(
+        f"[bold green]Logged in[/bold green] as [cyan]{escape(username)}[/cyan]"
+        f" (user ID: {user_id}). Credentials saved."
+    )
+    return 0
 
 
 def _forum_post_cache_path(appid: str) -> Path:
@@ -487,6 +532,12 @@ def run_pack(argv: list[str]) -> int:
 
     _setup_cli_logging()
 
+    multiup_user = multiup_pass = ""
+    if args.upload and not args.anonymous:
+        creds = _resolve_multiup_credentials()
+        if creds:
+            multiup_user, multiup_pass = creds
+
     items = [
         QueueItem(
             appid=args.appid,
@@ -498,7 +549,7 @@ def run_pack(argv: list[str]) -> int:
         for p in platforms
     ]
 
-    asyncio.run(_process_all(items, args))
+    asyncio.run(_process_all(items, args, multiup_user, multiup_pass))
 
     failed = [item for item in items if item.status != Status.COMPLETE]
     if failed:
