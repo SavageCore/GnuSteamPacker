@@ -8,7 +8,7 @@ import gi
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
-from gi.repository import Adw, Gtk
+from gi.repository import Adw, Gdk, GLib, Gtk
 
 from gnusteampacker import config as cfg
 from gnusteampacker import credentials, multiup_api, release_text
@@ -62,29 +62,37 @@ class ProcessDialog(Adw.Dialog):
         self._branch = first.get("branch", "public")
         self._platforms = [s.get("platform", "") for s in group]
 
-        self.set_content_width(480)
+        self.set_content_width(560)
 
-        toolbar_view = Adw.ToolbarView()
-        toolbar_view.add_top_bar(Adw.HeaderBar())
-        self.set_child(toolbar_view)
+        self._toolbar_view = Adw.ToolbarView()
+        self._header = Adw.HeaderBar()
+        self._toolbar_view.add_top_bar(self._header)
+        self.set_child(self._toolbar_view)
 
-        content = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
-        content.set_margin_top(12)
-        content.set_margin_bottom(12)
-        content.set_margin_start(16)
-        content.set_margin_end(16)
-        toolbar_view.set_content(content)
+        self._page_stack = Gtk.Stack()
+        self._page_stack.set_transition_type(Gtk.StackTransitionType.SLIDE_LEFT)
+        self._toolbar_view.set_content(self._page_stack)
 
-        # ── Info group ────────────────────────────────────────────────────
+        self._page_stack.add_named(self._build_input_page(), "input")
+        self._page_stack.add_named(self._build_result_page(), "result")
+
+    # ── Page builders ─────────────────────────────────────────────────────
+
+    def _build_input_page(self) -> Gtk.Box:
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
+        box.set_margin_top(12)
+        box.set_margin_bottom(12)
+        box.set_margin_start(16)
+        box.set_margin_end(16)
+
         info_group = Adw.PreferencesGroup(title=_("Archive"))
         info_row = Adw.ActionRow(
             title=self._game_name,
             subtitle=f"Build {self._build_id} · {', '.join(self._platforms)} · {self._branch}",
         )
         info_group.add(info_row)
-        content.append(info_group)
+        box.append(info_group)
 
-        # ── Version + upload options ───────────────────────────────────────
         options_group = Adw.PreferencesGroup()
         options_group.set_margin_top(16)
 
@@ -99,9 +107,8 @@ class ProcessDialog(Adw.Dialog):
         self._upload_switch.connect("notify::active", self._on_upload_toggled)
         options_group.add(self._upload_switch)
 
-        content.append(options_group)
+        box.append(options_group)
 
-        # ── Confirm button ────────────────────────────────────────────────
         btn_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
         btn_box.set_margin_top(20)
         btn_box.set_halign(Gtk.Align.END)
@@ -116,7 +123,56 @@ class ProcessDialog(Adw.Dialog):
         self._process_btn.connect("clicked", self._on_process_clicked)
         btn_box.append(self._process_btn)
 
-        content.append(btn_box)
+        box.append(btn_box)
+        return box
+
+    def _build_result_page(self) -> Gtk.Box:
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
+        box.set_margin_top(12)
+        box.set_margin_bottom(12)
+        box.set_margin_start(16)
+        box.set_margin_end(16)
+
+        label = Gtk.Label(label=_("Forum Post"))
+        label.add_css_class("heading")
+        label.set_halign(Gtk.Align.START)
+        label.set_margin_bottom(8)
+        box.append(label)
+
+        scroll = Gtk.ScrolledWindow()
+        scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+        scroll.set_vexpand(True)
+        scroll.set_min_content_height(260)
+
+        self._result_view = Gtk.TextView()
+        self._result_view.set_editable(False)
+        self._result_view.set_monospace(True)
+        self._result_view.set_wrap_mode(Gtk.WrapMode.WORD_CHAR)
+        self._result_view.set_left_margin(8)
+        self._result_view.set_right_margin(8)
+        self._result_view.set_top_margin(8)
+        self._result_view.set_bottom_margin(8)
+        self._result_buffer = self._result_view.get_buffer()
+        scroll.set_child(self._result_view)
+        box.append(scroll)
+
+        btn_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+        btn_box.set_margin_top(16)
+        btn_box.set_halign(Gtk.Align.END)
+
+        self._copy_btn = Gtk.Button(label=_("Copy Forum Post"))
+        self._copy_btn.add_css_class("suggested-action")
+        self._copy_btn.connect("clicked", self._on_copy_clicked)
+        btn_box.append(self._copy_btn)
+
+        close_btn = Gtk.Button(label=_("Close"))
+        close_btn.connect("clicked", lambda _btn: self.close())
+        btn_box.append(close_btn)
+
+        box.append(btn_box)
+        return box
+
+    # ── Input page handlers ───────────────────────────────────────────────
 
     def _on_version_changed(self, _entry) -> None:
         self._process_btn.set_sensitive(bool(self._version_entry.get_text().strip()))
@@ -180,6 +236,8 @@ class ProcessDialog(Adw.Dialog):
         self._version_entry.set_sensitive(not busy)
         self._upload_switch.set_sensitive(not busy)
 
+    # ── Finalize + result page ─────────────────────────────────────────────
+
     def _finalize(self, items: list[QueueItem]) -> None:
         conf = cfg.load()
         output_dir = Path(conf["output_dir"])
@@ -215,4 +273,27 @@ class ProcessDialog(Adw.Dialog):
                     log.warning("Failed to remove sidecar %s: %s", sidecar_path, exc)
 
         self._on_processed()
-        self.close()
+        self._show_result(new_post)
+
+    def _show_result(self, forum_post: str) -> None:
+        self.set_title(_("Release Text"))
+        self._result_buffer.set_text(forum_post)
+        self._page_stack.set_visible_child_name("result")
+
+    def _on_copy_clicked(self, _btn) -> None:
+        text = self._result_buffer.get_text(
+            self._result_buffer.get_start_iter(),
+            self._result_buffer.get_end_iter(),
+            False,
+        )
+        provider = Gdk.ContentProvider.new_for_bytes(
+            "text/plain;charset=utf-8",
+            GLib.Bytes.new(text.encode("utf-8")),
+        )
+        Gdk.Display.get_default().get_clipboard().set_content(provider)
+        self._copy_btn.set_label(_("Copied!"))
+        GLib.timeout_add(1500, self._reset_copy_btn)
+
+    def _reset_copy_btn(self) -> bool:
+        self._copy_btn.set_label(_("Copy Forum Post"))
+        return False
