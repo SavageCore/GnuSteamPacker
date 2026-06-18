@@ -239,6 +239,9 @@ class ProcessDialog(Adw.Dialog):
     # ── Finalize + result page ─────────────────────────────────────────────
 
     def _finalize(self, items: list[QueueItem]) -> None:
+        _order = {"win64": 0, "win32": 1, "lin64": 2, "lin32": 3, "macos": 4}
+        items.sort(key=lambda i: _order.get(i.platform, 99))
+
         conf = cfg.load()
         output_dir = Path(conf["output_dir"])
         new_blocks: list[str] = []
