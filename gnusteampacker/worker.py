@@ -131,6 +131,11 @@ async def process_item(
         push(Status.FAIL, detail=_("Info fetch failed: {error}").format(error=e))
         return
 
+    os_key = steam_api.PLATFORM_OS.get(item.platform)
+    if os_key and store_details and not store_details.get("platforms", {}).get(os_key):
+        push(Status.NOSUB, detail="platform not available for this game")
+        return
+
     # ── 3. Download via SteamCMD ───────────────────────────────────────────
     push(Status.DOWNLOADING, 0.0)
     install_dir = output_base / item.archive_name
