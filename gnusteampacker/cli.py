@@ -77,39 +77,63 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("appid", help="Steam AppID, e.g. 1902940")
     parser.add_argument(
+        "-p",
         "--platforms",
         default="win64,lin64",
         help="Comma-separated platform keys, e.g. win64,lin64, or 'all' for all available"
         " (default: win64,lin64)",
     )
-    parser.add_argument("--branch", default="public", help="Steam branch (default: public)")
-    parser.add_argument("--branch-password", default="", help="Password for a private branch")
+    parser.add_argument("-b", "--branch", default="public", help="Steam branch (default: public)")
+    parser.add_argument("-B", "--branch-password", default="", help="Password for a private branch")
     parser.add_argument(
+        "-v",
         "--version",
         default="",
         help="Human version string for the forum reply, e.g. 1.3.5 (prompted if omitted)",
     )
     parser.add_argument(
+        "-u",
         "--forum-post-url",
         default="",
         help="URL of the release post; cached per-appid (prompted on first use for an appid)",
     )
     parser.add_argument(
+        "-n",
         "--no-open",
         action="store_true",
         help="Don't auto-open the SteamDB patch notes page in a browser",
     )
     parser.add_argument(
+        "-U",
         "--upload",
         action="store_true",
         help="Upload the packaged files",
     )
     parser.add_argument(
+        "-a",
         "--anonymous",
         action="store_true",
         help="Upload anonymously without using stored multiup.io credentials",
     )
     return parser
+
+
+_BOOLEAN_SHORT_FLAGS = frozenset("Uan")
+
+
+def _expand_combined_flags(argv: list[str]) -> list[str]:
+    result = []
+    for arg in argv:
+        if (
+            arg.startswith("-")
+            and not arg.startswith("--")
+            and len(arg) > 2
+            and all(c in _BOOLEAN_SHORT_FLAGS for c in arg[1:])
+        ):
+            result.extend(f"-{c}" for c in arg[1:])
+        else:
+            result.append(arg)
+    return result
 
 
 def _setup_cli_logging() -> None:
@@ -513,7 +537,7 @@ def _print_multiup_delete_instructions(items: list[QueueItem]) -> None:
 
 def run_pack(argv: list[str]) -> int:
     parser = build_parser()
-    args = parser.parse_args(argv)
+    args = parser.parse_args(_expand_combined_flags(argv))
 
     platforms = [p.strip() for p in args.platforms.split(",") if p.strip()]
     if not platforms:

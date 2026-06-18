@@ -137,14 +137,14 @@ you'll be prompted for the code interactively.
 
 | Flag | Default | Description |
 |------|---------|-------------|
-| `--platforms` | `win64,lin64` | Comma-separated platform keys: `win64`, `win32`, `lin64`, `lin32`, `macos` |
-| `--branch` | `public` | Steam branch to download |
-| `--branch-password` | _(none)_ | Password for a private branch |
-| `--version` | _(none)_ | Human version string for the forum reply, e.g. `1.3.5` (prompted if omitted) |
-| `--forum-post-url` | _(none)_ | URL of the release post; cached per-appid (prompted on first use after the first pack) |
-| `--no-open` | off | Don't auto-open the SteamDB patch notes page in your browser |
-| `--upload` | off | Upload the packaged files to multiup.io |
-| `--anonymous` | off | Upload anonymously, bypassing stored multiup.io credentials |
+| `-p`, `--platforms` | `win64,lin64` | Comma-separated platform keys: `win64`, `win32`, `lin64`, `lin32`, `macos` |
+| `-b`, `--branch` | `public` | Steam branch to download |
+| `-B`, `--branch-password` | _(none)_ | Password for a private branch |
+| `-v`, `--version` | _(none)_ | Human version string for the forum reply, e.g. `1.3.5` (prompted if omitted) |
+| `-u`, `--forum-post-url` | _(none)_ | URL of the release post; cached per-appid (prompted on first use after the first pack) |
+| `-n`, `--no-open` | off | Don't auto-open the SteamDB patch notes page in your browser |
+| `-U`, `--upload` | off | Upload the packaged files to multiup.io |
+| `-a`, `--anonymous` | off | Upload anonymously, bypassing stored multiup.io credentials |
 
 On success, `pack`:
 1. Prints paths to the generated `.7z` archives, ready to upload to multiup.io (if `--upload` was omitted)
