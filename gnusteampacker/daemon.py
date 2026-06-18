@@ -158,6 +158,15 @@ def _setup_logging(conf: dict) -> None:
     )
 
 
+async def check_all() -> bool:
+    """Public async entry point for in-process checks (e.g. GUI 'Run now' button)."""
+    conf = cfg.load()
+    entries = load_watchlist()
+    if not entries:
+        return True
+    return await _check_all(entries, conf)
+
+
 def run_daemon_check() -> int:
     conf = cfg.load()
     _setup_logging(conf)

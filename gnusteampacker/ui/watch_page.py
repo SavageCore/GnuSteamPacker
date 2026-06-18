@@ -12,6 +12,7 @@ gi.require_version("Adw", "1")
 from gi.repository import Adw, GLib, Gtk
 
 from gnusteampacker import config as cfg
+from gnusteampacker.async_runner import run as async_run
 from gnusteampacker.i18n import _
 from gnusteampacker.queue_model import QueueItem
 from gnusteampacker.ui.add_game_dialog import AddGameDialog
@@ -83,11 +84,11 @@ class WatchPage(Gtk.Box):
         self._last_checked_row = Adw.ActionRow(title=_("Last checked"), subtitle=_("Never"))
         timer_group.add(self._last_checked_row)
 
-        run_now_btn = Gtk.Button(label=_("Run now"))
-        run_now_btn.set_valign(Gtk.Align.CENTER)
-        run_now_btn.connect("clicked", self._on_run_now)
+        self._run_now_btn = Gtk.Button(label=_("Run now"))
+        self._run_now_btn.set_valign(Gtk.Align.CENTER)
+        self._run_now_btn.connect("clicked", self._on_run_now)
         run_now_row = Adw.ActionRow(title=_("Manual check"))
-        run_now_row.add_suffix(run_now_btn)
+        run_now_row.add_suffix(self._run_now_btn)
         timer_group.add(run_now_row)
 
         self.append(timer_group)
@@ -288,16 +289,14 @@ class WatchPage(Gtk.Box):
             log.warning("systemctl %s failed: %s", action, exc)
 
     def _on_run_now(self, _btn) -> None:
-        try:
-            subprocess.run(
-                ["systemctl", "--user", "start", "gnusteampacker-daemon.service"],
-                capture_output=True,
-                timeout=10,
-            )
-        except (subprocess.TimeoutExpired, FileNotFoundError) as exc:
-            log.warning("systemctl start failed: %s", exc)
-        GLib.timeout_add(2000, self._delayed_refresh)
+        from gnusteampacker.daemon import check_all
 
-    def _delayed_refresh(self) -> bool:
-        self.refresh()
-        return False
+        self._run_now_btn.set_sensitive(False)
+        self._run_now_btn.set_label(_("Checking…"))
+
+        def _done(_result, _exc) -> None:
+            self._run_now_btn.set_sensitive(True)
+            self._run_now_btn.set_label(_("Run now"))
+            self.refresh()
+
+        async_run(check_all(), done_cb=_done)
