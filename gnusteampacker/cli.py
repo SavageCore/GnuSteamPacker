@@ -22,7 +22,7 @@ from gnusteampacker import config as cfg
 from gnusteampacker import credentials, multiup_api, release_text, worker
 from gnusteampacker import steam_api as _steam_api
 from gnusteampacker.queue_model import QueueItem, Status
-from gnusteampacker.steam_api import OS_PRIMARY_PLATFORM, PLATFORM_STEAMCMD
+from gnusteampacker.steam_api import OS_PRIMARY_PLATFORM, PLATFORM_OS, PLATFORM_STEAMCMD
 
 console = Console()
 
@@ -79,7 +79,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "-p",
         "--platforms",
-        default="win64,lin64",
+        default=None,
         help="Comma-separated platform keys, e.g. win64,lin64, or 'all' for all available"
         " (default: win64,lin64)",
     )
@@ -213,9 +213,9 @@ class _PlatformProgress:
         parser = build_parser()
         args = parser.parse_args(sys.argv[2:])
 
-        # Use the _PLATFORM_MAP to convert the platform keys to their display names.
+        platforms_str = args.platforms or "win64,lin64"
         return [
-            _PLATFORM_MAP.get(p.strip(), p.strip()) for p in args.platforms.split(",") if p.strip()
+            _PLATFORM_MAP.get(p.strip(), p.strip()) for p in platforms_str.split(",") if p.strip()
         ]
 
     def _print_build_id(self, build_id: str, available_platforms: list[str]) -> None:
@@ -539,7 +539,8 @@ def run_pack(argv: list[str]) -> int:
     parser = build_parser()
     args = parser.parse_args(_expand_combined_flags(argv))
 
-    platforms = [p.strip() for p in args.platforms.split(",") if p.strip()]
+    is_explicit = args.platforms is not None
+    platforms = [p.strip() for p in (args.platforms or "win64,lin64").split(",") if p.strip()]
     if not platforms:
         parser.error("--platforms must list at least one platform")
     if platforms == ["all"]:
@@ -548,6 +549,11 @@ def run_pack(argv: list[str]) -> int:
         platforms = [
             OS_PRIMARY_PLATFORM[os_key] for os_key in OS_PRIMARY_PLATFORM if avail_oses.get(os_key)
         ] or list(PLATFORM_STEAMCMD.keys())
+    elif not is_explicit:
+        store = asyncio.run(_steam_api.get_store_details(args.appid))
+        avail_oses = store.get("platforms", {}) if store else {}
+        if avail_oses:
+            platforms = [p for p in platforms if avail_oses.get(PLATFORM_OS[p])]
     else:
         invalid = [p for p in platforms if p not in PLATFORM_STEAMCMD]
         if invalid:
