@@ -94,14 +94,6 @@ def build_parser() -> argparse.ArgumentParser:
         help="URL of the release post; cached per-appid (prompted on first use for an appid)",
     )
     parser.add_argument(
-        "--forum-post-content",
-        default="",
-        help=(
-            "Content of the release post (prompted if omitted; "
-            "can be a path to a text file or pasted content)"
-        ),
-    )
-    parser.add_argument(
         "--no-open",
         action="store_true",
         help="Don't auto-open the SteamDB patch notes page in a browser",
@@ -400,14 +392,22 @@ def _resolve_forum_post_url(appid: str, args: argparse.Namespace, conf: dict) ->
     return url
 
 
-def _resolve_forum_post_content(args: argparse.Namespace) -> str:
-    if not args.forum_post_content:
-        return ""
+def _forum_post_cache_path(appid: str) -> Path:
+    return cfg.DATA_DIR / "forum_posts" / f"{appid}.txt"
 
-    candidate = Path(args.forum_post_content).expanduser()
-    if candidate.is_file():
-        return candidate.read_text(encoding="utf-8")
-    return args.forum_post_content
+
+def _load_cached_forum_post(appid: str) -> str:
+    path = _forum_post_cache_path(appid)
+    if path.exists():
+        console.print(f"\nUsing cached forum post for AppID {appid}.")
+        return path.read_text(encoding="utf-8")
+    return ""
+
+
+def _save_forum_post_cache(appid: str, content: str) -> None:
+    path = _forum_post_cache_path(appid)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(content, encoding="utf-8")
 
 
 def _resolve_version(args: argparse.Namespace, items: list[QueueItem]) -> str:
@@ -421,21 +421,7 @@ def _resolve_version(args: argparse.Namespace, items: list[QueueItem]) -> str:
         return input("New version number, e.g. 1.3.5: ").strip()
 
 
-def _read_old_forum_post(args: argparse.Namespace) -> str:
-    forum_post = _resolve_forum_post_content(args)
-    if forum_post:
-        return forum_post
-
-    print("\nPaste the current forum post content, or enter a path to a file containing it.")
-    print("For pasted content, finish with Ctrl+D.")
-    first_line = input("> ")
-    candidate = Path(first_line.strip()).expanduser()
-    if first_line.strip() and candidate.is_file():
-        return candidate.read_text(encoding="utf-8")
-    return (first_line + "\n" + sys.stdin.read()).strip()
-
-
-def _write_forum_post(items: list[QueueItem], conf: dict, args: argparse.Namespace) -> Path | None:
+def _write_forum_post(items: list[QueueItem], conf: dict) -> Path | None:
     output_dir = Path(conf["output_dir"])
     new_blocks = []
     for item in items:
@@ -448,12 +434,13 @@ def _write_forum_post(items: list[QueueItem], conf: dict, args: argparse.Namespa
             return None
         new_blocks.append(txt_path.read_text(encoding="utf-8"))
 
-    old_post = _read_old_forum_post(args)
+    old_post = _load_cached_forum_post(items[0].appid)
     new_post = release_text.insert_new_release(old_post, new_blocks)
 
     safe_name = items[0].game_name.replace(" ", ".").replace(":", "").replace("/", "_")
     out_path = output_dir / f"{safe_name}.ForumPost.Build.{items[0].build_id}.txt"
     out_path.write_text(new_post, encoding="utf-8")
+    _save_forum_post_cache(items[0].appid, new_post)
     return out_path
 
 
@@ -537,7 +524,7 @@ def run_pack(argv: list[str]) -> int:
         txt_path = output_dir / f"{item.archive_name}.txt"
         txt_path.write_text(release_text.generate(item), encoding="utf-8")
 
-    forum_post_path = _write_forum_post(items, conf, args)
+    forum_post_path = _write_forum_post(items, conf)
     if forum_post_path:
         console.print(
             f"\n[bold white]New forum post written to:[/bold white] {escape(str(forum_post_path))}"
