@@ -233,12 +233,14 @@ class MainWindow(Adw.ApplicationWindow):
                         wl_entry.last_build_id = item.build_id
                         break
                 save_watchlist(wl_entries)
+                GLib.idle_add(self._watch_page.refresh)
             if item.status in (Status.BADLOGIN, Status.STEAMGUARD):
                 break
 
     def _on_batch_done(self) -> bool:
         self._is_batch_running = False
         self._update_start_button_state()
+        GLib.idle_add(self._watch_page.refresh)
         return False
 
     def _retry_item(self, item: QueueItem) -> None:

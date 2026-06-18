@@ -3,6 +3,7 @@
 import json
 import logging
 import subprocess
+from datetime import datetime
 from pathlib import Path
 
 import gi
@@ -31,6 +32,16 @@ def _set_margins(widget: Gtk.Widget) -> Gtk.Widget:
     widget.set_margin_start(_MARGIN)
     widget.set_margin_end(_MARGIN)
     return widget
+
+
+def _to_local_str(iso: str) -> str:
+    """Convert an ISO-8601 UTC timestamp to a local-time display string."""
+    if not iso:
+        return ""
+    try:
+        return datetime.fromisoformat(iso).astimezone().strftime("%Y-%m-%d %H:%M:%S")
+    except (ValueError, OSError):
+        return iso[:19].replace("T", " ")
 
 
 def _load_pending_groups(output_dir: Path) -> list[list[dict]]:
@@ -170,9 +181,7 @@ class WatchPage(Gtk.Box):
             return
         times = [e.last_checked for e in self._entries if e.last_checked]
         if times:
-            latest = max(times)
-            # Show just the date/time portion without timezone suffix
-            self._last_checked_row.set_subtitle(latest[:19].replace("T", " "))
+            self._last_checked_row.set_subtitle(_to_local_str(max(times)))
         else:
             self._last_checked_row.set_subtitle(_("Never"))
 
@@ -208,7 +217,7 @@ class WatchPage(Gtk.Box):
         build_id = first.get("build_id", "")
         branch = first.get("branch", "public")
         platforms = ", ".join(s.get("platform", "") for s in group)
-        downloaded_at = first.get("downloaded_at", "")[:19].replace("T", " ")
+        downloaded_at = _to_local_str(first.get("downloaded_at", ""))
 
         row = Adw.ActionRow(
             title=f"{game_name} - Build {build_id}",
