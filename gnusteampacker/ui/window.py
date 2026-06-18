@@ -46,8 +46,10 @@ class MainWindow(Adw.ApplicationWindow):
         return False
 
     def _build_ui(self) -> None:
+        self._toast_overlay = Adw.ToastOverlay()
         toolbar_view = Adw.ToolbarView()
-        self.set_content(toolbar_view)
+        self._toast_overlay.set_child(toolbar_view)
+        self.set_content(self._toast_overlay)
 
         # ── Header bar ────────────────────────────────────────────────────
         header = Adw.HeaderBar()
@@ -227,20 +229,41 @@ class MainWindow(Adw.ApplicationWindow):
                 from gnusteampacker.daemon import write_pending_sidecar
 
                 write_pending_sidecar(item, Path(conf["output_dir"]))
-                wl_entries = load_watchlist()
-                for wl_entry in wl_entries:
-                    if wl_entry.appid == item.appid and wl_entry.branch == item.branch:
-                        wl_entry.last_build_id = item.build_id
-                        break
-                save_watchlist(wl_entries)
                 GLib.idle_add(self._watch_page.refresh)
             if item.status in (Status.BADLOGIN, Status.STEAMGUARD):
                 break
 
+        # Update last_build_id only for entries where every platform completed.
+        daemon_items = [i for i in ready_items if i.from_daemon]
+        if daemon_items:
+            completed: dict[tuple[str, str], QueueItem] = {}
+            failed: set[tuple[str, str]] = set()
+            for i in daemon_items:
+                key = (i.appid, i.branch)
+                if i.status == Status.COMPLETE:
+                    completed.setdefault(key, i)
+                else:
+                    failed.add(key)
+            keys_ok = set(completed) - failed
+            if keys_ok:
+                wl_entries = load_watchlist()
+                for key in keys_ok:
+                    for wl_entry in wl_entries:
+                        if wl_entry.appid == key[0] and wl_entry.branch == key[1]:
+                            wl_entry.last_build_id = completed[key].build_id
+                            break
+                save_watchlist(wl_entries)
+
     def _on_batch_done(self) -> bool:
         self._is_batch_running = False
         self._update_start_button_state()
-        GLib.idle_add(self._watch_page.refresh)
+        has_new_pending = any(i.from_daemon and i.status == Status.COMPLETE for i in self._items)
+        if has_new_pending:
+            self._view_stack.set_visible_child_name("watch")
+            toast = Adw.Toast(title=_("Updates downloaded — ready to process"))
+            self._toast_overlay.add_toast(toast)
+        else:
+            GLib.idle_add(self._watch_page.refresh)
         return False
 
     def _retry_item(self, item: QueueItem) -> None:
