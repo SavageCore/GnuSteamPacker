@@ -515,7 +515,8 @@ def run_pack(argv: list[str]) -> int:
     conf = cfg.load()
     _print_summary(items, conf, args.upload)
 
-    forum_url = _resolve_forum_post_url(args.appid, args, conf)
+    first_pack = not _forum_post_cache_path(args.appid).exists()
+    forum_url = None if first_pack else _resolve_forum_post_url(args.appid, args, conf)
     version = _resolve_version(args, items)
 
     output_dir = Path(conf["output_dir"])
@@ -530,7 +531,8 @@ def run_pack(argv: list[str]) -> int:
             f"\n[bold white]New forum post written to:[/bold white] {escape(str(forum_post_path))}"
         )
 
-    _print_steamdb_reply(items, forum_url, version)
+    if forum_url:
+        _print_steamdb_reply(items, forum_url, version)
 
     if args.upload:
         _print_multiup_delete_instructions(items)
