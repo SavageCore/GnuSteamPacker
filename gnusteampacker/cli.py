@@ -461,6 +461,26 @@ def run_pack_login() -> int:
     return 0
 
 
+def run_pack_steam_login() -> int:
+    from pathlib import Path
+
+    from gnusteampacker import steamcmd
+
+    username = input("Steam username: ").strip()
+    if not username:
+        console.print("[red]Username cannot be empty.[/red]")
+        return 1
+    password = getpass.getpass("Steam password: ")
+    credentials.set_username(username)
+    credentials.set_password(password)
+    steamcmd.clear_cached_login(Path(cfg.load()["steamcmd_path"]))
+    console.print(
+        f"[bold green]Steam credentials saved[/bold green] for [cyan]{escape(username)}[/cyan]."
+    )
+    console.print("Steam Guard codes will be prompted interactively on first download.")
+    return 0
+
+
 def _forum_post_cache_path(appid: str) -> Path:
     return cfg.DATA_DIR / "forum_posts" / f"{appid}.txt"
 

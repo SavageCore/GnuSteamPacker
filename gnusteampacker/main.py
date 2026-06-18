@@ -13,9 +13,17 @@ def main() -> int:
 
     if len(sys.argv) > 1 and sys.argv[1] == "pack":
         if len(sys.argv) > 2 and sys.argv[2] == "login":
-            from gnusteampacker.cli import run_pack_login
+            subtype = sys.argv[3] if len(sys.argv) > 3 else ""
+            if subtype == "steam":
+                from gnusteampacker.cli import run_pack_steam_login
 
-            return run_pack_login()
+                return run_pack_steam_login()
+            if subtype == "multiup":
+                from gnusteampacker.cli import run_pack_login
+
+                return run_pack_login()
+            print("Usage: gnusteampacker pack login <steam|multiup>", file=sys.stderr)
+            return 1
         from gnusteampacker.cli import run_pack
 
         return run_pack(sys.argv[2:])

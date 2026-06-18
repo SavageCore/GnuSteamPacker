@@ -131,9 +131,13 @@ the GUI:
 gnusteampacker pack 1902940 --platforms win64,lin64 --branch public
 ```
 
-This requires Steam credentials to already be configured via the GUI's Preferences
-(GnuSteamPacker stores them in your system keyring). If Steam Guard is required,
-you'll be prompted for the code interactively.
+Store your Steam credentials once before running pack:
+
+```bash
+gnusteampacker pack login steam
+```
+
+If Steam Guard is required, you'll be prompted for the code interactively on the first download.
 
 | Flag | Default | Description |
 |------|---------|-------------|
@@ -157,12 +161,31 @@ On success, `pack`:
 4. Prints a forum reply template e.g. `[url=...]Updated[/url] to [url=...]1.0.0[/url]`
    (skipped on first pack).
 
+### Steam credentials
+
+To store your Steam credentials for headless use:
+
+```bash
+gnusteampacker pack login steam
+```
+
+This prompts for your username and password and stores them in your system keyring (or a fallback
+file at `~/.config/gnusteampacker/.{username,password}` if no keyring is available). Credentials
+are used automatically on every subsequent `pack` run.
+
+To clear stored credentials (e.g. to switch accounts or re-test):
+
+```bash
+secret-tool clear service gnusteampacker key username
+secret-tool clear service gnusteampacker key password
+```
+
 ### multiup.io credentials
 
 To upload as a logged-in multiup.io user, save your credentials once:
 
 ```bash
-gnusteampacker pack login
+gnusteampacker pack login multiup
 ```
 
 This prompts for your username and password, verifies them against the multiup.io API,
