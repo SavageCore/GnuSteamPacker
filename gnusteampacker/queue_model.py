@@ -46,6 +46,7 @@ class QueueItem:
     file_hash: str = ""
     error_detail: str = ""
     speed: float = 0.0  # bytes/sec, 0.0 = unknown/idle
+    from_daemon: bool = False  # queued by watch mode; writes sidecar instead of release text
 
     @property
     def display_speed(self) -> str:

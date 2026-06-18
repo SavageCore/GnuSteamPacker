@@ -16,7 +16,7 @@ from gnusteampacker.watchlist import save as save_watchlist
 log = logging.getLogger(__name__)
 
 
-def _write_pending_sidecar(item: QueueItem, output_dir: Path) -> None:
+def write_pending_sidecar(item: QueueItem, output_dir: Path) -> None:
     sidecar = {
         "appid": item.appid,
         "game_name": item.game_name,
@@ -80,7 +80,7 @@ async def _pack_entry(entry: WatchEntry, conf: dict) -> bool:
         )
 
         if item.status == Status.COMPLETE:
-            _write_pending_sidecar(item, output_dir)
+            write_pending_sidecar(item, output_dir)
             log.info("Packed %s/%s: %s", entry.appid, item.platform, item.archive_name)
         else:
             log.error(
@@ -158,13 +158,67 @@ def _setup_logging(conf: dict) -> None:
     )
 
 
-async def check_all() -> bool:
-    """Public async entry point for in-process checks (e.g. GUI 'Run now' button)."""
+async def check_new_builds(entries: list[WatchEntry], conf: dict) -> list[QueueItem]:
+    """Query Steam API for build ID changes; return QueueItems for new builds (GUI path).
+
+    Updates last_checked and handles first-run recording. Does NOT download — the caller
+    (window.py) adds returned items to the queue so progress is visible in the Queue tab.
+    last_build_id is updated by window.py after successful download.
+    """
+    new_items: list[QueueItem] = []
+
+    for entry in entries:
+        if not entry.enabled:
+            log.debug("Skipping disabled entry: %s (%s)", entry.name, entry.appid)
+            continue
+
+        log.info("Checking %s (AppID %s, branch %s)…", entry.name, entry.appid, entry.branch)
+        try:
+            game_info = await steam_api.get_game_info(entry.appid)
+        except Exception as exc:
+            log.error("Failed to fetch info for %s: %s", entry.appid, exc)
+            entry.last_checked = datetime.now(tz=UTC).isoformat()
+            save_watchlist(entries)
+            await asyncio.sleep(2)
+            continue
+
+        new_build_id = str(
+            game_info.get(f"build_{entry.branch}") or game_info.get("build_public") or ""
+        )
+
+        if not entry.last_build_id:
+            log.info("First check for %s: recorded build %s.", entry.name, new_build_id)
+            entry.last_build_id = new_build_id
+        elif new_build_id != entry.last_build_id:
+            log.info("New build for %s: %s → %s", entry.name, entry.last_build_id, new_build_id)
+            for platform in entry.platforms:
+                new_items.append(
+                    QueueItem(
+                        appid=entry.appid,
+                        game_name=entry.name,
+                        platform=platform,
+                        branch=entry.branch,
+                        branch_password=entry.branch_password,
+                        from_daemon=True,
+                    )
+                )
+        else:
+            log.info("No change for %s: still at build %s", entry.name, new_build_id)
+
+        entry.last_checked = datetime.now(tz=UTC).isoformat()
+        save_watchlist(entries)
+        await asyncio.sleep(2)
+
+    return new_items
+
+
+async def check_all() -> list[QueueItem]:
+    """Public async entry for GUI 'Run now': returns QueueItems for new builds."""
     conf = cfg.load()
     entries = load_watchlist()
     if not entries:
-        return True
-    return await _check_all(entries, conf)
+        return []
+    return await check_new_builds(entries, conf)
 
 
 def run_daemon_check() -> int:

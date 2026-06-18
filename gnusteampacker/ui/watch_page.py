@@ -51,12 +51,13 @@ def _load_pending_groups(output_dir: Path) -> list[list[dict]]:
 
 
 class WatchPage(Gtk.Box):
-    def __init__(self) -> None:
+    def __init__(self, add_daemon_items_cb=None) -> None:
         super().__init__(orientation=Gtk.Orientation.VERTICAL, spacing=0)
         self._entries: list[WatchEntry] = []
         self._watchlist_rows: list[Gtk.Widget] = []
         self._pending_rows: list[Gtk.Widget] = []
         self._updating_timer = False
+        self._add_daemon_items_cb = add_daemon_items_cb
         self._build_ui()
         self.refresh()
 
@@ -294,9 +295,11 @@ class WatchPage(Gtk.Box):
         self._run_now_btn.set_sensitive(False)
         self._run_now_btn.set_label(_("Checking…"))
 
-        def _done(_result, _exc) -> None:
+        def _done(items, _exc) -> None:
             self._run_now_btn.set_sensitive(True)
             self._run_now_btn.set_label(_("Run now"))
             self.refresh()
+            if items and self._add_daemon_items_cb:
+                self._add_daemon_items_cb(items)
 
         async_run(check_all(), done_cb=_done)

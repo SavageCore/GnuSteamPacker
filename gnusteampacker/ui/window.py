@@ -15,6 +15,8 @@ from gnusteampacker.i18n import _
 from gnusteampacker.queue_model import QueueItem, Status
 from gnusteampacker.ui.add_game_dialog import AddGameDialog
 from gnusteampacker.ui.queue_row import QueueRow
+from gnusteampacker.watchlist import load as load_watchlist
+from gnusteampacker.watchlist import save as save_watchlist
 
 
 class MainWindow(Adw.ApplicationWindow):
@@ -105,7 +107,7 @@ class MainWindow(Adw.ApplicationWindow):
         # ── Watch page ────────────────────────────────────────────────────
         from gnusteampacker.ui.watch_page import WatchPage
 
-        self._watch_page = WatchPage()
+        self._watch_page = WatchPage(add_daemon_items_cb=self._add_daemon_items)
         watch_scroll = Gtk.ScrolledWindow(vexpand=True)
         watch_scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
         watch_scroll.set_child(self._watch_page)
@@ -154,6 +156,15 @@ class MainWindow(Adw.ApplicationWindow):
         is_queue = view_stack.get_visible_child_name() == "queue"
         self._add_btn.set_visible(is_queue)
         self._start_btn.set_visible(is_queue)
+        if not is_queue:
+            self._watch_page.refresh()
+
+    def _add_daemon_items(self, items: list[QueueItem]) -> None:
+        for item in items:
+            self._add_item(item)
+        if items:
+            self._view_stack.set_visible_child_name("queue")
+            self._on_start_all(None)
 
     # ── Download ─────────────────────────────────────────────────────────
 
@@ -206,8 +217,22 @@ class MainWindow(Adw.ApplicationWindow):
                     "remember_login": remember_login,
                 }
             await worker.process_item(
-                item, update_cb, auth_override=per_item_auth, info_cache=info_cache
+                item,
+                update_cb,
+                auth_override=per_item_auth,
+                info_cache=info_cache,
+                write_release_text=not item.from_daemon,
             )
+            if item.from_daemon and item.status == Status.COMPLETE:
+                from gnusteampacker.daemon import write_pending_sidecar
+
+                write_pending_sidecar(item, Path(conf["output_dir"]))
+                wl_entries = load_watchlist()
+                for wl_entry in wl_entries:
+                    if wl_entry.appid == item.appid and wl_entry.branch == item.branch:
+                        wl_entry.last_build_id = item.build_id
+                        break
+                save_watchlist(wl_entries)
             if item.status in (Status.BADLOGIN, Status.STEAMGUARD):
                 break
 
