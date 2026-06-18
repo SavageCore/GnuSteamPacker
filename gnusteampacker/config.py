@@ -6,6 +6,7 @@ CONFIG_DIR = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / 
 DATA_DIR = Path(os.environ.get("XDG_DATA_HOME", Path.home() / ".local/share")) / "gnusteampacker"
 
 CONFIG_FILE = CONFIG_DIR / "config.json"
+WATCHLIST_FILE = CONFIG_DIR / "watchlist.json"
 
 _cpu = os.cpu_count() or 4
 

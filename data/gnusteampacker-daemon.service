@@ -1,0 +1,10 @@
+[Unit]
+Description=GnuSteamPacker watch mode - check for game updates
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/gnusteampacker daemon check
+StandardOutput=journal
+StandardError=journal

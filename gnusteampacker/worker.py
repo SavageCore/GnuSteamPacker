@@ -33,7 +33,7 @@ _MANIFEST_RE = re.compile(r"^(\d+)_(\d+)\.manifest$")
 
 
 def _ignore_dangling_symlinks(src: str, names: list[str]) -> set[str]:
-    """Skip dangling symlinks — valid ones (e.g. .so soname aliases) are preserved."""
+    """Skip dangling symlinks - valid ones (e.g. .so soname aliases) are preserved."""
     return {n for n in names if (p := Path(src, n)).is_symlink() and not p.exists()}
 
 
@@ -65,6 +65,7 @@ async def process_item(
     multiup_pass: str | None = None,
     compute_hash: bool = False,
     info_cache: dict | None = None,
+    write_release_text: bool = True,
 ) -> None:
     conf = cfg.load()
     sc_path = Path(conf["steamcmd_path"])
@@ -403,7 +404,8 @@ async def process_item(
             return
 
     # ── 10. Write BBCode release text ───────────────────────────────────────
-    txt_path = output_base / (item.archive_name + ".txt")
-    txt_path.write_text(release_text.generate(item), encoding="utf-8")
+    if write_release_text:
+        txt_path = output_base / (item.archive_name + ".txt")
+        txt_path.write_text(release_text.generate(item), encoding="utf-8")
 
     push(Status.COMPLETE, 1.0)
