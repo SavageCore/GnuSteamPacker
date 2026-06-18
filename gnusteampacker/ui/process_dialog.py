@@ -1,5 +1,6 @@
 """Process Dialog - turn a daemon-downloaded archive into a release post."""
 
+import asyncio
 import logging
 from pathlib import Path
 
@@ -10,7 +11,8 @@ gi.require_version("Adw", "1")
 from gi.repository import Adw, Gtk
 
 from gnusteampacker import config as cfg
-from gnusteampacker import release_text
+from gnusteampacker import credentials, multiup_api, release_text
+from gnusteampacker.async_runner import run as async_run
 from gnusteampacker.i18n import _
 from gnusteampacker.queue_model import QueueItem
 
@@ -33,7 +35,7 @@ def _save_forum_post_cache(appid: str, content: str) -> None:
 
 
 def _item_from_sidecar(sidecar: dict, version: str) -> QueueItem:
-    item = QueueItem(
+    return QueueItem(
         appid=sidecar["appid"],
         game_name=sidecar["game_name"],
         platform=sidecar["platform"],
@@ -45,7 +47,6 @@ def _item_from_sidecar(sidecar: dict, version: str) -> QueueItem:
         depot_list=sidecar.get("depot_list", []),
         available_platforms=sidecar.get("available_platforms", []),
     )
-    return item
 
 
 class ProcessDialog(Adw.Dialog):
@@ -83,13 +84,22 @@ class ProcessDialog(Adw.Dialog):
         info_group.add(info_row)
         content.append(info_group)
 
-        # ── Version entry ─────────────────────────────────────────────────
-        version_group = Adw.PreferencesGroup()
-        version_group.set_margin_top(16)
+        # ── Version + upload options ───────────────────────────────────────
+        options_group = Adw.PreferencesGroup()
+        options_group.set_margin_top(16)
+
         self._version_entry = Adw.EntryRow(title=_("Version number (e.g. 1.3.5)"))
         self._version_entry.connect("changed", self._on_version_changed)
-        version_group.add(self._version_entry)
-        content.append(version_group)
+        options_group.add(self._version_entry)
+
+        self._upload_switch = Adw.SwitchRow(
+            title=_("Upload to multiup.io"),
+            subtitle=_("Requires multiup.io credentials in Preferences"),
+        )
+        self._upload_switch.connect("notify::active", self._on_upload_toggled)
+        options_group.add(self._upload_switch)
+
+        content.append(options_group)
 
         # ── Confirm button ────────────────────────────────────────────────
         btn_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
@@ -111,15 +121,68 @@ class ProcessDialog(Adw.Dialog):
     def _on_version_changed(self, _entry) -> None:
         self._process_btn.set_sensitive(bool(self._version_entry.get_text().strip()))
 
+    def _on_upload_toggled(self, switch, _param) -> None:
+        if switch.get_active():
+            self._process_btn.set_label(_("Generate & Upload"))
+        else:
+            self._process_btn.set_label(_("Generate Release Text"))
+
     def _on_process_clicked(self, _btn) -> None:
         version = self._version_entry.get_text().strip()
         if not version:
             return
 
+        items = [_item_from_sidecar(s, version) for s in self._group]
+
+        if self._upload_switch.get_active():
+            self._set_busy(True)
+            conf = cfg.load()
+            output_dir = Path(conf["output_dir"])
+            mu_user = credentials.get_multiup_username()
+            mu_pass = credentials.get_multiup_password()
+
+            async def _upload() -> None:
+                for item in items:
+                    archive_path = output_dir / f"{item.archive_name}.7z"
+                    if not archive_path.exists():
+                        log.warning("Archive not found for upload: %s", archive_path)
+                        continue
+                    try:
+                        user_id = None
+                        if mu_user and mu_pass:
+                            user_id = await asyncio.to_thread(multiup_api.login, mu_user, mu_pass)
+                        result = await asyncio.to_thread(
+                            multiup_api.upload_file,
+                            file_path=archive_path,
+                            user_id=user_id,
+                        )
+                        if isinstance(result, tuple):
+                            item.url, item.delete_url = result
+                        else:
+                            item.url = result
+                        log.info("Uploaded %s → %s", item.archive_name, item.url)
+                    except Exception as exc:
+                        log.error("Upload failed for %s: %s", item.archive_name, exc)
+
+            def _done(_result, exc) -> None:
+                if exc:
+                    log.error("Upload task error: %s", exc)
+                self._set_busy(False)
+                self._finalize(items)
+
+            async_run(_upload(), done_cb=_done)
+        else:
+            self._finalize(items)
+
+    def _set_busy(self, busy: bool) -> None:
+        self._process_btn.set_sensitive(not busy)
+        self._process_btn.set_label(_("Uploading…") if busy else _("Generate & Upload"))
+        self._version_entry.set_sensitive(not busy)
+        self._upload_switch.set_sensitive(not busy)
+
+    def _finalize(self, items: list[QueueItem]) -> None:
         conf = cfg.load()
         output_dir = Path(conf["output_dir"])
-
-        items = [_item_from_sidecar(s, version) for s in self._group]
         new_blocks: list[str] = []
 
         for item in items:
