@@ -11,7 +11,7 @@ gi.require_version("Adw", "1")
 from gi.repository import Adw, Gdk, GLib, Gtk
 
 from gnusteampacker import config as cfg
-from gnusteampacker import credentials, multiup_api, release_text
+from gnusteampacker import credentials, hashing, multiup_api, release_text
 from gnusteampacker.async_runner import run as async_run
 from gnusteampacker.i18n import _
 from gnusteampacker.queue_model import QueueItem
@@ -205,20 +205,22 @@ class ProcessDialog(Adw.Dialog):
             cfg.save(conf)
 
         items = [_item_from_sidecar(s, version) for s in self._group]
+        do_upload = self._upload_switch.get_active()
+        self._set_busy(True)
+        conf = cfg.load()
+        output_dir = Path(conf["output_dir"])
+        mu_user = credentials.get_multiup_username() if do_upload else None
+        mu_pass = credentials.get_multiup_password() if do_upload else None
 
-        if self._upload_switch.get_active():
-            self._set_busy(True)
-            conf = cfg.load()
-            output_dir = Path(conf["output_dir"])
-            mu_user = credentials.get_multiup_username()
-            mu_pass = credentials.get_multiup_password()
-
-            async def _upload() -> None:
-                for item in items:
-                    archive_path = output_dir / f"{item.archive_name}.7z"
-                    if not archive_path.exists():
-                        log.warning("Archive not found for upload: %s", archive_path)
-                        continue
+        async def _process() -> None:
+            for item in items:
+                archive_path = output_dir / f"{item.archive_name}.7z"
+                if not archive_path.exists():
+                    log.warning("Archive not found: %s", archive_path)
+                    continue
+                if not item.file_hash:
+                    item.file_hash = await asyncio.to_thread(hashing.blake3_hex, archive_path)
+                if do_upload:
                     try:
                         user_id = None
                         if mu_user and mu_pass:
@@ -236,19 +238,22 @@ class ProcessDialog(Adw.Dialog):
                     except Exception as exc:
                         log.error("Upload failed for %s: %s", item.archive_name, exc)
 
-            def _done(_result, exc) -> None:
-                if exc:
-                    log.error("Upload task error: %s", exc)
-                self._set_busy(False)
-                self._finalize(items)
-
-            async_run(_upload(), done_cb=_done)
-        else:
+        def _done(_result, exc) -> None:
+            if exc:
+                log.error("Process task error: %s", exc)
+            self._set_busy(False)
             self._finalize(items)
 
+        async_run(_process(), done_cb=_done)
+
     def _set_busy(self, busy: bool) -> None:
+        do_upload = self._upload_switch.get_active()
         self._process_btn.set_sensitive(not busy)
-        self._process_btn.set_label(_("Uploading…") if busy else _("Generate & Upload"))
+        if busy:
+            self._process_btn.set_label(_("Uploading…") if do_upload else _("Hashing…"))
+        else:
+            label = _("Generate & Upload") if do_upload else _("Generate Release Text")
+            self._process_btn.set_label(label)
         self._version_entry.set_sensitive(not busy)
         self._upload_switch.set_sensitive(not busy)
 
