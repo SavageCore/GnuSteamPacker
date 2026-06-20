@@ -100,6 +100,11 @@ class ProcessDialog(Adw.Dialog):
         self._version_entry.connect("changed", self._on_version_changed)
         options_group.add(self._version_entry)
 
+        cached_url = cfg.load().get("forum_post_urls", {}).get(self._appid, "")
+        self._forum_url_entry = Adw.EntryRow(title=_("cs.rin.ru thread URL"))
+        self._forum_url_entry.set_text(cached_url)
+        options_group.add(self._forum_url_entry)
+
         self._upload_switch = Adw.SwitchRow(
             title=_("Upload to multiup.io"),
             subtitle=_("Requires multiup.io credentials in Preferences"),
@@ -160,7 +165,11 @@ class ProcessDialog(Adw.Dialog):
         btn_box.set_margin_top(16)
         btn_box.set_halign(Gtk.Align.END)
 
-        self._copy_btn = Gtk.Button(label=_("Copy Forum Post"))
+        self._copy_post_btn = Gtk.Button(label=_("Copy Forum Post"))
+        self._copy_post_btn.connect("clicked", self._on_copy_post_clicked)
+        btn_box.append(self._copy_post_btn)
+
+        self._copy_btn = Gtk.Button(label=_("Copy Update Message"))
         self._copy_btn.add_css_class("suggested-action")
         self._copy_btn.connect("clicked", self._on_copy_clicked)
         btn_box.append(self._copy_btn)
@@ -187,6 +196,13 @@ class ProcessDialog(Adw.Dialog):
         version = self._version_entry.get_text().strip()
         if not version:
             return
+        self._version = version
+        forum_url = self._forum_url_entry.get_text().strip()
+        self._forum_url = forum_url
+        if forum_url:
+            conf = cfg.load()
+            conf.setdefault("forum_post_urls", {})[self._appid] = forum_url
+            cfg.save(conf)
 
         items = [_item_from_sidecar(s, version) for s in self._group]
 
@@ -284,10 +300,9 @@ class ProcessDialog(Adw.Dialog):
         self._page_stack.set_visible_child_name("result")
 
     def _on_copy_clicked(self, _btn) -> None:
-        text = self._result_buffer.get_text(
-            self._result_buffer.get_start_iter(),
-            self._result_buffer.get_end_iter(),
-            False,
+        text = (
+            f"[url={self._forum_url}]Updated[/url] to "
+            f"[url=https://steamdb.info/patchnotes/{self._build_id}/]{self._version}[/url]"
         )
         provider = Gdk.ContentProvider.new_for_bytes(
             "text/plain;charset=utf-8",
@@ -298,5 +313,23 @@ class ProcessDialog(Adw.Dialog):
         GLib.timeout_add(1500, self._reset_copy_btn)
 
     def _reset_copy_btn(self) -> bool:
-        self._copy_btn.set_label(_("Copy Forum Post"))
+        self._copy_btn.set_label(_("Copy Update Message"))
+        return False
+
+    def _on_copy_post_clicked(self, _btn) -> None:
+        text = self._result_buffer.get_text(
+            self._result_buffer.get_start_iter(),
+            self._result_buffer.get_end_iter(),
+            False,
+        )
+        provider = Gdk.ContentProvider.new_for_bytes(
+            "text/plain;charset=utf-8",
+            GLib.Bytes.new(text.encode("utf-8")),
+        )
+        Gdk.Display.get_default().get_clipboard().set_content(provider)
+        self._copy_post_btn.set_label(_("Copied!"))
+        GLib.timeout_add(1500, self._reset_copy_post_btn)
+
+    def _reset_copy_post_btn(self) -> bool:
+        self._copy_post_btn.set_label(_("Copy Forum Post"))
         return False
