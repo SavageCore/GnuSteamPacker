@@ -58,7 +58,9 @@ def _load_pending_groups(output_dir: Path) -> list[list[dict]]:
     for s in sidecars:
         key = (s.get("appid", ""), s.get("build_id", ""), s.get("branch", ""))
         groups.setdefault(key, []).append(s)
-    return list(groups.values())
+    return sorted(
+        groups.values(), key=lambda g: max(s.get("downloaded_at", "") for s in g), reverse=True
+    )
 
 
 class WatchPage(Gtk.Box):
