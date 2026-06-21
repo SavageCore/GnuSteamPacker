@@ -10,7 +10,7 @@ import gi
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
-from gi.repository import Adw, GLib, Gtk
+from gi.repository import Adw, Gdk, Gio, GLib, Gtk
 
 from gnusteampacker import config as cfg
 from gnusteampacker.async_runner import run as async_run
@@ -143,14 +143,20 @@ class WatchPage(Gtk.Box):
         self._pending_rows.clear()
 
         conf = cfg.load()
-        output_dir = Path(conf["output_dir"])
-        if not output_dir.exists():
-            return
+        dirs_to_scan: set[Path] = {Path(conf["output_dir"])}
+        for entry in self._entries:
+            if entry.output_dir:
+                dirs_to_scan.add(Path(entry.output_dir))
 
-        groups = _load_pending_groups(output_dir)
-        self._pending_group.set_visible(bool(groups))
+        all_groups: list[list[dict]] = []
+        for d in dirs_to_scan:
+            if d.exists():
+                all_groups.extend(_load_pending_groups(d))
+        all_groups.sort(key=lambda g: max(s.get("downloaded_at", "") for s in g), reverse=True)
 
-        for group in groups:
+        self._pending_group.set_visible(bool(all_groups))
+
+        for group in all_groups:
             row = self._make_pending_row(group)
             self._pending_group.add(row)
             self._pending_rows.append(row)
@@ -196,7 +202,13 @@ class WatchPage(Gtk.Box):
             f"AppID: {entry.appid} · {platforms_str} · "
             f"{_('Branch')}: {entry.branch} · {_('Build')}: {build_str}"
         )
+        if entry.output_dir:
+            subtitle += f" · {_('Output')}: {entry.output_dir}"
         row = Adw.ActionRow(title=entry.name, subtitle=subtitle)
+
+        gesture = Gtk.GestureClick(button=3)
+        gesture.connect("released", lambda g, n, x, y: self._show_entry_menu(entry, row, x, y))
+        row.add_controller(gesture)
 
         switch = Gtk.Switch()
         switch.set_active(entry.enabled)
@@ -240,6 +252,54 @@ class WatchPage(Gtk.Box):
 
         return row
 
+    # ── Context menu ──────────────────────────────────────────────────────
+
+    def _show_entry_menu(self, entry: WatchEntry, row: Adw.ActionRow, x: float, y: float) -> None:
+        popover = Gtk.Popover()
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
+
+        def _btn(label: str, callback) -> Gtk.Button:
+            b = Gtk.Button(label=label, has_frame=False)
+            b.connect("clicked", lambda _: (popover.popdown(), callback()))
+            box.append(b)
+            return b
+
+        _btn(_("Set output path"), lambda: self._pick_output_dir(entry))
+
+        if entry.output_dir:
+            _btn(_("Clear custom path"), lambda: self._clear_output_dir(entry))
+
+        forum_post = cfg.forum_post_cache_path(entry.appid)
+        if forum_post.exists():
+            _btn(_("Open forum post"), lambda: subprocess.run(["xdg-open", str(forum_post)]))
+
+        popover.set_child(box)
+        popover.set_parent(row)
+        rect = Gdk.Rectangle()
+        rect.x, rect.y, rect.width, rect.height = int(x), int(y), 1, 1
+        popover.set_pointing_to(rect)
+        popover.popup()
+
+    def _pick_output_dir(self, entry: WatchEntry) -> None:
+        dialog = Gtk.FileDialog()
+        if entry.output_dir:
+            dialog.set_initial_folder(Gio.File.new_for_path(entry.output_dir))
+        dialog.select_folder(self.get_root(), None, self._on_output_dir_selected, entry)
+
+    def _on_output_dir_selected(self, dialog: Gtk.FileDialog, result, entry: WatchEntry) -> None:
+        try:
+            folder = dialog.select_folder_finish(result)
+        except GLib.Error:
+            return
+        entry.output_dir = folder.get_path()
+        save_watchlist(self._entries)
+        self._refresh_watchlist_rows()
+
+    def _clear_output_dir(self, entry: WatchEntry) -> None:
+        entry.output_dir = ""
+        save_watchlist(self._entries)
+        self._refresh_watchlist_rows()
+
     # ── Handler factories ─────────────────────────────────────────────────
 
     def _make_switch_handler(self, entry: WatchEntry):
@@ -276,11 +336,10 @@ class WatchPage(Gtk.Box):
             def on_response(_d, response: str) -> None:
                 if response != "delete":
                     return
-                conf = cfg.load()
-                output_dir = Path(conf["output_dir"])
                 for item in group:
-                    Path(item["_sidecar_path"]).unlink(missing_ok=True)
-                    archive = output_dir / (item.get("archive_name", "") + ".7z")
+                    sidecar = Path(item["_sidecar_path"])
+                    sidecar.unlink(missing_ok=True)
+                    archive = sidecar.parent / (item.get("archive_name", "") + ".7z")
                     if archive.name:
                         archive.unlink(missing_ok=True)
                 self._refresh_pending_rows()

@@ -36,7 +36,7 @@ def write_pending_sidecar(item: QueueItem, output_dir: Path) -> None:
 
 
 async def _pack_entry(entry: WatchEntry, conf: dict) -> bool:
-    output_dir = Path(conf["output_dir"])
+    output_dir = Path(entry.output_dir or conf["output_dir"])
     base_auth = credentials.build_auth_override(conf)
     remember_login = bool((base_auth or {}).get("remember_login", conf.get("remember_login", True)))
     username = (base_auth or {}).get("username", credentials.get_username()).strip()
@@ -48,6 +48,7 @@ async def _pack_entry(entry: WatchEntry, conf: dict) -> bool:
             platform=p,
             branch=entry.branch,
             branch_password=entry.branch_password,
+            output_dir=entry.output_dir,
         )
         for p in entry.platforms
     ]
@@ -200,6 +201,7 @@ async def check_new_builds(entries: list[WatchEntry], conf: dict) -> list[QueueI
                         branch=entry.branch,
                         branch_password=entry.branch_password,
                         from_daemon=True,
+                        output_dir=entry.output_dir,
                     )
                 )
         else:

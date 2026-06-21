@@ -19,6 +19,7 @@ class WatchEntry:
     last_build_id: str  # "" = never checked
     last_checked: str  # ISO-8601 or ""
     enabled: bool = field(default=True)
+    output_dir: str = field(default="")  # "" = use global config output_dir
 
 
 def load() -> list[WatchEntry]:

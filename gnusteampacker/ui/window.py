@@ -228,7 +228,7 @@ class MainWindow(Adw.ApplicationWindow):
             if item.from_daemon and item.status == Status.COMPLETE:
                 from gnusteampacker.daemon import write_pending_sidecar
 
-                write_pending_sidecar(item, Path(conf["output_dir"]))
+                write_pending_sidecar(item, Path(item.output_dir or conf["output_dir"]))
                 GLib.idle_add(self._watch_page.refresh)
             if item.status in (Status.BADLOGIN, Status.STEAMGUARD):
                 break

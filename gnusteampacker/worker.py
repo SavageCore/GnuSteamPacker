@@ -69,7 +69,7 @@ async def process_item(
 ) -> None:
     conf = cfg.load()
     sc_path = Path(conf["steamcmd_path"])
-    output_base = Path(conf["output_dir"])
+    output_base = Path(item.output_dir) if item.output_dir else Path(conf["output_dir"])
     compression_level = int(conf.get("compression_level", 5))
     compression_threads = int(conf.get("compression_threads", 1))
     username = (auth_override or {}).get("username", credentials.get_username()).strip()
