@@ -15,6 +15,8 @@ from gnusteampacker.i18n import _
 from gnusteampacker.queue_model import QueueItem, Status
 from gnusteampacker.ui.add_game_dialog import AddGameDialog
 from gnusteampacker.ui.queue_row import QueueRow
+from gnusteampacker.watchlist import load as load_watchlist
+from gnusteampacker.watchlist import save as save_watchlist
 
 
 class MainWindow(Adw.ApplicationWindow):
@@ -44,16 +46,18 @@ class MainWindow(Adw.ApplicationWindow):
         return False
 
     def _build_ui(self) -> None:
+        self._toast_overlay = Adw.ToastOverlay()
         toolbar_view = Adw.ToolbarView()
-        self.set_content(toolbar_view)
+        self._toast_overlay.set_child(toolbar_view)
+        self.set_content(self._toast_overlay)
 
         # ── Header bar ────────────────────────────────────────────────────
         header = Adw.HeaderBar()
 
-        add_btn = Gtk.Button(icon_name="list-add-symbolic")
-        add_btn.set_tooltip_text(_("Add game"))
-        add_btn.connect("clicked", self._on_add_clicked)
-        header.pack_start(add_btn)
+        self._add_btn = Gtk.Button(icon_name="list-add-symbolic")
+        self._add_btn.set_tooltip_text(_("Add game"))
+        self._add_btn.connect("clicked", self._on_add_clicked)
+        header.pack_start(self._add_btn)
 
         self._start_btn = Gtk.Button(label=_("Start All"))
         self._start_btn.add_css_class("suggested-action")
@@ -67,12 +71,18 @@ class MainWindow(Adw.ApplicationWindow):
         menu_btn.set_menu_model(self._build_menu())
         header.pack_end(menu_btn)
 
-        toolbar_view.add_top_bar(header)
+        # ViewSwitcherTitle gives Queue/Watch tabs in the header
+        self._view_stack = Adw.ViewStack()
+        switcher_title = Adw.ViewSwitcherTitle()
+        switcher_title.set_stack(self._view_stack)
+        header.set_title_widget(switcher_title)
 
-        # ── Content: stack between status page and list ───────────────────
+        toolbar_view.add_top_bar(header)
+        toolbar_view.set_content(self._view_stack)
+
+        # ── Queue page: existing empty/list stack ─────────────────────────
         self._stack = Gtk.Stack()
         self._stack.set_transition_type(Gtk.StackTransitionType.CROSSFADE)
-        toolbar_view.set_content(self._stack)
 
         status_page = Adw.StatusPage(
             title=_("No games in queue"),
@@ -91,6 +101,21 @@ class MainWindow(Adw.ApplicationWindow):
         self._queue_group.set_margin_end(128)
         scroll.set_child(self._queue_group)
         self._stack.add_named(scroll, "queue")
+
+        self._view_stack.add_titled_with_icon(
+            self._stack, "queue", _("Queue"), "folder-download-symbolic"
+        )
+
+        # ── Watch page ────────────────────────────────────────────────────
+        from gnusteampacker.ui.watch_page import WatchPage
+
+        self._watch_page = WatchPage(add_daemon_items_cb=self._add_daemon_items)
+        watch_scroll = Gtk.ScrolledWindow(vexpand=True)
+        watch_scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+        watch_scroll.set_child(self._watch_page)
+        self._view_stack.add_titled_with_icon(watch_scroll, "watch", _("Watch"), "alarm-symbolic")
+
+        self._view_stack.connect("notify::visible-child", self._on_view_changed)
 
         self._refresh_stack()
 
@@ -128,6 +153,20 @@ class MainWindow(Adw.ApplicationWindow):
 
     def _refresh_stack(self) -> None:
         self._stack.set_visible_child_name("queue" if self._items else "empty")
+
+    def _on_view_changed(self, view_stack, _param) -> None:
+        is_queue = view_stack.get_visible_child_name() == "queue"
+        self._add_btn.set_visible(is_queue)
+        self._start_btn.set_visible(is_queue)
+        if not is_queue:
+            self._watch_page.refresh()
+
+    def _add_daemon_items(self, items: list[QueueItem]) -> None:
+        for item in items:
+            self._add_item(item)
+        if items:
+            self._view_stack.set_visible_child_name("queue")
+            self._on_start_all(None)
 
     # ── Download ─────────────────────────────────────────────────────────
 
@@ -180,14 +219,51 @@ class MainWindow(Adw.ApplicationWindow):
                     "remember_login": remember_login,
                 }
             await worker.process_item(
-                item, update_cb, auth_override=per_item_auth, info_cache=info_cache
+                item,
+                update_cb,
+                auth_override=per_item_auth,
+                info_cache=info_cache,
+                write_release_text=not item.from_daemon,
             )
+            if item.from_daemon and item.status == Status.COMPLETE:
+                from gnusteampacker.daemon import write_pending_sidecar
+
+                write_pending_sidecar(item, Path(conf["output_dir"]))
+                GLib.idle_add(self._watch_page.refresh)
             if item.status in (Status.BADLOGIN, Status.STEAMGUARD):
                 break
+
+        # Update last_build_id only for entries where every platform completed.
+        daemon_items = [i for i in ready_items if i.from_daemon]
+        if daemon_items:
+            completed: dict[tuple[str, str], QueueItem] = {}
+            failed: set[tuple[str, str]] = set()
+            for i in daemon_items:
+                key = (i.appid, i.branch)
+                if i.status == Status.COMPLETE:
+                    completed.setdefault(key, i)
+                else:
+                    failed.add(key)
+            keys_ok = set(completed) - failed
+            if keys_ok:
+                wl_entries = load_watchlist()
+                for key in keys_ok:
+                    for wl_entry in wl_entries:
+                        if wl_entry.appid == key[0] and wl_entry.branch == key[1]:
+                            wl_entry.last_build_id = completed[key].build_id
+                            break
+                save_watchlist(wl_entries)
 
     def _on_batch_done(self) -> bool:
         self._is_batch_running = False
         self._update_start_button_state()
+        has_new_pending = any(i.from_daemon and i.status == Status.COMPLETE for i in self._items)
+        if has_new_pending:
+            self._view_stack.set_visible_child_name("watch")
+            toast = Adw.Toast(title=_("Updates downloaded - ready to process"))
+            self._toast_overlay.add_toast(toast)
+        else:
+            GLib.idle_add(self._watch_page.refresh)
         return False
 
     def _retry_item(self, item: QueueItem) -> None:

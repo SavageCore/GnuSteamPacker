@@ -6,6 +6,7 @@ CONFIG_DIR = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / 
 DATA_DIR = Path(os.environ.get("XDG_DATA_HOME", Path.home() / ".local/share")) / "gnusteampacker"
 
 CONFIG_FILE = CONFIG_DIR / "config.json"
+WATCHLIST_FILE = CONFIG_DIR / "watchlist.json"
 
 _cpu = os.cpu_count() or 4
 
@@ -41,3 +42,13 @@ def save(cfg: dict) -> None:
     CONFIG_DIR.mkdir(parents=True, exist_ok=True)
     with CONFIG_FILE.open("w") as f:
         json.dump(cfg, f, indent=2)
+
+
+def forum_post_cache_path(appid: str) -> Path:
+    return DATA_DIR / "forum_posts" / f"{appid}.txt"
+
+
+def save_forum_post_cache(appid: str, content: str) -> None:
+    path = forum_post_cache_path(appid)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(content, encoding="utf-8")

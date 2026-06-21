@@ -11,6 +11,15 @@ from gnusteampacker.i18n import _
 def main() -> int:
     import os
 
+    if len(sys.argv) > 1 and sys.argv[1] == "daemon":
+        subtype = sys.argv[2] if len(sys.argv) > 2 else ""
+        if subtype == "check":
+            from gnusteampacker.daemon import run_daemon_check
+
+            return run_daemon_check()
+        print("Usage: gnusteampacker daemon check", file=sys.stderr)
+        return 1
+
     if len(sys.argv) > 1 and sys.argv[1] == "pack":
         if len(sys.argv) > 2 and sys.argv[2] == "login":
             subtype = sys.argv[3] if len(sys.argv) > 3 else ""

@@ -3,6 +3,12 @@ project('gnusteampacker',
   meson_version: '>= 1.0',
 )
 
+install_data(
+  'data/gnusteampacker-daemon.service',
+  'data/gnusteampacker-daemon.timer',
+  install_dir: get_option('prefix') / 'lib' / 'systemd' / 'user',
+)
+
 py = import('python').find_installation('python3')
 gnome = import('gnome')
 

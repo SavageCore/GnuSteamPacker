@@ -1,0 +1,11 @@
+[Unit]
+Description=GnuSteamPacker watch mode timer - hourly update check
+Requires=gnusteampacker-daemon.service
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=1h
+Persistent=true
+
+[Install]
+WantedBy=timers.target

@@ -1,4 +1,4 @@
-.PHONY: dev run run-debug watch lint format dev-icons pot update-po mo flatpak flatpak-bundle flatpak-run dist-cli dist-gui rpm deb appimage clear-auth clean
+.PHONY: dev run run-debug watch lint format dev-icons pot update-po mo flatpak flatpak-bundle flatpak-run dist-cli dist-gui rpm deb appimage daemon-dev-install clear-auth clean
 
 dev:
 	uv venv --python /usr/bin/python3 --system-site-packages --clear
@@ -78,6 +78,15 @@ appimage:
 	uv export --no-dev --no-hashes --no-annotate -o requirements.txt
 	sed -i '/^-e \./d; s/ ;.*//' requirements.txt
 	python-appimage build app -p 3.11 .
+
+daemon-dev-install:
+	cp data/gnusteampacker-daemon.service ~/.config/systemd/user/
+	cp data/gnusteampacker-daemon.timer ~/.config/systemd/user/
+	mkdir -p ~/.config/systemd/user/gnusteampacker-daemon.service.d
+	printf '[Service]\nExecStart=\nExecStart=%s/.venv/bin/python -m gnusteampacker.main daemon check\nWorkingDirectory=%s\n' \
+		$(CURDIR) $(CURDIR) > ~/.config/systemd/user/gnusteampacker-daemon.service.d/dev-override.conf
+	systemctl --user daemon-reload
+	@echo "Daemon units installed. Enable with: systemctl --user enable --now gnusteampacker-daemon.timer"
 
 clear-auth:
 	uv run python scripts/cleaner.py
