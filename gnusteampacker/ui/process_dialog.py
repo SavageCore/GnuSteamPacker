@@ -242,7 +242,7 @@ class ProcessDialog(Adw.Dialog):
             if exc:
                 log.error("Process task error: %s", exc)
             self._set_busy(False)
-            self._finalize(items)
+            self._finalize(items, do_upload)
 
         async_run(_process(), done_cb=_done)
 
@@ -259,7 +259,7 @@ class ProcessDialog(Adw.Dialog):
 
     # ── Finalize + result page ─────────────────────────────────────────────
 
-    def _finalize(self, items: list[QueueItem]) -> None:
+    def _finalize(self, items: list[QueueItem], did_upload: bool = False) -> None:
         _order = {"win64": 0, "win32": 1, "lin64": 2, "lin32": 3, "macos": 4}
         items.sort(key=lambda i: _order.get(i.platform, 99))
 
@@ -287,6 +287,15 @@ class ProcessDialog(Adw.Dialog):
             log.error("Failed to write forum post: %s", exc)
 
         _save_forum_post_cache(self._appid, new_post)
+
+        if did_upload:
+            game_dir = output_dir / safe_name
+            game_dir.mkdir(exist_ok=True)
+            for item in items:
+                for ext in (".7z", ".txt"):
+                    src = output_dir / f"{item.archive_name}{ext}"
+                    if src.exists():
+                        src.rename(game_dir / src.name)
 
         for sidecar in self._group:
             sidecar_path = Path(sidecar.get("_sidecar_path", ""))

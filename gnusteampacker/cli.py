@@ -632,6 +632,17 @@ def run_pack(argv: list[str]) -> int:
             f"\n[bold white]New forum post written to:[/bold white] {escape(str(forum_post_path))}"
         )
 
+    if args.upload:
+        safe_name = items[0].game_name.replace(" ", ".").replace(":", "").replace("/", "_")
+        game_dir = output_dir / safe_name
+        game_dir.mkdir(exist_ok=True)
+        for item in items:
+            for ext in (".7z", ".txt"):
+                src = output_dir / f"{item.archive_name}{ext}"
+                if src.exists():
+                    src.rename(game_dir / src.name)
+        console.print(f"\n[bold white]Files organized to:[/bold white] {escape(str(game_dir))}")
+
     if forum_url:
         _print_steamdb_reply(items, forum_url, version)
 
