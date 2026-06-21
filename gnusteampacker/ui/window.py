@@ -260,7 +260,7 @@ class MainWindow(Adw.ApplicationWindow):
         has_new_pending = any(i.from_daemon and i.status == Status.COMPLETE for i in self._items)
         if has_new_pending:
             self._view_stack.set_visible_child_name("watch")
-            toast = Adw.Toast(title=_("Updates downloaded — ready to process"))
+            toast = Adw.Toast(title=_("Updates downloaded - ready to process"))
             self._toast_overlay.add_toast(toast)
         else:
             GLib.idle_add(self._watch_page.refresh)

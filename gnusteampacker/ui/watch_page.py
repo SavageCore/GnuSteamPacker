@@ -226,6 +226,12 @@ class WatchPage(Gtk.Box):
             subtitle=f"{platforms} · {branch} · {_('Downloaded')}: {downloaded_at}",
         )
 
+        delete_btn = Gtk.Button(label=_("Delete"))
+        delete_btn.set_valign(Gtk.Align.CENTER)
+        delete_btn.add_css_class("destructive-action")
+        delete_btn.connect("clicked", self._make_delete_handler(group))
+        row.add_suffix(delete_btn)
+
         process_btn = Gtk.Button(label=_("Process"))
         process_btn.set_valign(Gtk.Align.CENTER)
         process_btn.add_css_class("suggested-action")
@@ -248,6 +254,39 @@ class WatchPage(Gtk.Box):
             self._entries = [e for e in self._entries if e is not entry]
             save_watchlist(self._entries)
             self._refresh_watchlist_rows()
+
+        return handler
+
+    def _make_delete_handler(self, group: list[dict]):
+        def handler(_btn) -> None:
+            first = group[0]
+            game_name = first.get("game_name", "Unknown")
+            build_id = first.get("build_id", "")
+
+            body = f"{game_name} - {_('Build')} {build_id} " + _(
+                "and its archive files will be permanently deleted."
+            )
+            dialog = Adw.AlertDialog(heading=_("Delete download?"), body=body)
+            dialog.add_response("cancel", _("Cancel"))
+            dialog.add_response("delete", _("Delete"))
+            dialog.set_response_appearance("delete", Adw.ResponseAppearance.DESTRUCTIVE)
+            dialog.set_default_response("cancel")
+            dialog.set_close_response("cancel")
+
+            def on_response(_d, response: str) -> None:
+                if response != "delete":
+                    return
+                conf = cfg.load()
+                output_dir = Path(conf["output_dir"])
+                for item in group:
+                    Path(item["_sidecar_path"]).unlink(missing_ok=True)
+                    archive = output_dir / (item.get("archive_name", "") + ".7z")
+                    if archive.name:
+                        archive.unlink(missing_ok=True)
+                self._refresh_pending_rows()
+
+            dialog.connect("response", on_response)
+            dialog.present(self.get_root())
 
         return handler
 

@@ -161,7 +161,7 @@ def _setup_logging(conf: dict) -> None:
 async def check_new_builds(entries: list[WatchEntry], conf: dict) -> list[QueueItem]:
     """Query Steam API for build ID changes; return QueueItems for new builds (GUI path).
 
-    Updates last_checked and handles first-run recording. Does NOT download — the caller
+    Updates last_checked and handles first-run recording. Does NOT download - the caller
     (window.py) adds returned items to the queue so progress is visible in the Queue tab.
     last_build_id is updated by window.py after successful download.
     """
