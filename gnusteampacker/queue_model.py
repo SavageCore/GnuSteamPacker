@@ -70,6 +70,10 @@ class QueueItem:
         return labels.get(self.platform, self.platform)
 
     @property
+    def safe_name(self) -> str:
+        return self.game_name.replace(" ", ".").replace(":", "").replace("/", "_")
+
+    @property
     def archive_name(self) -> str:
         _plat_labels = {
             "win64": "Win64",
@@ -78,11 +82,10 @@ class QueueItem:
             "lin32": "Linux32",
             "macos": "MacOS",
         }
-        safe = self.game_name.replace(" ", ".").replace(":", "").replace("/", "_")
         plat = _plat_labels.get(self.platform, self.platform.capitalize())
         branch = self.branch.capitalize() or "Public"
         build = self.build_id or "0"
-        return f"{safe}.Build.{build}.{plat}.{branch}"
+        return f"{self.safe_name}.Build.{build}.{plat}.{branch}"
 
     def is_terminal(self) -> bool:
         return self.status in (

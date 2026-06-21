@@ -481,22 +481,12 @@ def run_pack_steam_login() -> int:
     return 0
 
 
-def _forum_post_cache_path(appid: str) -> Path:
-    return cfg.DATA_DIR / "forum_posts" / f"{appid}.txt"
-
-
 def _load_cached_forum_post(appid: str) -> str:
-    path = _forum_post_cache_path(appid)
+    path = cfg.forum_post_cache_path(appid)
     if path.exists():
         console.print(f"\nUsing cached forum post for AppID {appid}.")
         return path.read_text(encoding="utf-8")
     return ""
-
-
-def _save_forum_post_cache(appid: str, content: str) -> None:
-    path = _forum_post_cache_path(appid)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(content, encoding="utf-8")
 
 
 def _resolve_version(args: argparse.Namespace, items: list[QueueItem]) -> str:
@@ -526,10 +516,9 @@ def _write_forum_post(items: list[QueueItem], conf: dict) -> Path | None:
     old_post = _load_cached_forum_post(items[0].appid)
     new_post = release_text.insert_new_release(old_post, new_blocks)
 
-    safe_name = items[0].game_name.replace(" ", ".").replace(":", "").replace("/", "_")
-    out_path = output_dir / f"{safe_name}.ForumPost.Build.{items[0].build_id}.txt"
+    out_path = output_dir / f"{items[0].safe_name}.ForumPost.Build.{items[0].build_id}.txt"
     out_path.write_text(new_post, encoding="utf-8")
-    _save_forum_post_cache(items[0].appid, new_post)
+    cfg.save_forum_post_cache(items[0].appid, new_post)
     return out_path
 
 
@@ -616,7 +605,7 @@ def run_pack(argv: list[str]) -> int:
     conf = cfg.load()
     _print_summary(items, conf, args.upload)
 
-    first_pack = not _forum_post_cache_path(args.appid).exists()
+    first_pack = not cfg.forum_post_cache_path(args.appid).exists()
     forum_url = None if first_pack else _resolve_forum_post_url(args.appid, args, conf)
     version = _resolve_version(args, items)
 
@@ -633,8 +622,7 @@ def run_pack(argv: list[str]) -> int:
         )
 
     if args.upload:
-        safe_name = items[0].game_name.replace(" ", ".").replace(":", "").replace("/", "_")
-        game_dir = output_dir / safe_name
+        game_dir = output_dir / items[0].safe_name
         game_dir.mkdir(exist_ok=True)
         for item in items:
             for ext in (".7z", ".txt"):

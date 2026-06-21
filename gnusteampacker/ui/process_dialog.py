@@ -19,21 +19,6 @@ from gnusteampacker.queue_model import QueueItem
 log = logging.getLogger(__name__)
 
 
-def _forum_post_cache_path(appid: str) -> Path:
-    return cfg.DATA_DIR / "forum_posts" / f"{appid}.txt"
-
-
-def _load_cached_forum_post(appid: str) -> str:
-    path = _forum_post_cache_path(appid)
-    return path.read_text(encoding="utf-8") if path.exists() else ""
-
-
-def _save_forum_post_cache(appid: str, content: str) -> None:
-    path = _forum_post_cache_path(appid)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(content, encoding="utf-8")
-
-
 def _item_from_sidecar(sidecar: dict, version: str) -> QueueItem:
     return QueueItem(
         appid=sidecar["appid"],
@@ -276,17 +261,18 @@ class ProcessDialog(Adw.Dialog):
                 log.error("Failed to write release text for %s: %s", item.archive_name, exc)
             new_blocks.append(txt)
 
-        old_post = _load_cached_forum_post(self._appid)
+        _cache = cfg.forum_post_cache_path(self._appid)
+        old_post = _cache.read_text(encoding="utf-8") if _cache.exists() else ""
         new_post = release_text.insert_new_release(old_post, new_blocks)
 
-        safe_name = self._game_name.replace(" ", ".").replace(":", "").replace("/", "_")
+        safe_name = items[0].safe_name
         forum_path = output_dir / f"{safe_name}.ForumPost.Build.{self._build_id}.txt"
         try:
             forum_path.write_text(new_post, encoding="utf-8")
         except OSError as exc:
             log.error("Failed to write forum post: %s", exc)
 
-        _save_forum_post_cache(self._appid, new_post)
+        cfg.save_forum_post_cache(self._appid, new_post)
 
         if did_upload:
             game_dir = output_dir / safe_name
