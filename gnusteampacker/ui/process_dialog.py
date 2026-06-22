@@ -300,9 +300,11 @@ class ProcessDialog(Adw.Dialog):
         self._page_stack.set_visible_child_name("result")
 
     def _on_copy_clicked(self, _btn) -> None:
+        version_text = f"{self._version} ({self._build_id})"
+
         text = (
             f"[url={self._forum_url}]Updated[/url] to "
-            f"[url=https://steamdb.info/patchnotes/{self._build_id}/]{self._version}[/url]"
+            f"[url=https://steamdb.info/patchnotes/{self._build_id}/]{version_text}[/url]"
         )
         provider = Gdk.ContentProvider.new_for_bytes(
             "text/plain;charset=utf-8",

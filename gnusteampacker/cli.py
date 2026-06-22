@@ -531,7 +531,9 @@ def _print_steamdb_reply(items: list[QueueItem], forum_url: str, version: str) -
     patchnotes_url = f"https://steamdb.info/patchnotes/{build_id}/"
 
     console.print("\n[bold white]Forum reply:[/bold white]")
-    reply = f"  [url={forum_url}]Updated[/url] to [url={patchnotes_url}]{version}[/url]"
+    reply = (
+        f"  [url={forum_url}]Updated[/url] to [url={patchnotes_url}]{version} ({build_id})[/url]"
+    )
     console.print(Text(reply, style="white"))
 
 
