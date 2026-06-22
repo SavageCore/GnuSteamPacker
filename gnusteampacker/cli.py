@@ -6,6 +6,7 @@ import contextlib
 import getpass
 import logging
 import os
+import shutil
 import sys
 import webbrowser
 from pathlib import Path
@@ -611,7 +612,7 @@ def run_pack(argv: list[str]) -> int:
     forum_url = None if first_pack else _resolve_forum_post_url(args.appid, args, conf)
     version = _resolve_version(args, items)
 
-    output_dir = Path(conf["output_dir"])
+    output_dir = Path(items[0].output_dir) if items[0].output_dir else Path(conf["output_dir"])
     for item in items:
         item.game_version = version
         txt_path = output_dir / f"{item.archive_name}.txt"
@@ -631,6 +632,7 @@ def run_pack(argv: list[str]) -> int:
                 src = output_dir / f"{item.archive_name}{ext}"
                 if src.exists():
                     src.rename(game_dir / src.name)
+            shutil.rmtree(output_dir / item.archive_name, ignore_errors=True)
         console.print(f"\n[bold white]Files organized to:[/bold white] {escape(str(game_dir))}")
 
     if forum_url:

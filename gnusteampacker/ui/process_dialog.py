@@ -2,6 +2,7 @@
 
 import asyncio
 import logging
+import shutil
 from pathlib import Path
 
 import gi
@@ -249,7 +250,7 @@ class ProcessDialog(Adw.Dialog):
         items.sort(key=lambda i: _order.get(i.platform, 99))
 
         conf = cfg.load()
-        output_dir = Path(conf["output_dir"])
+        output_dir = Path(items[0].output_dir) if items[0].output_dir else Path(conf["output_dir"])
         new_blocks: list[str] = []
 
         for item in items:
@@ -282,6 +283,7 @@ class ProcessDialog(Adw.Dialog):
                     src = output_dir / f"{item.archive_name}{ext}"
                     if src.exists():
                         src.rename(game_dir / src.name)
+                shutil.rmtree(output_dir / item.archive_name, ignore_errors=True)
 
         for sidecar in self._group:
             sidecar_path = Path(sidecar.get("_sidecar_path", ""))
