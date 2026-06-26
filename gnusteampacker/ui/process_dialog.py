@@ -16,8 +16,20 @@ from gnusteampacker import credentials, hashing, multiup_api, release_text
 from gnusteampacker.async_runner import run as async_run
 from gnusteampacker.i18n import _
 from gnusteampacker.queue_model import QueueItem
+from gnusteampacker.speed import SpeedTracker
 
 log = logging.getLogger(__name__)
+
+
+def _human_size(n: int) -> str:
+    # ponytail: local size formatter, promote to queue_model if reused elsewhere
+    if n < 1_000:
+        return f"{n} B"
+    if n < 1_000_000:
+        return f"{n / 1_000:.1f} KB"
+    if n < 1_000_000_000:
+        return f"{n / 1_000_000:.1f} MB"
+    return f"{n / 1_000_000_000:.1f} GB"
 
 
 def _item_from_sidecar(sidecar: dict, version: str) -> QueueItem:
@@ -49,6 +61,7 @@ class ProcessDialog(Adw.Dialog):
         self._platforms = [s.get("platform", "") for s in group]
 
         self.set_content_width(560)
+        self._progress_detail = ""
 
         self._toolbar_view = Adw.ToolbarView()
         self._header = Adw.HeaderBar()
@@ -71,11 +84,18 @@ class ProcessDialog(Adw.Dialog):
         box.set_margin_start(16)
         box.set_margin_end(16)
 
+        _output_dir = Path(cfg.load()["output_dir"])
+        _total = 0
+        for s in self._group:
+            p = _output_dir / f"{_item_from_sidecar(s, '').archive_name}.7z"
+            if p.exists():
+                _total += p.stat().st_size
+        _size_str = f" · {_human_size(_total)}" if _total else ""
+
         info_group = Adw.PreferencesGroup(title=_("Archive"))
-        info_row = Adw.ActionRow(
-            title=self._game_name,
-            subtitle=f"Build {self._build_id} · {', '.join(self._platforms)} · {self._branch}",
-        )
+        _plats = ", ".join(self._platforms)
+        _subtitle = f"Build {self._build_id} · {_plats} · {self._branch}{_size_str}"
+        info_row = Adw.ActionRow(title=self._game_name, subtitle=_subtitle)
         info_group.add(info_row)
         box.append(info_group)
 
@@ -100,8 +120,21 @@ class ProcessDialog(Adw.Dialog):
 
         box.append(options_group)
 
+        self._progress = Gtk.ProgressBar()
+        self._progress.set_show_text(True)
+        self._progress.set_margin_top(16)
+        self._progress.set_visible(False)
+        box.append(self._progress)
+
+        self._progress_label = Gtk.Label(label="")
+        self._progress_label.set_xalign(0)
+        self._progress_label.add_css_class("dim-label")
+        self._progress_label.set_margin_top(4)
+        self._progress_label.set_visible(False)
+        box.append(self._progress_label)
+
         btn_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
-        btn_box.set_margin_top(20)
+        btn_box.set_margin_top(16)
         btn_box.set_halign(Gtk.Align.END)
 
         cancel_btn = Gtk.Button(label=_("Cancel"))
@@ -205,16 +238,32 @@ class ProcessDialog(Adw.Dialog):
                     log.warning("Archive not found: %s", archive_path)
                     continue
                 if not item.file_hash:
-                    item.file_hash = await asyncio.to_thread(hashing.blake3_hex, archive_path)
+                    self._progress_detail = _("Hashing") + f" {item.game_name} ({item.platform})"
+                    GLib.idle_add(self._progress.set_fraction, 0.0)
+                    item.file_hash = await asyncio.to_thread(
+                        hashing.blake3_hex,
+                        archive_path,
+                        lambda pct, speed: GLib.idle_add(self._set_progress, pct, speed),
+                    )
                 if do_upload:
                     try:
                         user_id = None
                         if mu_user and mu_pass:
                             user_id = await asyncio.to_thread(multiup_api.login, mu_user, mu_pass)
+                        tracker = SpeedTracker()
+                        self._progress_detail = (
+                            _("Uploading") + f" {item.game_name} ({item.platform})"
+                        )
+                        GLib.idle_add(self._progress.set_fraction, 0.0)
                         result = await asyncio.to_thread(
                             multiup_api.upload_file,
                             file_path=archive_path,
                             user_id=user_id,
+                            progress_cb=lambda sent, total: GLib.idle_add(
+                                self._set_progress,
+                                sent / total if total else 0.0,
+                                tracker.update(sent),
+                            ),
                         )
                         if isinstance(result, tuple):
                             item.url, item.delete_url = result
@@ -242,6 +291,25 @@ class ProcessDialog(Adw.Dialog):
             self._process_btn.set_label(label)
         self._version_entry.set_sensitive(not busy)
         self._upload_switch.set_sensitive(not busy)
+        self._progress.set_visible(busy)
+        self._progress_label.set_visible(busy)
+
+    def _set_progress(self, fraction: float, speed: float) -> bool:
+        self._progress.set_fraction(fraction)
+        self._progress.set_text(f"{fraction * 100:.0f}%")
+        if speed >= 1_000_000:
+            speed_str = f"{speed / 1_000_000:.1f} MB/s"
+        elif speed >= 1_000:
+            speed_str = f"{speed / 1_000:.0f} KB/s"
+        elif speed > 0:
+            speed_str = f"{speed:.0f} B/s"
+        else:
+            speed_str = ""
+        detail = self._progress_detail
+        if speed_str:
+            detail = f"{detail} · {speed_str}" if detail else speed_str
+        self._progress_label.set_text(detail)
+        return False
 
     # ── Finalize + result page ─────────────────────────────────────────────
 
