@@ -58,6 +58,10 @@ def insert_new_release(old_post: str, new_blocks: list[str]) -> str:
     ``old_post`` is expected to start directly with the current release blocks
     (no header content), matching the format produced by this same function.
     """
+    new_section = "\n\n".join(new_blocks)
+    if not old_post.strip():
+        return new_section  # ponytail: first pack — no history yet, no Previous Versions section
+
     marker = "[b]Previous Versions:[/b]"
     idx = old_post.find(marker)
     if idx == -1:
@@ -77,8 +81,27 @@ def insert_new_release(old_post: str, new_blocks: list[str]) -> str:
             else:
                 moved = current_section
 
-    new_section = "\n\n".join(new_blocks)
     return f"{new_section}\n\n[b]Previous Versions:[/b]\n\n[spoiler]{moved}[/spoiler]"
+
+
+def _selftest() -> None:
+    sep = PREVIOUS_VERSION_SEPARATOR
+    a, b, c = "A", "B", "C"
+    # first pack: no Previous Versions section at all
+    r1 = insert_new_release("", [a])
+    assert r1 == a, r1
+    assert "Previous Versions" not in r1
+    # second pack: Previous Versions created, first release inside spoiler
+    r2 = insert_new_release(r1, [b])
+    assert r2.startswith(b)
+    assert "[b]Previous Versions:[/b]" in r2
+    assert r2.endswith(f"[spoiler]{a}[/spoiler]")
+    # third pack: separator appears, oldest release at bottom
+    r3 = insert_new_release(r2, [c])
+    assert r3.startswith(c)
+    assert sep in r3
+    assert r3.endswith(f"{sep}\n\n{a}[/spoiler]")
+    print("release_text selftest OK")
 
 
 def build_depot_list(
@@ -108,3 +131,7 @@ def build_depot_list(
         label = f"{depot_id} - {name}" if name else depot_id
         lines.append(f"{label} [Manifest {manifest_id}]")
     return lines
+
+
+if __name__ == "__main__":
+    _selftest()
