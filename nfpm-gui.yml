@@ -20,11 +20,11 @@ depends:
   - gir1.2-adw-1
 
 contents:
-  - src: ./dist-gui/gnusteampacker/async_runner.py
-    dst: /usr/lib/python3/dist-packages/gnusteampacker/async_runner.py
+  - src: ./dist-gui/usr/lib/python${PYVER}/site-packages/gnusteampacker/async_runner.py
+    dst: /usr/lib/python${PYVER}/site-packages/gnusteampacker/async_runner.py
 
-  - src: ./dist-gui/gnusteampacker/ui
-    dst: /usr/lib/python3/dist-packages/gnusteampacker/ui
+  - src: ./dist-gui/usr/lib/python${PYVER}/site-packages/gnusteampacker/ui
+    dst: /usr/lib/python${PYVER}/site-packages/gnusteampacker/ui
     type: dir
 
   - src: ./data/org.gnusteampacker.GnuSteamPacker.desktop

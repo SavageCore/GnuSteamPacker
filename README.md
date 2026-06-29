@@ -224,12 +224,20 @@ make flatpak
 make flatpak-run
 ```
 
-Build an RPM or DEB (requires `nfpm`):
+Build an RPM or DEB (requires `nfpm` and `envsubst` from `gettext`):
 
 ```bash
 make rpm
 make deb
 ```
+
+Three packages are produced in `dist-packages/`:
+
+| Package | Contents | Use when |
+|---------|----------|----------|
+| `gnusteampacker-full` | CLI + GUI | Local install (recommended) |
+| `gnusteampacker` | CLI only | Repo-based install without GUI |
+| `gnusteampacker-gui` | GTK4 GUI add-on | Repo-based install, depends on `gnusteampacker` |
 
 ## License
 

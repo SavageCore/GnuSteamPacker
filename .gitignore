@@ -7,6 +7,11 @@ build/
 *.egg-info/
 .ruff_cache/
 build-dir/
+build-cli/
+build-gui/
+dist-cli/
+dist-gui/
+dist-packages/
 repo/
 .flatpak-builder/
 .claude/

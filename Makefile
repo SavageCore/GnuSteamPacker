@@ -1,5 +1,7 @@
 .PHONY: dev run run-debug watch lint format dev-icons pot update-po mo flatpak flatpak-bundle flatpak-run dist-cli dist-gui rpm deb appimage daemon-dev-install clear-auth clean
 
+PYVER := $(shell python3 -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')
+
 dev:
 	uv venv --python /usr/bin/python3 --system-site-packages --clear
 	uv sync
@@ -59,20 +61,26 @@ flatpak-run:
 	flatpak-builder --run build-dir org.gnusteampacker.GnuSteamPacker.json gnusteampacker
 
 dist-cli: mo
-	meson setup build-cli -Dgui=false --wipe
+	meson setup build-cli -Dgui=false --prefix=/usr --wipe
 	meson install -C build-cli --destdir $(CURDIR)/dist-cli
+	python3 -m pip install blake3 --no-deps --quiet --target $(CURDIR)/dist-cli/usr/lib/python$(PYVER)/site-packages/
 
 dist-gui: mo
-	meson setup build-gui -Dgui=true --wipe
+	meson setup build-gui -Dgui=true --prefix=/usr --wipe
 	meson install -C build-gui --destdir $(CURDIR)/dist-gui
+	python3 -m pip install blake3 --no-deps --quiet --target $(CURDIR)/dist-gui/usr/lib/python$(PYVER)/site-packages/
 
 rpm: dist-cli dist-gui
-	nfpm package --packager rpm --config nfpm.yml
-	nfpm package --packager rpm --config nfpm-gui.yml
+	mkdir -p dist-packages
+	nfpm package --packager rpm --target dist-packages/ --config nfpm.yml
+	PYVER=$(PYVER) envsubst '$$PYVER' < nfpm-gui.yml | PYVER=$(PYVER) nfpm package --packager rpm --target dist-packages/ --config /dev/stdin
+	nfpm package --packager rpm --target dist-packages/ --config nfpm-combined.yml
 
 deb: dist-cli dist-gui
-	nfpm package --packager deb --config nfpm.yml
-	nfpm package --packager deb --config nfpm-gui.yml
+	mkdir -p dist-packages
+	nfpm package --packager deb --target dist-packages/ --config nfpm.yml
+	PYVER=$(PYVER) envsubst '$$PYVER' < nfpm-gui.yml | PYVER=$(PYVER) nfpm package --packager deb --target dist-packages/ --config /dev/stdin
+	nfpm package --packager deb --target dist-packages/ --config nfpm-combined.yml
 
 appimage:
 	uv export --no-dev --no-hashes --no-annotate -o requirements.txt
@@ -92,4 +100,4 @@ clear-auth:
 	uv run python scripts/cleaner.py
 
 clean:
-	rm -rf build-dir .flatpak-builder flatpak-repo requirements.txt __pycache__ gnusteampacker/__pycache__ gnusteampacker/ui/__pycache__ gnusteampacker/locale
+	rm -rf build-dir build-cli build-gui dist-cli dist-gui dist-packages .flatpak-builder flatpak-repo requirements.txt __pycache__ gnusteampacker/__pycache__ gnusteampacker/ui/__pycache__ gnusteampacker/locale
