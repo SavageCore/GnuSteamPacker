@@ -62,6 +62,12 @@ class ProcessDialog(Adw.Dialog):
 
         self.set_content_width(560)
         self._progress_detail = ""
+        # Archives live next to their .pending.json sidecar (per-watch-entry
+        # output dir may differ from the global config output_dir).
+        _sidecar_path = first.get("_sidecar_path", "")
+        self._output_dir = (
+            Path(_sidecar_path).parent if _sidecar_path else Path(cfg.load()["output_dir"])
+        )
 
         self._toolbar_view = Adw.ToolbarView()
         self._header = Adw.HeaderBar()
@@ -84,10 +90,9 @@ class ProcessDialog(Adw.Dialog):
         box.set_margin_start(16)
         box.set_margin_end(16)
 
-        _output_dir = Path(cfg.load()["output_dir"])
         _total = 0
         for s in self._group:
-            p = _output_dir / f"{_item_from_sidecar(s, '').archive_name}.7z"
+            p = self._output_dir / f"{_item_from_sidecar(s, '').archive_name}.7z"
             if p.exists():
                 _total += p.stat().st_size
         _size_str = f" · {_human_size(_total)}" if _total else ""
@@ -226,8 +231,7 @@ class ProcessDialog(Adw.Dialog):
         items = [_item_from_sidecar(s, version) for s in self._group]
         do_upload = self._upload_switch.get_active()
         self._set_busy(True)
-        conf = cfg.load()
-        output_dir = Path(conf["output_dir"])
+        output_dir = self._output_dir
         mu_user = credentials.get_multiup_username() if do_upload else None
         mu_pass = credentials.get_multiup_password() if do_upload else None
 
@@ -317,8 +321,7 @@ class ProcessDialog(Adw.Dialog):
         _order = {"win64": 0, "win32": 1, "lin64": 2, "lin32": 3, "macos": 4}
         items.sort(key=lambda i: _order.get(i.platform, 99))
 
-        conf = cfg.load()
-        output_dir = Path(items[0].output_dir) if items[0].output_dir else Path(conf["output_dir"])
+        output_dir = self._output_dir
         new_blocks: list[str] = []
 
         for item in items:
