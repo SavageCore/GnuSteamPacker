@@ -19,12 +19,12 @@ log = logging.getLogger(__name__)
 def _missing_platforms(entry: WatchEntry, build_id: str, conf: dict) -> list[str]:
     """Platforms in entry.platforms with no archive on disk for build_id.
 
-    Returns [] unless the build is *partly* present — if none of the platforms
-    have been downloaded, this build was never fetched (or the user cleaned it
-    up), and we should not auto re-download everything.
+    The very-first-ever check for an entry is handled separately (records the
+    build without downloading) - by the time this runs, that has already
+    happened at least once, so any platform still missing here (including "no
+    platform has ever been fetched for this build") should be filled in.
     """
     output_dir = Path(entry.output_dir or conf["output_dir"])
-    present: list[str] = []
     missing: list[str] = []
     for p in entry.platforms:
         item = QueueItem(
@@ -39,8 +39,9 @@ def _missing_platforms(entry: WatchEntry, build_id: str, conf: dict) -> list[str
         # Pending / processed-without-upload archives live in output_dir;
         # processed-with-upload archives are moved into output_dir/<safe_name>/.
         exists = (output_dir / name).exists() or (output_dir / item.safe_name / name).exists()
-        (present if exists else missing).append(p)
-    return missing if (present and missing) else []
+        if not exists:
+            missing.append(p)
+    return missing
 
 
 def write_pending_sidecar(item: QueueItem, output_dir: Path) -> None:
