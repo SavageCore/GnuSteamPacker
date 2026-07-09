@@ -335,7 +335,7 @@ class ProcessDialog(Adw.Dialog):
 
         _cache = cfg.forum_post_cache_path(self._appid)
         old_post = _cache.read_text(encoding="utf-8") if _cache.exists() else ""
-        new_post = release_text.insert_new_release(old_post, new_blocks)
+        new_post = release_text.add_platforms_to_current_build(old_post, new_blocks, self._build_id)
 
         safe_name = items[0].safe_name
         forum_path = output_dir / f"{safe_name}.ForumPost.Build.{self._build_id}.txt"

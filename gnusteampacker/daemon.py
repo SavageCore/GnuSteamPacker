@@ -16,6 +16,33 @@ from gnusteampacker.watchlist import save as save_watchlist
 log = logging.getLogger(__name__)
 
 
+def _missing_platforms(entry: WatchEntry, build_id: str, conf: dict) -> list[str]:
+    """Platforms in entry.platforms with no archive on disk for build_id.
+
+    Returns [] unless the build is *partly* present — if none of the platforms
+    have been downloaded, this build was never fetched (or the user cleaned it
+    up), and we should not auto re-download everything.
+    """
+    output_dir = Path(entry.output_dir or conf["output_dir"])
+    present: list[str] = []
+    missing: list[str] = []
+    for p in entry.platforms:
+        item = QueueItem(
+            appid=entry.appid,
+            game_name=entry.name,
+            platform=p,
+            branch=entry.branch,
+            branch_password=entry.branch_password,
+            build_id=build_id,
+        )
+        name = f"{item.archive_name}.7z"
+        # Pending / processed-without-upload archives live in output_dir;
+        # processed-with-upload archives are moved into output_dir/<safe_name>/.
+        exists = (output_dir / name).exists() or (output_dir / item.safe_name / name).exists()
+        (present if exists else missing).append(p)
+    return missing if (present and missing) else []
+
+
 def write_pending_sidecar(item: QueueItem, output_dir: Path) -> None:
     sidecar = {
         "appid": item.appid,
@@ -35,7 +62,7 @@ def write_pending_sidecar(item: QueueItem, output_dir: Path) -> None:
     log.info("Wrote pending sidecar: %s", sidecar_path)
 
 
-async def _pack_entry(entry: WatchEntry, conf: dict) -> bool:
+async def _pack_entry(entry: WatchEntry, conf: dict, platforms: list[str] | None = None) -> bool:
     output_dir = Path(entry.output_dir or conf["output_dir"])
     base_auth = credentials.build_auth_override(conf)
     remember_login = bool((base_auth or {}).get("remember_login", conf.get("remember_login", True)))
@@ -50,7 +77,7 @@ async def _pack_entry(entry: WatchEntry, conf: dict) -> bool:
             branch_password=entry.branch_password,
             output_dir=entry.output_dir,
         )
-        for p in entry.platforms
+        for p in (platforms if platforms is not None else entry.platforms)
     ]
 
     all_ok = True
@@ -131,7 +158,13 @@ async def _check_all(entries: list[WatchEntry], conf: dict) -> bool:
             else:
                 any_failed = True
         else:
-            log.info("No change for %s: still at build %s", entry.name, new_build_id)
+            missing = _missing_platforms(entry, new_build_id, conf)
+            if missing:
+                log.info("Filling missing platforms for %s: %s", entry.name, missing)
+                if not await _pack_entry(entry, conf, platforms=missing):
+                    any_failed = True
+            else:
+                log.info("No change for %s: still at build %s", entry.name, new_build_id)
 
         entry.last_checked = datetime.now(tz=UTC).isoformat()
         save_watchlist(entries)
@@ -205,7 +238,23 @@ async def check_new_builds(entries: list[WatchEntry], conf: dict) -> list[QueueI
                     )
                 )
         else:
-            log.info("No change for %s: still at build %s", entry.name, new_build_id)
+            missing = _missing_platforms(entry, new_build_id, conf)
+            if missing:
+                log.info("Filling missing platforms for %s: %s", entry.name, missing)
+                for platform in missing:
+                    new_items.append(
+                        QueueItem(
+                            appid=entry.appid,
+                            game_name=entry.name,
+                            platform=platform,
+                            branch=entry.branch,
+                            branch_password=entry.branch_password,
+                            from_daemon=True,
+                            output_dir=entry.output_dir,
+                        )
+                    )
+            else:
+                log.info("No change for %s: still at build %s", entry.name, new_build_id)
 
         entry.last_checked = datetime.now(tz=UTC).isoformat()
         save_watchlist(entries)

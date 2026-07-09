@@ -84,6 +84,23 @@ def insert_new_release(old_post: str, new_blocks: list[str]) -> str:
     return f"{new_section}\n\n[b]Previous Versions:[/b]\n\n[spoiler]{moved}[/spoiler]"
 
 
+def add_platforms_to_current_build(old_post: str, new_blocks: list[str], build_id: str) -> str:
+    """Add newly-processed platform blocks to a build already at the top of
+    ``old_post`` (e.g. a late Mac download for a build already posted for
+    Windows/Linux), instead of demoting the existing blocks into Previous
+    Versions. Falls back to ``insert_new_release`` for a genuinely new build.
+    """
+    marker = "[b]Previous Versions:[/b]"
+    idx = old_post.find(marker)
+    current = old_post if idx == -1 else old_post[:idx]
+    if build_id and f"Build {build_id}" in current:
+        addition = "\n\n".join(new_blocks)
+        if idx == -1:
+            return f"{old_post.rstrip()}\n\n{addition}"
+        return f"{old_post[:idx].rstrip()}\n\n{addition}\n\n{old_post[idx:]}"
+    return insert_new_release(old_post, new_blocks)
+
+
 def _selftest() -> None:
     sep = PREVIOUS_VERSION_SEPARATOR
     a, b, c = "A", "B", "C"
@@ -101,6 +118,29 @@ def _selftest() -> None:
     assert r3.startswith(c)
     assert sep in r3
     assert r3.endswith(f"{sep}\n\n{a}[/spoiler]")
+
+    # late platform for the same build: merge into current section, no demotion
+    win = "[b]Foo [Win64] [Branch: Public]...Build 123...[/b]"
+    lin = "[b]Foo [Linux64] [Branch: Public]...Build 123...[/b]"
+    mac = "[b]Foo [MacOS] [Branch: Public]...Build 123...[/b]"
+    posted = insert_new_release("", [win, lin])  # first pack: no Previous Versions yet
+    merged = add_platforms_to_current_build(posted, [mac], "123")
+    assert win in merged
+    assert lin in merged
+    assert mac in merged
+    assert "Previous Versions" not in merged
+
+    # same, but with an existing Previous Versions section beneath the current build
+    posted2 = insert_new_release(r1, [win, lin])
+    merged2 = add_platforms_to_current_build(posted2, [mac], "123")
+    assert win in merged2 and lin in merged2 and mac in merged2
+    assert merged2.endswith(f"[spoiler]{a}[/spoiler]")
+
+    # a genuinely new build falls back to insert_new_release (demotes old section)
+    new_build = add_platforms_to_current_build(posted, [win], "456")
+    assert new_build.startswith(win)
+    assert "[b]Previous Versions:[/b]" in new_build
+
     print("release_text selftest OK")
 
 
