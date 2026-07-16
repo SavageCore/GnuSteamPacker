@@ -136,6 +136,7 @@ class MainWindow(Adw.ApplicationWindow):
             item,
             remove_cb=self._remove_item,
             retry_cb=self._retry_item,
+            process_cb=self._on_process_item,
         )
         self._rows[id(item)] = row
         self._queue_group.add(row)
@@ -150,6 +151,26 @@ class MainWindow(Adw.ApplicationWindow):
             self._items.remove(item)
         self._refresh_stack()
         self._update_start_button_state()
+
+    def _on_process_item(self, item: QueueItem) -> None:
+        from gnusteampacker.daemon import sidecar_dict
+        from gnusteampacker.ui.process_dialog import ProcessDialog
+
+        outdir = Path(item.output_dir or cfg.load()["output_dir"])
+        siblings = [
+            i
+            for i in self._items
+            if i.appid == item.appid
+            and i.build_id == item.build_id
+            and i.branch == item.branch
+            and i.status == Status.COMPLETE
+        ]
+        group = []
+        for i in siblings:
+            d = sidecar_dict(i)
+            d["_sidecar_path"] = str(outdir / f"{i.archive_name}.pending.json")
+            group.append(d)
+        ProcessDialog(group, on_processed=lambda: None).present(self)
 
     def _refresh_stack(self) -> None:
         self._stack.set_visible_child_name("queue" if self._items else "empty")

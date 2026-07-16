@@ -44,8 +44,8 @@ def _missing_platforms(entry: WatchEntry, build_id: str, conf: dict) -> list[str
     return missing
 
 
-def write_pending_sidecar(item: QueueItem, output_dir: Path) -> None:
-    sidecar = {
+def sidecar_dict(item: QueueItem) -> dict:
+    return {
         "appid": item.appid,
         "game_name": item.game_name,
         "platform": item.platform,
@@ -58,8 +58,11 @@ def write_pending_sidecar(item: QueueItem, output_dir: Path) -> None:
         "available_platforms": item.available_platforms,
         "downloaded_at": datetime.now(tz=UTC).isoformat(),
     }
+
+
+def write_pending_sidecar(item: QueueItem, output_dir: Path) -> None:
     sidecar_path = output_dir / f"{item.archive_name}.pending.json"
-    sidecar_path.write_text(json.dumps(sidecar, indent=2), encoding="utf-8")
+    sidecar_path.write_text(json.dumps(sidecar_dict(item), indent=2), encoding="utf-8")
     log.info("Wrote pending sidecar: %s", sidecar_path)
 
 

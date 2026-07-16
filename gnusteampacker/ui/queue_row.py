@@ -16,11 +16,12 @@ _ANIM_EASE = 0.15
 
 
 class QueueRow(Adw.ActionRow):
-    def __init__(self, item: QueueItem, remove_cb, retry_cb):
+    def __init__(self, item: QueueItem, remove_cb, retry_cb, process_cb=None):
         super().__init__()
         self._item = item
         self._remove_cb = remove_cb
         self._retry_cb = retry_cb
+        self._process_cb = process_cb
 
         self.set_title(item.game_name or _("AppID {appid}").format(appid=item.appid))
         self.set_subtitle(self._build_subtitle(item))
@@ -47,6 +48,16 @@ class QueueRow(Adw.ActionRow):
         self._retry_btn.set_visible(False)
         self._retry_btn.connect("clicked", lambda _btn: retry_cb(item))
         self._btn_box.append(self._retry_btn)
+
+        self._process_btn = Gtk.Button()
+        self._process_btn.set_icon_name("document-send-symbolic")
+        self._process_btn.add_css_class("flat")
+        self._process_btn.set_tooltip_text(_("Process"))
+        self._process_btn.set_visible(False)
+        self._process_btn.connect(
+            "clicked", lambda _btn: self._process_cb(self._item) if self._process_cb else None
+        )
+        self._btn_box.append(self._process_btn)
 
         self._remove_btn = Gtk.Button()
         self._remove_btn.set_icon_name("user-trash-symbolic")
@@ -110,6 +121,9 @@ class QueueRow(Adw.ActionRow):
             self._last_progress_status = None
 
         self._retry_btn.set_visible(item.is_retryable())
+        self._process_btn.set_visible(
+            item.status == Status.COMPLETE and self._process_cb is not None
+        )
         self._remove_btn.set_sensitive(item.status == Status.READY or item.is_terminal())
 
         for cls in ("success", "error", "warning"):
