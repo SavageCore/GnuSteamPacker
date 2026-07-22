@@ -370,6 +370,7 @@ class WatchPage(Gtk.Box):
                     entry.platforms.append(item.platform)
                     save_watchlist(self._entries)
                     GLib.idle_add(self._refresh_watchlist_rows)
+                    self._queue_download(entry, [item.platform])
                 return
         new_entry = WatchEntry(
             appid=item.appid,
@@ -384,6 +385,25 @@ class WatchPage(Gtk.Box):
         self._entries.append(new_entry)
         save_watchlist(self._entries)
         GLib.idle_add(self._refresh_watchlist_rows)
+        self._queue_download(new_entry, new_entry.platforms)
+
+    def _queue_download(self, entry: WatchEntry, platforms: list[str]) -> None:
+        """Download the current build right away instead of waiting for a future change."""
+        if not self._add_daemon_items_cb:
+            return
+        items = [
+            QueueItem(
+                appid=entry.appid,
+                game_name=entry.name,
+                platform=platform,
+                branch=entry.branch,
+                branch_password=entry.branch_password,
+                from_daemon=True,
+                output_dir=entry.output_dir,
+            )
+            for platform in platforms
+        ]
+        self._add_daemon_items_cb(items)
 
     def _on_timer_toggled(self, switch, _param) -> None:
         if self._updating_timer:
