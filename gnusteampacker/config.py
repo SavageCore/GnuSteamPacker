@@ -22,6 +22,7 @@ DEFAULTS = {
     "window_height": 800,
     "window_maximized": False,
     "remember_login": True,
+    "notify_on_pending": True,
 }
 
 

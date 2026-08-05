@@ -3,11 +3,14 @@
 import asyncio
 import json
 import logging
+import shutil
+import subprocess
 from datetime import UTC, datetime
 from pathlib import Path
 
 from gnusteampacker import config as cfg
 from gnusteampacker import credentials, steam_api, worker
+from gnusteampacker.i18n import _
 from gnusteampacker.queue_model import QueueItem, Status
 from gnusteampacker.watchlist import WatchEntry
 from gnusteampacker.watchlist import load as load_watchlist
@@ -66,7 +69,9 @@ def write_pending_sidecar(item: QueueItem, output_dir: Path) -> None:
     log.info("Wrote pending sidecar: %s", sidecar_path)
 
 
-async def _pack_entry(entry: WatchEntry, conf: dict, platforms: list[str] | None = None) -> bool:
+async def _pack_entry(
+    entry: WatchEntry, conf: dict, platforms: list[str] | None = None
+) -> tuple[bool, list[QueueItem]]:
     output_dir = Path(entry.output_dir or conf["output_dir"])
     base_auth = credentials.build_auth_override(conf)
     remember_login = bool((base_auth or {}).get("remember_login", conf.get("remember_login", True)))
@@ -85,6 +90,7 @@ async def _pack_entry(entry: WatchEntry, conf: dict, platforms: list[str] | None
     ]
 
     all_ok = True
+    pending: list[QueueItem] = []
     for idx, item in enumerate(items):
         per_item_auth = base_auth
         if idx > 0 and remember_login and username:
@@ -113,6 +119,7 @@ async def _pack_entry(entry: WatchEntry, conf: dict, platforms: list[str] | None
 
         if item.status == Status.COMPLETE:
             write_pending_sidecar(item, output_dir)
+            pending.append(item)
             log.info("Packed %s/%s: %s", entry.appid, item.platform, item.archive_name)
         else:
             log.error(
@@ -124,11 +131,12 @@ async def _pack_entry(entry: WatchEntry, conf: dict, platforms: list[str] | None
             )
             all_ok = False
 
-    return all_ok
+    return all_ok, pending
 
 
-async def _check_all(entries: list[WatchEntry], conf: dict) -> bool:
+async def _check_all(entries: list[WatchEntry], conf: dict) -> tuple[bool, list[QueueItem]]:
     any_failed = False
+    pending: list[QueueItem] = []
 
     for entry in entries:
         if not entry.enabled:
@@ -156,7 +164,8 @@ async def _check_all(entries: list[WatchEntry], conf: dict) -> bool:
             entry.last_build_id = new_build_id
         elif new_build_id != entry.last_build_id:
             log.info("New build for %s: %s → %s", entry.name, entry.last_build_id, new_build_id)
-            ok = await _pack_entry(entry, conf)
+            ok, entry_pending = await _pack_entry(entry, conf)
+            pending.extend(entry_pending)
             if ok:
                 entry.last_build_id = new_build_id
             else:
@@ -165,7 +174,9 @@ async def _check_all(entries: list[WatchEntry], conf: dict) -> bool:
             missing = _missing_platforms(entry, new_build_id, conf)
             if missing:
                 log.info("Filling missing platforms for %s: %s", entry.name, missing)
-                if not await _pack_entry(entry, conf, platforms=missing):
+                ok, entry_pending = await _pack_entry(entry, conf, platforms=missing)
+                pending.extend(entry_pending)
+                if not ok:
                     any_failed = True
             else:
                 log.info("No change for %s: still at build %s", entry.name, new_build_id)
@@ -174,7 +185,39 @@ async def _check_all(entries: list[WatchEntry], conf: dict) -> bool:
         save_watchlist(entries)
         await asyncio.sleep(2)
 
-    return not any_failed
+    return not any_failed, pending
+
+
+def _notify_pending(items: list[QueueItem], conf: dict) -> None:
+    """Send a desktop notification for downloads left unprocessed by a daemon run."""
+    if not conf.get("notify_on_pending", True):
+        return
+    notify_send = shutil.which("notify-send")
+    if not notify_send:
+        log.info("notify-send not found; skipping desktop notification")
+        return
+
+    names = sorted({item.game_name or f"App {item.appid}" for item in items})
+    builds = sorted({item.build_id for item in items if item.build_id})
+    summary = _("New downloads ready to process")
+    body = ", ".join(names)
+    if builds:
+        body = f"{body} ({_('Builds')}: {', '.join(builds)})"
+
+    try:
+        subprocess.run(
+            [
+                notify_send,
+                "--app-name=GnuSteamPacker",
+                "--category=transfer.complete",
+                summary,
+                body,
+            ],
+            timeout=10,
+        )
+        log.info("Sent notification for %d pending download(s).", len(items))
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        log.warning("Failed to send notification: %s", exc)
 
 
 def _setup_logging(conf: dict) -> None:
@@ -288,5 +331,7 @@ def run_daemon_check() -> int:
     enabled = [e for e in entries if e.enabled]
     log.info("Daemon check: %d/%d entries enabled.", len(enabled), len(entries))
 
-    ok = asyncio.run(_check_all(entries, conf))
+    ok, pending = asyncio.run(_check_all(entries, conf))
+    if pending:
+        _notify_pending(pending, conf)
     return 0 if ok else 1

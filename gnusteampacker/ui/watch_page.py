@@ -95,6 +95,14 @@ class WatchPage(Gtk.Box):
         self._timer_switch.connect("notify::active", self._on_timer_toggled)
         timer_group.add(self._timer_switch)
 
+        self._notify_switch = Adw.SwitchRow(
+            title=_("Notify when downloads need processing"),
+            subtitle=_("Desktop notification after a scheduled check downloads updates"),
+        )
+        self._notify_switch.set_active(bool(cfg.load().get("notify_on_pending", True)))
+        self._notify_switch.connect("notify::active", self._on_notify_toggled)
+        timer_group.add(self._notify_switch)
+
         self._last_checked_row = Adw.ActionRow(title=_("Last checked"), subtitle=_("Never"))
         timer_group.add(self._last_checked_row)
 
@@ -404,6 +412,11 @@ class WatchPage(Gtk.Box):
             for platform in platforms
         ]
         self._add_daemon_items_cb(items)
+
+    def _on_notify_toggled(self, switch, _param) -> None:
+        conf = cfg.load()
+        conf["notify_on_pending"] = switch.get_active()
+        cfg.save(conf)
 
     def _on_timer_toggled(self, switch, _param) -> None:
         if self._updating_timer:
