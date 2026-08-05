@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gnusteampacker\n"
 "Report-Msgid-Bugs-To: https://github.com/SavageCore/GnuSteamPacker/issues\n"
-"POT-Creation-Date: 2026-06-16 11:19+0100\n"
-"PO-Revision-Date: 2026-06-16 10:37\n"
+"POT-Creation-Date: 2026-08-05 19:28+0100\n"
+"PO-Revision-Date: 2026-08-05 19:06\n"
 "Last-Translator: \n"
 "Language-Team: Russian\n"
 "Language: ru_RU\n"
@@ -17,39 +17,47 @@ msgstr ""
 "X-Crowdin-File: /main/po/gnusteampacker.pot\n"
 "X-Crowdin-File-ID: 7\n"
 
+#: gnusteampacker/daemon.py:204
+msgid "New downloads ready to process"
+msgstr ""
+
+#: gnusteampacker/daemon.py:207
+msgid "Builds"
+msgstr ""
+
 #: gnusteampacker/i18n.py:73 gnusteampacker/ui/preferences_window.py:183
 msgid "Follow System"
 msgstr "Как в системе"
 
-#: gnusteampacker/main.py:70
+#: gnusteampacker/main.py:111
 msgid "A Linux-native GUI for downloading, cleaning, and packaging Steam games for archival and sharing. Spiritual port of <a href=\"https://github.com/Masquerade64/SuperSteamPacker\">SuperSteamPacker</a>."
 msgstr "Нативный графический интерфейс для Linux для загрузки, очистки и упаковки игр Steam для архивирования и распространения. Духовный преемник <a href=\"https://github.com/Masquerade64/SuperSteamPacker\">SuperSteamPacker</a>."
 
-#: gnusteampacker/main.py:79
+#: gnusteampacker/main.py:120
 msgid "Donate"
 msgstr "Поддержать"
 
-#: gnusteampacker/main.py:81
+#: gnusteampacker/main.py:122
 msgid "Third-Party Libraries and Special Thanks"
 msgstr "Сторонние библиотеки и благодарности"
 
-#: gnusteampacker/queue_model.py:63
+#: gnusteampacker/queue_model.py:65
 msgid "Windows 64-bit"
 msgstr "Windows 64-бит"
 
-#: gnusteampacker/queue_model.py:64
+#: gnusteampacker/queue_model.py:66
 msgid "Windows 32-bit"
 msgstr "Windows 32-бит"
 
-#: gnusteampacker/queue_model.py:65
+#: gnusteampacker/queue_model.py:67
 msgid "Linux 64-bit"
 msgstr "Linux 64-бит"
 
-#: gnusteampacker/queue_model.py:66
+#: gnusteampacker/queue_model.py:68
 msgid "Linux 32-bit"
 msgstr "Linux 32-бит"
 
-#: gnusteampacker/queue_model.py:67
+#: gnusteampacker/queue_model.py:69
 msgid "macOS"
 msgstr "macOS"
 
@@ -91,7 +99,7 @@ msgstr "Параметры"
 msgid "Platform"
 msgstr "Платформа"
 
-#: gnusteampacker/ui/add_game_dialog.py:93
+#: gnusteampacker/ui/add_game_dialog.py:93 gnusteampacker/ui/watch_page.py:211
 msgid "Branch"
 msgstr "Ветка"
 
@@ -99,7 +107,9 @@ msgstr "Ветка"
 msgid "Branch password"
 msgstr "Пароль ветки"
 
-#: gnusteampacker/ui/add_game_dialog.py:109 gnusteampacker/ui/window.py:241
+#: gnusteampacker/ui/add_game_dialog.py:109
+#: gnusteampacker/ui/process_dialog.py:145 gnusteampacker/ui/watch_page.py:338
+#: gnusteampacker/ui/window.py:338
 msgid "Cancel"
 msgstr "Отмена"
 
@@ -149,7 +159,7 @@ msgstr "Максимальный"
 msgid "Ultra"
 msgstr "Ультра"
 
-#: gnusteampacker/ui/preferences_window.py:22 gnusteampacker/ui/window.py:99
+#: gnusteampacker/ui/preferences_window.py:22 gnusteampacker/ui/window.py:124
 msgid "Preferences"
 msgstr "Настройки"
 
@@ -170,6 +180,7 @@ msgid "Auto-download if missing"
 msgstr "Автозагрузка при отсутствии"
 
 #: gnusteampacker/ui/preferences_window.py:54
+#: gnusteampacker/ui/watch_page.py:214
 msgid "Output"
 msgstr "Вывод"
 
@@ -262,86 +273,277 @@ msgstr "Язык интерфейса"
 msgid "Restart GnuSteamPacker to apply a language change"
 msgstr "Перезапустите GnuSteamPacker, чтобы применить смену языка"
 
-#: gnusteampacker/ui/queue_row.py:25 gnusteampacker/ui/queue_row.py:86
+#: gnusteampacker/ui/process_dialog.py:52
+msgid "Process Download"
+msgstr ""
+
+#: gnusteampacker/ui/process_dialog.py:100
+msgid "Archive"
+msgstr ""
+
+#: gnusteampacker/ui/process_dialog.py:110
+msgid "Version number (e.g. 1.3.5)"
+msgstr ""
+
+#: gnusteampacker/ui/process_dialog.py:115
+msgid "cs.rin.ru thread URL"
+msgstr ""
+
+#: gnusteampacker/ui/process_dialog.py:120
+msgid "Upload to multiup.io"
+msgstr ""
+
+#: gnusteampacker/ui/process_dialog.py:121
+msgid "Requires multiup.io credentials in Preferences"
+msgstr ""
+
+#: gnusteampacker/ui/process_dialog.py:149
+#: gnusteampacker/ui/process_dialog.py:217
+#: gnusteampacker/ui/process_dialog.py:294
+msgid "Generate Release Text"
+msgstr ""
+
+#: gnusteampacker/ui/process_dialog.py:165
+msgid "Forum Post"
+msgstr ""
+
+#: gnusteampacker/ui/process_dialog.py:192
+#: gnusteampacker/ui/process_dialog.py:409
+msgid "Copy Forum Post"
+msgstr ""
+
+#: gnusteampacker/ui/process_dialog.py:196
+#: gnusteampacker/ui/process_dialog.py:391
+msgid "Copy Update Message"
+msgstr ""
+
+#: gnusteampacker/ui/process_dialog.py:201
+msgid "Close"
+msgstr ""
+
+#: gnusteampacker/ui/process_dialog.py:215
+#: gnusteampacker/ui/process_dialog.py:294
+msgid "Generate & Upload"
+msgstr ""
+
+#: gnusteampacker/ui/process_dialog.py:245
+msgid "Hashing"
+msgstr ""
+
+#: gnusteampacker/ui/process_dialog.py:259
+msgid "Uploading"
+msgstr ""
+
+#: gnusteampacker/ui/process_dialog.py:292
+msgid "Uploading…"
+msgstr ""
+
+#: gnusteampacker/ui/process_dialog.py:292
+msgid "Hashing…"
+msgstr ""
+
+#: gnusteampacker/ui/process_dialog.py:371
+msgid "Release Text"
+msgstr ""
+
+#: gnusteampacker/ui/process_dialog.py:387
+#: gnusteampacker/ui/process_dialog.py:405
+msgid "Copied!"
+msgstr ""
+
+#: gnusteampacker/ui/queue_row.py:26 gnusteampacker/ui/queue_row.py:97
 #, python-brace-format
 msgid "AppID {appid}"
 msgstr "AppID {appid}"
 
-#: gnusteampacker/ui/queue_row.py:46 gnusteampacker/ui/window.py:242
+#: gnusteampacker/ui/queue_row.py:47 gnusteampacker/ui/window.py:339
 msgid "Retry"
 msgstr "Повторить"
 
-#: gnusteampacker/ui/queue_row.py:54
+#: gnusteampacker/ui/queue_row.py:55 gnusteampacker/ui/watch_page.py:255
+msgid "Process"
+msgstr ""
+
+#: gnusteampacker/ui/queue_row.py:65
 msgid "Remove"
 msgstr "Удалить"
 
-#: gnusteampacker/ui/queue_row.py:126
+#: gnusteampacker/ui/queue_row.py:140
 #, python-brace-format
 msgid "AppID: {appid}  ·  {platform}  ·  Branch: {branch}"
 msgstr "AppID: {appid}  ·  {platform}  ·  Ветка: {branch}"
 
-#: gnusteampacker/ui/queue_row.py:136
+#: gnusteampacker/ui/queue_row.py:150
 #, python-brace-format
 msgid "{subtitle}  ·  {detail}"
 msgstr "{subtitle}  ·  {detail}"
 
-#: gnusteampacker/ui/window.py:54
+#: gnusteampacker/ui/watch_page.py:80
+msgid "Watchlist"
+msgstr ""
+
+#: gnusteampacker/ui/watch_page.py:84
+msgid "Unprocessed Downloads"
+msgstr ""
+
+#: gnusteampacker/ui/watch_page.py:88
+msgid "Automatic Checks"
+msgstr ""
+
+#: gnusteampacker/ui/watch_page.py:92
+msgid "Enable timer"
+msgstr ""
+
+#: gnusteampacker/ui/watch_page.py:93
+msgid "Checks for updates every hour"
+msgstr ""
+
+#: gnusteampacker/ui/watch_page.py:99
+msgid "Notify when downloads need processing"
+msgstr ""
+
+#: gnusteampacker/ui/watch_page.py:100
+msgid "Desktop notification after a scheduled check downloads updates"
+msgstr ""
+
+#: gnusteampacker/ui/watch_page.py:106
+msgid "Last checked"
+msgstr ""
+
+#: gnusteampacker/ui/watch_page.py:106 gnusteampacker/ui/watch_page.py:196
+#: gnusteampacker/ui/watch_page.py:202
+msgid "Never"
+msgstr ""
+
+#: gnusteampacker/ui/watch_page.py:109 gnusteampacker/ui/watch_page.py:442
+msgid "Run now"
+msgstr ""
+
+#: gnusteampacker/ui/watch_page.py:112
+msgid "Manual check"
+msgstr ""
+
+#: gnusteampacker/ui/watch_page.py:132
+msgid "Add game to watchlist"
+msgstr ""
+
+#: gnusteampacker/ui/watch_page.py:187
+msgid "Install the gnusteampacker package to enable"
+msgstr ""
+
+#: gnusteampacker/ui/watch_page.py:190
+msgid "systemctl not available"
+msgstr ""
+
+#: gnusteampacker/ui/watch_page.py:207
+msgid "None"
+msgstr ""
+
+#: gnusteampacker/ui/watch_page.py:208
+msgid "not yet checked"
+msgstr ""
+
+#: gnusteampacker/ui/watch_page.py:211 gnusteampacker/ui/watch_page.py:334
+msgid "Build"
+msgstr ""
+
+#: gnusteampacker/ui/watch_page.py:246
+msgid "Downloaded"
+msgstr ""
+
+#: gnusteampacker/ui/watch_page.py:249 gnusteampacker/ui/watch_page.py:339
+msgid "Delete"
+msgstr ""
+
+#: gnusteampacker/ui/watch_page.py:275
+msgid "Set output path"
+msgstr ""
+
+#: gnusteampacker/ui/watch_page.py:278
+msgid "Clear custom path"
+msgstr ""
+
+#: gnusteampacker/ui/watch_page.py:282
+msgid "Open forum post"
+msgstr ""
+
+#: gnusteampacker/ui/watch_page.py:335
+msgid "and its archive files will be permanently deleted."
+msgstr ""
+
+#: gnusteampacker/ui/watch_page.py:337
+msgid "Delete download?"
+msgstr ""
+
+#: gnusteampacker/ui/watch_page.py:438
+msgid "Checking…"
+msgstr ""
+
+#: gnusteampacker/ui/window.py:58
 msgid "Add game"
 msgstr "Добавить игру"
 
-#: gnusteampacker/ui/window.py:58
+#: gnusteampacker/ui/window.py:62
 msgid "Start All"
 msgstr "Запустить всё"
 
-#: gnusteampacker/ui/window.py:66
+#: gnusteampacker/ui/window.py:70
 msgid "Menu"
 msgstr "Меню"
 
-#: gnusteampacker/ui/window.py:78
+#: gnusteampacker/ui/window.py:88
 msgid "No games in queue"
 msgstr "В очереди нет игр"
 
-#: gnusteampacker/ui/window.py:79
+#: gnusteampacker/ui/window.py:89
 msgid "Press + to add a game to download."
 msgstr "Нажмите +, чтобы добавить игру для загрузки."
 
-#: gnusteampacker/ui/window.py:86
+#: gnusteampacker/ui/window.py:96 gnusteampacker/ui/window.py:106
 msgid "Queue"
 msgstr "Очередь"
 
-#: gnusteampacker/ui/window.py:100
+#: gnusteampacker/ui/window.py:116
+msgid "Watch"
+msgstr ""
+
+#: gnusteampacker/ui/window.py:125
 msgid "About GnuSteamPacker"
 msgstr "О приложении GnuSteamPacker"
 
-#: gnusteampacker/ui/window.py:226
+#: gnusteampacker/ui/window.py:284
+msgid "Updates downloaded - ready to process"
+msgstr ""
+
+#: gnusteampacker/ui/window.py:323
 msgid "Steam Guard Required"
 msgstr "Требуется код Steam Guard"
 
-#: gnusteampacker/ui/window.py:227
+#: gnusteampacker/ui/window.py:324
 msgid "Enter the code from your email or authenticator app."
 msgstr "Введите код из письма или приложения-аутентификатора."
 
-#: gnusteampacker/worker.py:93
+#: gnusteampacker/worker.py:94
 #, python-brace-format
 msgid "SteamCMD install failed: {error}"
 msgstr "Не удалось установить SteamCMD: {error}"
 
-#: gnusteampacker/worker.py:115 gnusteampacker/worker.py:131
+#: gnusteampacker/worker.py:116 gnusteampacker/worker.py:132
 #, python-brace-format
 msgid "Info fetch failed: {error}"
 msgstr "Не удалось получить информацию: {error}"
 
-#: gnusteampacker/worker.py:207
+#: gnusteampacker/worker.py:208
 #, python-brace-format
 msgid "SteamCMD output missing appmanifest for app {appid} in: {paths}"
 msgstr "В выводе SteamCMD отсутствует appmanifest для приложения {appid} в: {paths}"
 
-#: gnusteampacker/worker.py:303
+#: gnusteampacker/worker.py:304
 #, python-brace-format
 msgid "No files found under {path}"
 msgstr "Файлы не найдены в {path}"
 
-#: gnusteampacker/worker.py:339
+#: gnusteampacker/worker.py:340
 #, python-brace-format
 msgid "Failed to organise downloaded files: {error}"
 msgstr ""
