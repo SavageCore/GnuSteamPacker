@@ -1,6 +1,11 @@
-.PHONY: dev run run-debug watch lint format dev-icons pot update-po mo flatpak flatpak-bundle flatpak-run dist-cli dist-gui rpm deb appimage daemon-dev-install clear-auth clean
+.PHONY: dev run run-debug watch lint format dev-icons pot update-po mo flatpak flatpak-bundle flatpak-run dist-cli dist-gui rpm deb install appimage daemon-dev-install clear-auth clean
 
 PYVER := $(shell python3 -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')
+
+# Package installed by `make install` (full = CLI + GUI). Override with e.g. `make install INSTALL_PACKAGE=gnusteampacker`.
+INSTALL_PACKAGE ?= gnusteampacker-full
+# Privilege-elevation prefix used when not running as root. Override with `make install SUDO=` if unwanted.
+SUDO ?= sudo
 
 dev:
 	uv venv --python /usr/bin/python3 --system-site-packages --clear
@@ -81,6 +86,31 @@ deb: dist-cli dist-gui
 	nfpm package --packager deb --target dist-packages/ --config nfpm.yml
 	PYVER=$(PYVER) envsubst '$$PYVER' < nfpm-gui.yml | PYVER=$(PYVER) nfpm package --packager deb --target dist-packages/ --config /dev/stdin
 	nfpm package --packager deb --target dist-packages/ --config nfpm-combined.yml
+
+# Build the packages and install the combined (CLI + GUI) one via the distro's package manager,
+# so dependencies are resolved and upgrades tracked by dnf/apt. Runs through sudo unless already root.
+install: rpm
+	@set -e; \
+	if command -v dnf >/dev/null 2>&1; then \
+		pkg="$$(ls dist-packages/$(INSTALL_PACKAGE)-*.rpm | head -n1)"; \
+		if rpm -q "$(INSTALL_PACKAGE)" >/dev/null 2>&1; then \
+			inst="dnf reinstall -y $$pkg"; \
+		else \
+			inst="dnf install -y $$pkg"; \
+		fi; \
+	elif command -v apt-get >/dev/null 2>&1; then \
+		pkg="$$(ls dist-packages/$(INSTALL_PACKAGE)-*.deb | head -n1)"; \
+		inst="dpkg --force-reinstall -i $$pkg && apt-get install -f -y"; \
+	else \
+		echo "Error: no supported package manager (dnf/apt-get). Install dist-packages/$(INSTALL_PACKAGE)-* manually."; \
+		exit 1; \
+	fi; \
+	echo "Installing: $$pkg"; \
+	if [ "$$(id -u)" -eq 0 ]; then \
+		sh -c "$$inst"; \
+	else \
+		$(SUDO) sh -c "$$inst"; \
+	fi
 
 appimage:
 	uv export --no-dev --no-hashes --no-annotate -o requirements.txt
